@@ -24,7 +24,7 @@ import AdminMonetization from "./pages/admin-monetization";
 import AdminReports from "./pages/admin-reports";
 import AdminUsers from "./pages/admin-users";
 import Chats from "./pages/chats";
-import ChatId from "./pages/chats-chatId";
+import ChatId from "./pages/_chats-chatId-adapter";
 import Contest from "./pages/contest";
 import Faq from "./pages/faq";
 import Groups from "./pages/groups";

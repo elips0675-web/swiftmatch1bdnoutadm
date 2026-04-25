@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { generateProfileBio } from "@/ai/flows/ai-generate-profile-bio";
+import { generateProfileBio } from "@/shims/ai-flows";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { INTEREST_OPTIONS, DATING_GOALS, CIRCADIAN_RHYTHM_OPTIONS } from "@/lib/constants";

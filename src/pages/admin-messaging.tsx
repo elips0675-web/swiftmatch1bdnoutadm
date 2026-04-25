@@ -12,8 +12,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFirestore, useUser } from "@/shims/firebase";
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/shims/firebase-error-emitter';
+import { FirestorePermissionError } from '@/shims/firebase-errors';
 
 export default function AdminMessagingPage() {
     const { t, language } = useLanguage();

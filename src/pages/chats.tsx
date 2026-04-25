@@ -18,7 +18,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { generateIcebreakerSuggestions } from "@/ai/flows/ai-chat-icebreaker-suggestions";
+import { generateIcebreakerSuggestions } from "@/shims/ai-flows";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/context/language-context";
 import { toast } from "@/hooks/use-toast";

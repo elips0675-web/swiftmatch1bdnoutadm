@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { generateProfileBio } from "@/ai/flows/ai-generate-profile-bio";
+import { generateProfileBio } from "@/shims/ai-flows";
 import { toast } from "@/hooks/use-toast";
 import { 
   Select, 

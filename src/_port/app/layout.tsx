@@ -1,15 +1,15 @@
 
 import type {Metadata, Viewport} from 'next';
 import './globals.css';
-import { FirebaseClientProvider } from '@/firebase';
+import { FirebaseClientProvider } from "@/shims/firebase";
 import { Toaster } from '@/components/ui/toaster';
 import { LanguageProvider } from '@/context/language-context';
-import { Poppins, Quicksand } from 'next/font/google';
+import { Poppins, Quicksand } from "@/shims/next-font";
 import { AppContainer } from '@/components/layout/app-container';
 import { FeatureFlagsProvider } from '@/context/feature-flags-context';
 import { CookieConsent } from '@/components/shared/cookie-consent';
 import { PwaInstallBanner } from '@/components/shared/pwa-install-banner';
-import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
+import { FirebaseErrorListener } from "@/shims/firebase-error-listener";
 import { PwaRegistry } from '@/components/shared/pwa-registry';
 import { ClientOnly } from '@/components/shared/client-only';
 

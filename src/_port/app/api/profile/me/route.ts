@@ -1,5 +1,5 @@
 
-import { NextResponse } from 'next/server';
+import { NextResponse } from "@/shims/next-server";
 import pool from '@/lib/mysql-connector';
 import { verifyToken } from '@/lib/jwt';
 

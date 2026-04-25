@@ -1,5 +1,5 @@
 
-import { NextResponse } from 'next/server';
+import { NextResponse } from "@/shims/next-server";
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { verifyToken } from '@/lib/jwt';

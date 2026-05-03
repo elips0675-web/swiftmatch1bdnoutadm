@@ -244,6 +244,8 @@ function SearchContent() {
 
   if (isLoading) return <div className="flex-1 flex items-center justify-center h-full"><Skeleton className="w-[90%] h-[70vh] rounded-2xl" /></div>;
 
+  const noMoreUsers = !user || currentIndex >= userList.length;
+
   return (
     <>
       <AppHeader />

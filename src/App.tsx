@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/context/language-context";
 import { AdminLayout } from "@/components/layout/admin-layout";
 import { FeatureFlagsProvider } from "@/context/feature-flags-context";
-import { FirebaseClientProvider } from "@/shims/firebase";
 import { AppContainer } from "@/components/layout/app-container";
 import { ClientOnly } from "@/components/shared/client-only";
 import { CookieConsent } from "@/components/shared/cookie-consent";

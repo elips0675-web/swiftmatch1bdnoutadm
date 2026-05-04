@@ -1,179 +1,80 @@
-
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { doc, setDoc, onSnapshot, Unsubscribe } from 'firebase/firestore';
-import { useFirestore } from "@/shims/firebase";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { FeatureFlags } from '@/context/feature-flags-context';
-import { toast } from '@/hooks/use-toast';
-import { Loader2, Save, RotateCcw } from 'lucide-react';
-import { useLanguage } from '@/context/language-context';
+import { Badge } from "@/components/ui/badge";
+import { Save, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { toast } from 'sonner';
 
-const FEATURE_METADATA: { key: keyof FeatureFlags; label_ru: string; label_en: string; description_ru: string; description_en: string }[] = [
-  {
-    key: 'videoCallsEnabled',
-    label_ru: 'Видеозвонки',
-    label_en: 'Video Calls',
-    description_ru: 'Разрешить видеозвонки между пользователями в чатах.',
-    description_en: 'Allow video calls between users in chats.',
-  },
-  {
-    key: 'aiIcebreakersEnabled',
-    label_ru: 'AI Icebreakers в чате',
-    label_en: 'AI Icebreakers',
-    description_ru: 'Предлагать пользователям фразы для начала диалога, сгенерированные AI.',
-    description_en: 'Suggest AI-generated opening lines to users.',
-  },
-  {
-    key: 'aiCompatibilityEnabled',
-    label_ru: 'AI Анализ совместимости',
-    label_en: 'AI Compatibility',
-    description_ru: 'Показывать анализ совместимости при создании нового мэтча.',
-    description_en: 'Show compatibility analysis for new matches.',
-  },
-  {
-    key: 'groupsPageEnabled',
-    label_ru: 'Страница Групп',
-    label_en: 'Groups Page',
-    description_ru: 'Включить или отключить раздел "Группы" в приложении.',
-    description_en: 'Enable or disable the "Groups" section.',
-  },
+interface FeatureFlag {
+  key: string;
+  label: string;
+  description: string;
+  enabled: boolean;
+  affectedUsers: number;
+}
+
+const INITIAL_FLAGS: FeatureFlag[] = [
+  { key: 'videoCalls', label: 'Видеозвонки', description: 'Разрешить видеозвонки между пользователями в чатах', enabled: true, affectedUsers: 12480 },
+  { key: 'aiIcebreakers', label: 'AI Icebreakers', description: 'Предлагать AI-сгенерированные фразы для начала диалога', enabled: true, affectedUsers: 12480 },
+  { key: 'aiBioGeneration', label: 'AI Генерация био', description: 'Автоматическое создание описания профиля с помощью AI', enabled: false, affectedUsers: 0 },
+  { key: 'aiCompatibility', label: 'AI Анализ совместимости', description: 'Показывать анализ совместимости при создании нового мэтча', enabled: true, affectedUsers: 8200 },
+  { key: 'groupsPage', label: 'Страница Групп', description: 'Включить раздел "Группы" в приложении', enabled: true, affectedUsers: 12480 },
+  { key: 'contests', label: 'Конкурсы', description: 'Включить еженедельные конкурсы фото и голосования', enabled: true, affectedUsers: 6500 },
+  { key: 'premiumTiers', label: 'Premium тарифы', description: 'Управление Plus/Gold/Platinum подписками', enabled: true, affectedUsers: 2100 },
 ];
 
 export default function FeatureFlagsPage() {
-  const firestore = useFirestore();
-  const { t, language } = useLanguage();
-  const [flags, setFlags] = useState<Partial<FeatureFlags>>({});
-  const [pendingFlags, setPendingFlags] = useState<Partial<FeatureFlags>>({});
-  const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  const featureFlagsRef = useMemo(() => {
-    if (!firestore) return null;
-    return doc(firestore, 'config', 'features');
-  }, [firestore]);
+  const [flags, setFlags] = useState(INITIAL_FLAGS);
+  const [saved, setSaved] = useState(INITIAL_FLAGS);
 
-  useEffect(() => {
-    if (!featureFlagsRef) return;
-    
-    setLoading(true);
-    const unsubscribe: Unsubscribe = onSnapshot(featureFlagsRef, (doc) => {
-      if (doc.exists()) {
-        const data = doc.data() as FeatureFlags;
-        setFlags(data);
-        setPendingFlags(data);
-      } else {
-        const defaults = {
-            videoCallsEnabled: true,
-            aiIcebreakersEnabled: true,
-            aiCompatibilityEnabled: true,
-            groupsPageEnabled: true
-        };
-        setFlags(defaults);
-        setPendingFlags(defaults);
-      }
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching feature flags:", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to load feature flags.' });
-      setLoading(false);
-    });
+  const toggle = (key: string) => {
+    setFlags(prev => prev.map(f => f.key === key ? { ...f, enabled: !f.enabled } : f));
+  };
 
-    return () => unsubscribe();
-  }, [featureFlagsRef]);
+  const hasChanges = JSON.stringify(flags) !== JSON.stringify(saved);
 
-  const handleFlagToggle = useCallback((key: keyof FeatureFlags, value: boolean) => {
-    setPendingFlags(prev => ({ ...prev, [key]: value }));
-  }, []);
+  const handleSave = () => {
+    setSaved(flags);
+    toast.success('Настройки сохранены');
+  };
 
   const handleReset = () => {
-    setPendingFlags(flags);
-    toast({ title: t('admin.reset') });
+    setFlags(saved);
+    toast.info('Изменения сброшены');
   };
-
-  const handleSave = async () => {
-    if (!featureFlagsRef) return;
-
-    setIsSaving(true);
-    try {
-      await setDoc(featureFlagsRef, pendingFlags, { merge: true });
-      toast({ 
-        title: language === 'RU' ? 'Настройки сохранены' : 'Settings saved', 
-        description: language === 'RU' ? 'Изменения вступили в силу.' : 'Changes are now live.' 
-      });
-    } catch (error) {
-      console.error("Error updating feature flags:", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to save changes.' });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const hasChanges = useMemo(() => {
-    return JSON.stringify(flags) !== JSON.stringify(pendingFlags);
-  }, [flags, pendingFlags]);
-  
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6">
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-xl font-black uppercase tracking-tight">{t('admin.manage_features')}</CardTitle>
-          <CardDescription>{t('admin.feature_desc')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {FEATURE_METADATA.map(({ key, label_ru, label_en, description_ru, description_en }) => (
-            <div key={key} className="flex items-center justify-between space-x-4 p-4 rounded-2xl border bg-background hover:bg-muted/5 transition-colors">
-              <div className="space-y-0.5">
-                <Label htmlFor={key} className="text-sm font-bold cursor-pointer">{language === 'RU' ? label_ru : label_en}</Label>
-                <p className="text-xs text-muted-foreground">{language === 'RU' ? description_ru : description_en}</p>
+    <Card className="border-0 shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+          <SlidersHorizontal className="h-5 w-5 text-primary" />
+          Feature Flags
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {flags.map(flag => (
+          <div key={flag.key} className="flex items-center justify-between gap-4 p-4 rounded-2xl border bg-background hover:bg-muted/5 transition-colors">
+            <div className="space-y-1 flex-1">
+              <div className="flex items-center gap-2">
+                <Label htmlFor={flag.key} className="text-sm font-bold cursor-pointer">{flag.label}</Label>
+                <Badge variant="outline" className="text-[9px]">{flag.affectedUsers.toLocaleString()} users</Badge>
               </div>
-              <Switch
-                id={key}
-                checked={pendingFlags[key] ?? true}
-                onCheckedChange={(value) => handleFlagToggle(key, value)}
-              />
+              <p className="text-xs text-muted-foreground">{flag.description}</p>
             </div>
-          ))}
-        </CardContent>
-        <CardFooter className="flex items-center justify-end gap-3 border-t bg-muted/5 px-6 py-4">
-          <Button 
-            variant="ghost" 
-            onClick={handleReset} 
-            disabled={!hasChanges || isSaving}
-            className="rounded-full text-[10px] font-black uppercase tracking-widest h-10 px-6"
-          >
-            <RotateCcw className="mr-2 h-3 w-3" />
-            {t('admin.reset')}
-          </Button>
-          <Button 
-            onClick={handleSave} 
-            disabled={!hasChanges || isSaving}
-            className="min-w-[140px] rounded-full gradient-bg text-white font-black uppercase tracking-widest h-10 px-8 shadow-lg shadow-primary/20 border-0"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                ...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-3 w-3" />
-                {t('admin.save')}
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+            <Switch id={flag.key} checked={flag.enabled} onCheckedChange={() => toggle(flag.key)} />
+          </div>
+        ))}
+      </CardContent>
+      <CardFooter className="flex items-center justify-end gap-3 border-t bg-muted/5 px-6 py-4">
+        <Button variant="ghost" onClick={handleReset} disabled={!hasChanges} className="rounded-full text-xs font-bold h-10 px-6">
+          <RotateCcw className="mr-2 h-3 w-3" /> Сброс
+        </Button>
+        <Button onClick={handleSave} disabled={!hasChanges} className="min-w-[140px] rounded-full bg-primary text-primary-foreground font-bold h-10 px-8">
+          <Save className="mr-2 h-3 w-3" /> Сохранить
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }

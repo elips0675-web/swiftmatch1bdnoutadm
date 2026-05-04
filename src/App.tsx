@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/context/language-context";
 import { AdminLayout } from "@/components/layout/admin-layout";
+import { FirebaseClientProvider } from "@/shims/firebase";
 import { FeatureFlagsProvider } from "@/context/feature-flags-context";
 import { AppContainer } from "@/components/layout/app-container";
 import { ClientOnly } from "@/components/shared/client-only";

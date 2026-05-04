@@ -7,30 +7,30 @@ import {
 } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/navigation/admin-sidebar';
 import { PanelLeft } from 'lucide-react';
-import Link from "@/shims/next-link";
+import { Link } from 'react-router-dom';
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-        <Sidebar collapsible="icon">
-          <SidebarContent className="p-0">
+      <div className="min-h-screen flex w-full">
+        <Sidebar collapsible="icon" className="bg-[#0f172a] text-slate-300 border-r-0">
+          <SidebarContent className="p-0 bg-[#0f172a]">
             <AdminSidebar />
           </SidebarContent>
         </Sidebar>
-        <SidebarInset>
-          <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+        <SidebarInset className="bg-slate-50">
+          <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
             <SidebarTrigger className="sm:hidden">
               <PanelLeft />
               <span className="sr-only">Toggle Menu</span>
             </SidebarTrigger>
-            <div className="flex-1">
-                <Link href="/admin">
-                    <h1 className="font-semibold text-lg">Admin Panel</h1>
-                </Link>
-            </div>
+            <Link to="/admin" className="flex-1">
+              <h1 className="font-black text-lg uppercase tracking-tight">Admin Panel</h1>
+            </Link>
           </header>
           <main className="flex-1 p-4 sm:p-6">{children}</main>
         </SidebarInset>
+      </div>
     </SidebarProvider>
   );
 }

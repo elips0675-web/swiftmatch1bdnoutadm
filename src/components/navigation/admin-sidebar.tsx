@@ -8,184 +8,71 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { 
-  LayoutDashboard, 
-  Users, 
-  Flag, 
-  Home, 
-  Shield, 
-  LogOut, 
-  ChevronsLeft, 
-  ChevronsRight, 
-  SlidersHorizontal,
-  Languages,
-  DollarSign,
-  Package,
-  Mail,
-  BarChart3
+  LayoutDashboard, Users, Flag, Home, Shield, LogOut, 
+  ChevronsLeft, ChevronsRight, SlidersHorizontal,
+  DollarSign, Package, Mail, BarChart3
 } from 'lucide-react';
-import Link from "@/shims/next-link";
-import { usePathname } from "@/shims/next-navigation";
+import { NavLink, useLocation, Link } from 'react-router-dom';
 import { Button } from '../ui/button';
-import { useLanguage } from '@/context/language-context';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
+const NAV_ITEMS = [
+  { title: 'Dashboard', path: '/admin', icon: LayoutDashboard, exact: true },
+  { title: 'Analytics', path: '/admin/analytics', icon: BarChart3 },
+  { title: 'Users', path: '/admin/users', icon: Users },
+  { title: 'Reports', path: '/admin/reports', icon: Flag },
+  { title: 'Features', path: '/admin/features', icon: SlidersHorizontal },
+  { title: 'Monetization', path: '/admin/monetization', icon: DollarSign },
+  { title: 'Content', path: '/admin/content', icon: Package },
+  { title: 'Messaging', path: '/admin/messaging', icon: Mail },
+];
 
 export function AdminSidebar() {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const { state, toggleSidebar } = useSidebar();
-  const { t, language, setLanguage } = useLanguage();
+  const collapsed = state === 'collapsed';
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string, exact?: boolean) => exact ? pathname === path : pathname === path;
 
   return (
     <>
-        <SidebarHeader className="border-b flex items-center justify-between">
-            <Link href="/admin" className="flex items-center gap-2 font-semibold text-lg">
-                <Shield className="h-6 w-6 text-primary" />
-                <span className='group-data-[state=collapsed]:hidden'>SwiftMatch</span>
-            </Link>
-            <Button variant="ghost" size="icon" className="hidden md:flex" onClick={toggleSidebar}>
-              {state === 'expanded' ? <ChevronsLeft size={18} /> : <ChevronsRight size={18} />}
-            </Button>
-        </SidebarHeader>
-        <SidebarContent className="p-2">
-            <SidebarMenu>
-                <SidebarMenuItem>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={isActive('/admin')}
-                        tooltip={t('admin.dashboard')}
-                    >
-                        <Link href="/admin">
-                            <LayoutDashboard />
-                            <span>{t('admin.dashboard')}</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={isActive('/admin/analytics')}
-                        tooltip="Analytics"
-                    >
-                        <Link href="/admin/analytics">
-                            <BarChart3 />
-                            <span>Analytics</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={isActive('/admin/users')}
-                        tooltip={t('admin.users')}
-                    >
-                        <Link href="/admin/users">
-                            <Users />
-                            <span>{t('admin.users')}</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={isActive('/admin/reports')}
-                        tooltip={t('admin.reports')}
-                    >
-                        <Link href="/admin/reports">
-                            <Flag />
-                            <span>{t('admin.reports')}</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={isActive('/admin/features')}
-                        tooltip={t('admin.features')}
-                    >
-                        <Link href="/admin/features">
-                            <SlidersHorizontal />
-                            <span>{t('admin.features')}</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                 <SidebarMenuItem>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={isActive('/admin/monetization')}
-                        tooltip={t('admin.monetization.title')}
-                    >
-                        <Link href="/admin/monetization">
-                            <DollarSign />
-                            <span>{t('admin.monetization.title')}</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={isActive('/admin/content')}
-                        tooltip={t('admin.content.title')}
-                    >
-                        <Link href="/admin/content">
-                            <Package />
-                            <span>{t('admin.content.title')}</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                 <SidebarMenuItem>
-                    <SidebarMenuButton
-                        asChild
-                        isActive={isActive('/admin/messaging')}
-                        tooltip={t('admin.messaging.title')}
-                    >
-                        <Link href="/admin/messaging">
-                            <Mail />
-                            <span>{t('admin.messaging.title')}</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter className="mt-auto border-t p-2">
-            <SidebarMenu>
-                <SidebarMenuItem>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <SidebarMenuButton tooltip="Language">
-                                <Languages className="h-4 w-4" />
-                                <span>{language === 'RU' ? 'Русский' : 'English'}</span>
-                            </SidebarMenuButton>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" side="right" className="rounded-xl">
-                            <DropdownMenuItem onClick={() => setLanguage('RU')}>Русский (RU)</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setLanguage('EN')}>English (EN)</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip={t('admin.back_to_app')}>
-                         <Link href="/">
-                            <Home />
-                            <span>{t('admin.back_to_app')}</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip={t('admin.logout')}>
-                         <Link href="/login">
-                            <LogOut />
-                            <span>{t('admin.logout')}</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
-        </SidebarFooter>
+      <SidebarHeader className="border-b border-slate-700/50 flex items-center justify-between p-4">
+        <Link to="/admin" className="flex items-center gap-2 font-black text-lg text-white">
+          <Shield className="h-6 w-6 text-primary" />
+          {!collapsed && <span>SwiftMatch</span>}
+        </Link>
+        <Button variant="ghost" size="icon" className="hidden md:flex text-slate-400 hover:text-white hover:bg-slate-700/50" onClick={toggleSidebar}>
+          {collapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
+        </Button>
+      </SidebarHeader>
+      <SidebarContent className="p-2">
+        <SidebarMenu>
+          {NAV_ITEMS.map(item => (
+            <SidebarMenuItem key={item.path}>
+              <SidebarMenuButton asChild isActive={isActive(item.path, item.exact)} tooltip={item.title}
+                className="text-slate-400 hover:text-white hover:bg-slate-700/50 data-[active=true]:bg-primary/20 data-[active=true]:text-primary">
+                <NavLink to={item.path} end={item.exact}>
+                  <item.icon />
+                  <span>{item.title}</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter className="mt-auto border-t border-slate-700/50 p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Back to App" className="text-slate-400 hover:text-white hover:bg-slate-700/50">
+              <Link to="/"><Home /><span>Back to App</span></Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Logout" className="text-slate-400 hover:text-white hover:bg-slate-700/50">
+              <Link to="/login"><LogOut /><span>Logout</span></Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </>
   );
 }

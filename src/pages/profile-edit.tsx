@@ -85,11 +85,6 @@ export default function EditProfilePage() {
     }
 
     setIsSaving(true);
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
 
     const cleanedInterests = (profile.interests || []).filter((i: string) => !BANNED_WORDS.includes(i));
     
@@ -98,31 +93,10 @@ export default function EditProfilePage() {
       interests: cleanedInterests,
     };
 
-    try {
-      const response = await fetch('/api/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(dataToSave),
-      });
-
-      if (response.ok) {
-        toast({ title: "Профиль сохранен", description: "Ваши данные успешно обновлены." });
-        // Обновляем localStorage для консистентности
-        localStorage.setItem('userProfile', JSON.stringify(dataToSave));
-        router.push("/profile");
-      } else {
-        const errorData = await response.json();
-        toast({ title: "Ошибка сохранения", description: errorData.message || "Не удалось обновить профиль.", variant: "destructive" });
-      }
-    } catch (error) {
-      console.error("Save profile error:", error);
-      toast({ title: "Сетевая ошибка", description: "Проверьте ваше подключение.", variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
+    localStorage.setItem('userProfile', JSON.stringify(dataToSave));
+    toast({ title: "Профиль сохранен", description: "Ваши данные успешно обновлены." });
+    setIsSaving(false);
+    router.push("/profile");
   };
 
   const toggleInterest = (interest: string) => {

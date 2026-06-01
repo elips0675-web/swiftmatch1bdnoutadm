@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "@/shims/next-link";
-import { ChevronLeft, Send, Paperclip, HelpCircle } from "lucide-react";
+import { ChevronLeft, Send, Paperclip, CircleHelp as HelpCircle } from "lucide-react";
 import Image from "@/shims/next-image";
 import { useRouter } from "@/shims/next-navigation";
 import { Input } from "@/components/ui/input";

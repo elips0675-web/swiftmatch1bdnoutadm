@@ -42,7 +42,6 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {kpis.map((kpi, i) => (
           <Card key={i} className="border-0 shadow-sm">
@@ -61,7 +60,6 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Registration Trend */}
         <Card className="border-0 shadow-sm lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-black">Тренд регистраций</CardTitle>
@@ -92,7 +90,6 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* City Pie Chart */}
         <Card className="border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-black">Топ городов</CardTitle>
@@ -121,7 +118,6 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      {/* Recent Activity */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg font-black">Последняя активность</CardTitle>

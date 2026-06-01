@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "@/shims/next-navigation";
-import { Sparkles, User, MapPin, Info, Target, Loader2 } from "lucide-react";
+import { Sparkles, User, MapPin, Info, Target, Loader as Loader2, Trash2, CloudUpload as UploadCloud } from "lucide-react";
 import { AppHeader } from "@/components/layout/app-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,58 +10,121 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { generateProfileBio } from "@/shims/ai-flows";
 import { toast } from "@/hooks/use-toast";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { INTEREST_OPTIONS, DATING_GOALS } from "@/lib/constants";
+import { INTEREST_OPTIONS, DATING_GOALS, ZODIAC_SIGNS, CAPITALS } from "@/lib/constants";
 import { useLanguage } from "@/context/language-context";
-import { PhotoUploader } from "@/components/profile/photo-uploader";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const BANNED_WORDS = ["Хуй"];
+
+const DEFAULT_PROFILE = {
+  displayName: "Анна",
+  age: 24,
+  city: "Москва",
+  height: 172,
+  gender: "female",
+  lookingFor: "male",
+  datingGoal: "Серьезные отношения",
+  zodiac: "Лев",
+  bio: "Люблю закаты, хороший кофе и интересные разговоры.",
+  interests: ["Фотография", "Путешествия", "Кофе", "Музыка", "Спорт"].filter(i => !BANNED_WORDS.includes(i)),
+  match: 87,
+  attachmentStyle: null,
+  birthDate: "2001-08-10",
+  location: "Москва",
+  photos: [PlaceHolderImages[0].imageUrl, PlaceHolderImages[2].imageUrl, PlaceHolderImages[4].imageUrl],
+};
 
 export default function EditProfilePage() {
   const router = useRouter();
   const { t } = useLanguage();
-  
+
   const [profile, setProfile] = useState<any>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingBio, setIsGeneratingBio] = useState(false);
 
   useEffect(() => {
-    const demoProfile = {
-      displayName: "Александр",
-      bio: "Люблю путешествия и фотографию 📸",
-      gender: "male",
-      birthDate: "1995-06-15",
-      location: "Москва",
-      datingGoal: "",
-      interests: ["Путешествия", "Фотография", "Музыка"],
-      photos: ["/demo/people/me.png"],
-    };
-    const saved = localStorage.getItem('userProfile');
-    if (saved) {
+    const savedProfile = localStorage.getItem('userProfile');
+    let parsed: any;
+    if (savedProfile) {
       try {
-        const parsed = JSON.parse(saved);
-        parsed.photos = Array.isArray(parsed.photos) ? parsed.photos : demoProfile.photos;
-        setProfile(parsed);
-      } catch {
-        setProfile(demoProfile);
+        parsed = JSON.parse(savedProfile);
+        if (parsed.interests && Array.isArray(parsed.interests)) {
+          parsed.interests = parsed.interests.filter((i: string) => !BANNED_WORDS.includes(i));
+        }
+        parsed.photos = Array.isArray(parsed.photos) ? parsed.photos : [];
+        parsed.displayName = parsed.displayName || parsed.name || t('profile.someone');
+      } catch (e) {
+        console.error("Failed to parse profile", e);
+        parsed = { ...DEFAULT_PROFILE };
       }
     } else {
-      setProfile(demoProfile);
+      parsed = { ...DEFAULT_PROFILE };
     }
+    setProfile(parsed);
+
+    const savedPhotos = localStorage.getItem('userProfileGallery');
+    if (savedPhotos) {
+      try {
+        setPhotos(JSON.parse(savedPhotos));
+      } catch {
+        setPhotos(parsed.photos || DEFAULT_PROFILE.photos);
+      }
+    } else {
+      setPhotos(parsed.photos || DEFAULT_PROFILE.photos);
+    }
+
     setIsLoading(false);
-  }, []);
+  }, [t]);
 
   const handlePhotosChange = (newPhotos: string[]) => {
-    setProfile({ ...profile, photos: newPhotos });
+    setPhotos(newPhotos);
+    localStorage.setItem('userProfileGallery', JSON.stringify(newPhotos.filter(p => !p.startsWith('blob:'))));
+  };
+
+  const handleAddPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const previewUrl = URL.createObjectURL(file);
+      const updated = [...photos, previewUrl];
+      setPhotos(updated);
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = String(reader.result);
+        setPhotos(prev => {
+          const next = [...prev];
+          const idx = next.lastIndexOf(previewUrl);
+          if (idx !== -1) next[idx] = dataUrl;
+          localStorage.setItem('userProfileGallery', JSON.stringify(next.filter(p => !p.startsWith('blob:'))));
+          return next;
+        });
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    if (photos.length <= 1) {
+      toast({ title: "Нельзя удалить", description: "В профиле должна быть хотя бы одна фотография.", variant: "destructive" });
+      return;
+    }
+    const url = photos[index];
+    if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+    const next = photos.filter((_, i) => i !== index);
+    setPhotos(next);
+    localStorage.setItem('userProfileGallery', JSON.stringify(next.filter(p => !p.startsWith('blob:'))));
   };
 
   const handleGenerateBio = async () => {
@@ -78,8 +141,8 @@ export default function EditProfilePage() {
     }
   };
 
-  const handleSave = async () => {
-    if (!profile.photos || profile.photos.length === 0) {
+  const handleSave = () => {
+    if (photos.length === 0) {
       toast({ title: "Ошибка сохранения", description: "Загрузите хотя бы одну фотографию.", variant: "destructive" });
       return;
     }
@@ -87,13 +150,16 @@ export default function EditProfilePage() {
     setIsSaving(true);
 
     const cleanedInterests = (profile.interests || []).filter((i: string) => !BANNED_WORDS.includes(i));
-    
+
     const dataToSave = {
       ...profile,
       interests: cleanedInterests,
+      photos: photos.filter(p => !p.startsWith('blob:')),
     };
 
     localStorage.setItem('userProfile', JSON.stringify(dataToSave));
+    localStorage.setItem('userProfileGallery', JSON.stringify(photos.filter(p => !p.startsWith('blob:'))));
+
     toast({ title: "Профиль сохранен", description: "Ваши данные успешно обновлены." });
     setIsSaving(false);
     router.push("/profile");
@@ -104,8 +170,8 @@ export default function EditProfilePage() {
     const currentInterests = profile.interests || [];
     setProfile((prev: any) => ({
       ...prev,
-      interests: currentInterests.includes(interest) 
-        ? currentInterests.filter((i: string) => i !== interest) 
+      interests: currentInterests.includes(interest)
+        ? currentInterests.filter((i: string) => i !== interest)
         : [...currentInterests, interest]
     }));
   };
@@ -115,14 +181,14 @@ export default function EditProfilePage() {
       <div className="flex flex-col min-h-svh bg-[#f8f9fb]">
         <AppHeader />
         <main className="flex-1 p-4 space-y-5 pb-24">
-            <div className="bg-white rounded-2xl p-6 app-shadow space-y-6 border border-border/40">
-                <Skeleton className="h-8 w-1/3"/>
-                <Skeleton className="h-24 w-full"/>
-                <div className="h-px bg-border/50"></div>
-                <Skeleton className="h-8 w-1/4"/>
-                <Skeleton className="h-12 w-full"/>
-                <Skeleton className="h-12 w-full"/>
-            </div>
+          <div className="bg-white rounded-2xl p-6 app-shadow space-y-6 border border-border/40">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-24 w-full" />
+            <div className="h-px bg-border/50"></div>
+            <Skeleton className="h-8 w-1/4" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
         </main>
       </div>
     );
@@ -132,13 +198,45 @@ export default function EditProfilePage() {
     <div className="flex flex-col min-h-svh bg-[#f8f9fb]">
       <AppHeader />
       <main className="flex-1 overflow-y-auto p-4 space-y-5 pb-24">
-        
+
         <div className="bg-white rounded-2xl p-6 app-shadow space-y-6 border border-border/40">
 
-          <PhotoUploader photos={profile.photos} onPhotosChange={handlePhotosChange} />
+          {/* Photos */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center text-red-600"><Info size={14} /></div>
+                <h3 className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Фотографии</h3>
+              </div>
+              <label htmlFor="photo-upload" className="cursor-pointer text-primary font-bold text-xs uppercase tracking-widest hover:text-primary/80 transition-colors">
+                Загрузить
+              </label>
+              <input id="photo-upload" type="file" accept="image/*" multiple onChange={handleAddPhoto} className="hidden" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {photos.map((photo, index) => (
+                <div key={index} className="relative aspect-square rounded-xl overflow-hidden group bg-muted">
+                  <img src={photo} alt={`Photo ${index + 1}`} className="object-cover w-full h-full" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <button
+                      onClick={() => handleRemovePhoto(index)}
+                      className="w-9 h-9 rounded-full bg-red-500/80 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <label htmlFor="photo-upload" className="cursor-pointer aspect-square rounded-xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:border-primary transition-colors">
+                <UploadCloud size={24} />
+                <span className="text-[10px] font-bold mt-1 text-center">Добавить фото</span>
+              </label>
+            </div>
+          </div>
 
           <div className="h-px bg-border/50 my-6"></div>
 
+          {/* Bio */}
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -146,14 +244,15 @@ export default function EditProfilePage() {
                 <h3 className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">{t('profile.about')}</h3>
               </div>
               <button onClick={handleGenerateBio} disabled={isGeneratingBio} className="text-[9px] font-black text-primary flex items-center gap-1.5 uppercase tracking-tight bg-muted/50 px-3 py-1.5 rounded-full hover:bg-muted transition-colors shadow-sm">
-                <Sparkles size={11} className={isGeneratingBio ? "animate-spin" : "" } /> {t('profile.ai_improve')}
+                <Sparkles size={11} className={isGeneratingBio ? "animate-spin" : ""} /> {t('profile.ai_improve')}
               </button>
             </div>
-            <Textarea value={profile.bio || ''} onChange={e => setProfile({...profile, bio: e.target.value})} className="rounded-xl bg-muted/30 border-0 min-h-[90px] text-xs resize-none font-medium p-4" />
+            <Textarea value={profile.bio || ''} onChange={e => setProfile({ ...profile, bio: e.target.value })} className="rounded-xl bg-muted/30 border-0 min-h-[90px] text-xs resize-none font-medium p-4" />
           </div>
 
           <div className="h-px bg-border/50 my-6"></div>
 
+          {/* Basic Info */}
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><User size={14} /></div>
             <h3 className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">{t('profile.basic_info')}</h3>
@@ -162,60 +261,76 @@ export default function EditProfilePage() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Имя</Label>
-              <Input value={profile.displayName || ''} onChange={e => setProfile({...profile, displayName: e.target.value})} className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4 focus-visible:ring-primary/20" />
+              <Input value={profile.displayName || ''} onChange={e => setProfile({ ...profile, displayName: e.target.value })} className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4 focus-visible:ring-primary/20" />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">{t('profile.label.gender')}</Label>
-                    <Select value={profile.gender || ''} onValueChange={(val) => setProfile({...profile, gender: val})}>
-                        <SelectTrigger className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4"><SelectValue /></SelectTrigger>
-                        <SelectContent className="rounded-xl border-0 shadow-2xl">
-                            <SelectItem value="male" className="font-bold text-[11px]">Мужчина</SelectItem>
-                            <SelectItem value="female" className="font-bold text-[11px]">Женщина</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Дата рождения</Label>
-                    <Input type="date" value={profile.birthDate?.split('T')[0] || ''} onChange={e => setProfile({...profile, birthDate: e.target.value})} className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4 focus-visible:ring-primary/20" />
-                </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">{t('profile.label.gender')}</Label>
+                <Select value={profile.gender || ''} onValueChange={(val) => setProfile({ ...profile, gender: val })}>
+                  <SelectTrigger className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4"><SelectValue /></SelectTrigger>
+                  <SelectContent className="rounded-xl border-0 shadow-2xl">
+                    <SelectItem value="male" className="font-bold text-[11px]">Мужчина</SelectItem>
+                    <SelectItem value="female" className="font-bold text-[11px]">Женщина</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Дата рождения</Label>
+                <Input type="date" value={profile.birthDate?.split('T')[0] || ''} onChange={e => setProfile({ ...profile, birthDate: e.target.value })} className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4 focus-visible:ring-primary/20" />
+              </div>
             </div>
 
             <div className="space-y-1.5">
               <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Город</Label>
-              <div className="relative"><MapPin size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/60" /><Input value={profile.location || ''} onChange={e => setProfile({...profile, location: e.target.value})} className="rounded-xl bg-muted/30 border-0 h-11 font-bold pl-10 pr-4 focus-visible:ring-primary/20" /></div>
+              <div className="relative"><MapPin size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/60" /><Input value={profile.location || profile.city || ''} onChange={e => setProfile({ ...profile, location: e.target.value, city: e.target.value })} className="rounded-xl bg-muted/30 border-0 h-11 font-bold pl-10 pr-4 focus-visible:ring-primary/20" /></div>
             </div>
 
-             <div className="space-y-1.5 p-4 bg-primary/5 rounded-xl border border-primary/10">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Рост (см)</Label>
+                <Input type="number" value={profile.height || ''} onChange={e => setProfile({ ...profile, height: parseInt(e.target.value) || 0 })} className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4 focus-visible:ring-primary/20" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Знак зодиака</Label>
+                <Select value={profile.zodiac || ''} onValueChange={(val) => setProfile({ ...profile, zodiac: val })}>
+                  <SelectTrigger className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4"><SelectValue /></SelectTrigger>
+                  <SelectContent className="rounded-xl border-0 shadow-2xl">
+                    {ZODIAC_SIGNS.map(sign => <SelectItem key={sign} value={sign} className="font-bold text-[11px]">{sign}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5 p-4 bg-primary/5 rounded-xl border border-primary/10">
               <Label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1 flex items-center gap-1.5"><Target size={12} /> {t('profile.label.goal')}</Label>
-              <Select value={profile.datingGoal || ''} onValueChange={(val) => setProfile({...profile, datingGoal: val})}>
+              <Select value={profile.datingGoal || ''} onValueChange={(val) => setProfile({ ...profile, datingGoal: val })}>
                 <SelectTrigger className="rounded-xl bg-white border-0 h-11 font-bold px-4 shadow-sm">
-                    <SelectValue placeholder={t('onboarding.step3.goal_placeholder')} />
+                  <SelectValue placeholder={t('onboarding.step3.goal_placeholder')} />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-0 shadow-2xl">
-                    {DATING_GOALS.map(goal => <SelectItem key={goal} value={goal} className="font-bold text-[11px]">{goal}</SelectItem>)}
+                  {DATING_GOALS.map(goal => <SelectItem key={goal} value={goal} className="font-bold text-[11px]">{goal}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-
           </div>
 
+          {/* Interests */}
           <div className="space-y-4">
             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">{t('profile.interests')}</Label>
             <div className="flex flex-wrap gap-2">
               {INTEREST_OPTIONS.map(interest => (
-                  <Badge 
-                      key={interest} 
-                      onClick={() => toggleInterest(interest)} 
-                      variant={(profile.interests || []).includes(interest) ? "default" : "secondary"} 
-                      className={cn(
-                          "cursor-pointer px-3 py-1.5 rounded-lg transition-all border-0 font-bold text-[11px] uppercase tracking-tight shadow-sm", 
-                          (profile.interests || []).includes(interest) ? "gradient-bg text-white shadow-md hover:brightness-110" : "bg-muted text-muted-foreground hover:bg-border"
-                      )}
-                  >
-                      {t(interest)}
-                  </Badge>
+                <Badge
+                  key={interest}
+                  onClick={() => toggleInterest(interest)}
+                  variant={(profile.interests || []).includes(interest) ? "default" : "secondary"}
+                  className={cn(
+                    "cursor-pointer px-3 py-1.5 rounded-lg transition-all border-0 font-bold text-[11px] uppercase tracking-tight shadow-sm",
+                    (profile.interests || []).includes(interest) ? "gradient-bg text-white shadow-md hover:brightness-110" : "bg-muted text-muted-foreground hover:bg-border"
+                  )}
+                >
+                  {t(interest)}
+                </Badge>
               ))}
             </div>
           </div>
@@ -223,10 +338,10 @@ export default function EditProfilePage() {
         </div>
 
         <div className="mt-8 px-2">
-            <Button onClick={handleSave} disabled={isSaving} className="w-full h-14 rounded-2xl gradient-bg text-white font-black uppercase tracking-widest shadow-xl shadow-primary/30 border-0 hover:brightness-110 active:scale-95 transition-all">
-                {isSaving ? <Loader2 className="animate-spin mr-2" /> : null}
-                {t('profile.save_all')}
-            </Button>
+          <Button onClick={handleSave} disabled={isSaving} className="w-full h-14 rounded-2xl gradient-bg text-white font-black uppercase tracking-widest shadow-xl shadow-primary/30 border-0 hover:brightness-110 active:scale-95 transition-all">
+            {isSaving ? <Loader2 className="animate-spin mr-2" /> : null}
+            {t('profile.save_all')}
+          </Button>
         </div>
       </main>
     </div>

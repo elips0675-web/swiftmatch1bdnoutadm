@@ -4,49 +4,7 @@ import { useSearchParams, useRouter } from "@/shims/next-navigation";
 import Image from "@/shims/next-image";
 import Link from "@/shims/next-link";
 import dynamic from "@/shims/next-dynamic";
-import { 
-  MapPin, 
-  CheckCircle2, 
-  Star, 
-  Camera, 
-  Coffee, 
-  Music, 
-  Globe, 
-  Dumbbell,
-  Palette,
-  Film,
-  Flower2,
-  Briefcase,
-  Gamepad2,
-  Maximize2,
-  X,
-  Dog,
-  Ruler,
-  Target,
-  Sparkles,
-  Heart,
-  MessageCircle,
-  ChevronLeft,
-  Cpu,
-  Anchor,
-  Map,
-  Sprout,
-  BookOpen,
-  Scissors,
-  FlaskConical,
-  Car,
-  ChefHat,
-  Brush,
-  Mountain,
-  Wine,
-  Flag,
-  Sun,
-  User,
-  Info,
-  Trophy,
-  VenetianMask,
-  Search
-} from "lucide-react";
+import { MapPin, CircleCheck as CheckCircle2, Star, Camera, Coffee, Music, Globe, Dumbbell, Palette, Film, Flower2, Briefcase, Gamepad2, Maximize2, X, Dog, Ruler, Target, Sparkles, Heart, MessageCircle, ChevronLeft, Cpu, Anchor, Map, Sprout, BookOpen, Scissors, FlaskConical, Car, ChefHat, Brush, Mountain, Wine, Flag, Sun, User, Info, Trophy, VenetianMask, Search } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

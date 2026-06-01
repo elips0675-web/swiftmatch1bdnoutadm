@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronLeft, Send, MoreVertical, Smile, Heart, Laugh, Zap, Star, Flame } from "lucide-react";
+import { ChevronLeft, Send, MoveVertical as MoreVertical, Smile, Heart, Laugh, Zap, Star, Flame } from "lucide-react";
 import Image from "@/shims/next-image";
 import { useRouter } from "@/shims/next-navigation";
 import { Input } from "@/components/ui/input";

@@ -2,13 +2,13 @@
 import { Suspense, useState, useMemo } from 'react';
 import { useParams, useRouter } from "@/shims/next-navigation";
 import Link from "@/shims/next-link";
-import { 
-    ChevronLeft, 
+import {
+    ChevronLeft,
     ChevronRight,
-    Users, 
-    Plus, 
-    Gift, 
-    Play, 
+    Users,
+    Plus,
+    Gift,
+    Play,
     CreditCard
 } from 'lucide-react';
 import { GROUP_CATEGORIES } from '@/lib/demo-data';
@@ -18,10 +18,10 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/context/language-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@/components/ui/dialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { FootballFeed } from "@/components/feeds/football-feed";
+import { CategoryFeed } from "@/components/feeds/category-feed";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -35,16 +35,16 @@ function Pagination({ current, total, onChange }: { current: number, total: numb
 
   return (
     <div className="flex items-center justify-center gap-1.5 mt-8 mb-4">
-      <Button 
-        variant="outline" 
-        size="icon" 
-        className="w-8 h-8 rounded-lg border-muted bg-white" 
+      <Button
+        variant="outline"
+        size="icon"
+        className="w-8 h-8 rounded-lg border-muted bg-white"
         disabled={current === 1}
         onClick={() => onChange(current - 1)}
       >
         <ChevronLeft size={14} />
       </Button>
-      
+
       {pages.map(p => (
         <Button
           key={p}
@@ -60,10 +60,10 @@ function Pagination({ current, total, onChange }: { current: number, total: numb
         </Button>
       ))}
 
-      <Button 
-        variant="outline" 
-        size="icon" 
-        className="w-8 h-8 rounded-lg border-muted bg-white" 
+      <Button
+        variant="outline"
+        size="icon"
+        className="w-8 h-8 rounded-lg border-muted bg-white"
         disabled={current === total}
         onClick={() => onChange(current + 1)}
       >
@@ -81,6 +81,7 @@ function SubGroupsContent() {
 
     const [showPremiumDialog, setShowPremiumDialog] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [viewMode, setViewMode] = useState<'feed' | 'list'>('feed');
 
     const category = useMemo(() => GROUP_CATEGORIES.find(c => c.id === categoryId), [categoryId]);
 
@@ -99,27 +100,6 @@ function SubGroupsContent() {
         toast({ title: t('groups.ad.toast.title'), description: t('groups.ad.toast.description') });
         setShowPremiumDialog(false);
     };
-    
-    if (category?.name_ru === 'Футбол') {
-        return (
-            <div className="flex flex-col h-svh bg-[#f8f9fb]">
-                 <header className="flex items-center gap-2 px-3 py-2 border-b border-border sticky top-0 bg-white/90 backdrop-blur-lg z-50 h-16">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-muted/50">
-                        <ChevronLeft size={24} className="text-foreground" />
-                    </Button>
-                    <div className="flex-1 min-w-0">
-                        <h3 className="font-black text-lg leading-tight tracking-tight text-foreground truncate">
-                            Футбол
-                        </h3>
-                    </div>
-                </header>
-                <main className="flex-1 overflow-y-auto">
-                    <FootballFeed />
-                </main>
-                <BottomNav />
-            </div>
-        );
-    }
 
     if (!category) {
         return (
@@ -132,63 +112,92 @@ function SubGroupsContent() {
         );
     }
 
+    const categoryNameRu = category.name_ru;
+    const categoryNameEn = category.name_en;
+
     return (
         <div className="flex flex-col h-svh bg-[#f8f9fb]">
             <header className="flex items-center gap-2 px-3 py-2 border-b border-border sticky top-0 bg-white/90 backdrop-blur-lg z-50 h-16">
                 <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-muted/50">
-                  <ChevronLeft size={24} className="text-foreground" />
+                    <ChevronLeft size={24} className="text-foreground" />
                 </Button>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-black text-lg leading-tight tracking-tight text-foreground truncate">
-                    {language === 'RU' ? category.name_ru : category.name_en}
-                  </h3>
+                    <h3 className="font-black text-lg leading-tight tracking-tight text-foreground truncate">
+                        {language === 'RU' ? categoryNameRu : categoryNameEn}
+                    </h3>
+                </div>
+                <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+                    <button
+                        onClick={() => setViewMode('feed')}
+                        className={cn(
+                            "px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all",
+                            viewMode === 'feed' ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                        )}
+                    >
+                        {language === 'RU' ? 'Лента' : 'Feed'}
+                    </button>
+                    <button
+                        onClick={() => setViewMode('list')}
+                        className={cn(
+                            "px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all",
+                            viewMode === 'list' ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                        )}
+                    >
+                        {language === 'RU' ? 'Группы' : 'Groups'}
+                    </button>
                 </div>
             </header>
-            <main className="flex-1 overflow-y-auto px-5 pt-6 pb-24">
-                {/* Promo Banner */}
-                <div 
-                    onClick={() => setShowPremiumDialog(true)}
-                    className="mb-6 bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl text-white flex items-center gap-4 cursor-pointer hover:scale-[1.01] transition-transform app-shadow"
-                >
-                    <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm border border-white/20">
-                        <Gift size={24} />
-                    </div>
-                    <div>
-                        <h4 className="font-black tracking-tight">{t('groups.ad.title')}</h4>
-                        <p className="text-xs text-white/80 mt-0.5">{t('groups.ad.description')}</p>
-                    </div>
-                </div>
+            <main className="flex-1 overflow-y-auto">
+                {viewMode === 'feed' ? (
+                    <CategoryFeed categoryNameRu={categoryNameRu} categoryNameEn={categoryNameEn} />
+                ) : (
+                    <div className="px-5 pt-6 pb-24">
+                        {/* Promo Banner */}
+                        <div
+                            onClick={() => setShowPremiumDialog(true)}
+                            className="mb-6 bg-gradient-to-r from-blue-500 to-teal-500 p-4 rounded-xl text-white flex items-center gap-4 cursor-pointer hover:scale-[1.01] transition-transform app-shadow"
+                        >
+                            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm border border-white/20">
+                                <Gift size={24} />
+                            </div>
+                            <div>
+                                <h4 className="font-black tracking-tight">{t('groups.ad.title')}</h4>
+                                <p className="text-xs text-white/80 mt-0.5">{t('groups.ad.description')}</p>
+                            </div>
+                        </div>
 
-                {/* Subgroups List */}
-                <div className="space-y-3">
-                    {paginatedSubgroups.map(subgroup => (
-                        <Link href={`/chats?groupId=${subgroup.id}`} key={subgroup.id} className="flex items-center justify-between p-4 bg-white rounded-xl app-shadow hover:bg-muted/30 transition-all cursor-pointer group border border-white">
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
-                                      {language === 'RU' ? subgroup.name_ru : subgroup.name_en}
-                                    </h4>
-                                    <div className="flex items-center text-muted-foreground text-[10px] mt-1.5 gap-3">
-                                        <div className="flex items-center gap-1 font-bold uppercase tracking-wider">
-                                            <Users size={12} className="text-muted-foreground/60" /> {subgroup.members}
-                                        </div>
-                                        <div className="flex items-center gap-1 font-bold uppercase tracking-wider text-green-600">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-current"></div>
-                                            {subgroup.online} {t('chats.online')}
+                        {/* Subgroups List */}
+                        <div className="space-y-3">
+                            {paginatedSubgroups.map(subgroup => (
+                                <Link href={`/chats?groupId=${subgroup.id}`} key={subgroup.id} className="flex items-center justify-between p-4 bg-white rounded-xl app-shadow hover:bg-muted/30 transition-all cursor-pointer group border border-white">
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                                              {language === 'RU' ? subgroup.name_ru : subgroup.name_en}
+                                            </h4>
+                                            <div className="flex items-center text-muted-foreground text-[10px] mt-1.5 gap-3">
+                                                <div className="flex items-center gap-1 font-bold uppercase tracking-wider">
+                                                    <Users size={12} className="text-muted-foreground/60" /> {subgroup.members}
+                                                </div>
+                                                <div className="flex items-center gap-1 font-bold uppercase tracking-wider text-green-600">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-current"></div>
+                                                    {subgroup.online} {t('chats.online')}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                            <Button variant="outline" className="ml-4 shrink-0 px-4 h-9 rounded-full border-primary/20 text-primary hover:bg-primary/5 hover:text-primary font-black uppercase text-[9px] tracking-widest transition-transform group-hover:scale-105">
-                                <Plus size={14} className="mr-1.5" />
-                                {t('button.join')}
-                            </Button>
-                        </Link>
-                    ))}
-                </div>
+                                    <Button variant="outline" className="ml-4 shrink-0 px-4 h-9 rounded-full border-primary/20 text-primary hover:bg-primary/5 hover:text-primary font-black uppercase text-[9px] tracking-widest transition-transform group-hover:scale-105">
+                                        <Plus size={14} className="mr-1.5" />
+                                        {t('button.join')}
+                                    </Button>
+                                </Link>
+                            ))}
+                        </div>
 
-                {/* Pagination */}
-                <Pagination current={currentPage} total={totalPages} onChange={setCurrentPage} />
+                        {/* Pagination */}
+                        <Pagination current={currentPage} total={totalPages} onChange={setCurrentPage} />
+                    </div>
+                )}
             </main>
             <BottomNav />
 
@@ -197,7 +206,7 @@ function SubGroupsContent() {
                 {showPremiumDialog && (
                 <Dialog open={showPremiumDialog} onOpenChange={setShowPremiumDialog}>
                     <DialogContent className="max-w-[340px] rounded-2xl p-0 overflow-hidden border-0 bg-white app-shadow">
-                    <div className="relative h-40 bg-gradient-to-r from-blue-500 to-purple-600 flex flex-col items-center justify-center text-white p-6 overflow-hidden">
+                    <div className="relative h-40 bg-gradient-to-r from-blue-500 to-teal-500 flex flex-col items-center justify-center text-white p-6 overflow-hidden">
                         <div className="absolute inset-0 bg-black/5"></div>
                         <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }} transition={{ duration: 2, repeat: Infinity }} className="absolute"><Gift size={160} /></motion.div>
                         <Gift className="text-white mb-2 drop-shadow-lg relative z-10 animate-pulse" size={48} />

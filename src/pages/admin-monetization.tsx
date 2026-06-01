@@ -4,10 +4,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Save, DollarSign, Crown } from 'lucide-react';
 import { toast } from 'sonner';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, FunnelChart } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { generateRevenueData, generateConversionFunnel } from '@/lib/admin-mock-data';
 
 const PRICING = [
@@ -28,7 +27,6 @@ export default function MonetizationPage() {
 
   return (
     <div className="space-y-6">
-      {/* Pricing */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
@@ -61,7 +59,6 @@ export default function MonetizationPage() {
         </CardFooter>
       </Card>
 
-      {/* Ads */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg font-black flex items-center gap-2">
@@ -92,7 +89,6 @@ export default function MonetizationPage() {
         </CardContent>
       </Card>
 
-      {/* Revenue Chart */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg font-black">Доход по месяцам</CardTitle>
@@ -113,7 +109,6 @@ export default function MonetizationPage() {
         </CardContent>
       </Card>
 
-      {/* Conversion Funnel */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg font-black">Воронка конверсии</CardTitle>

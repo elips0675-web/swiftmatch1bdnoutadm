@@ -3,18 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { AppHeader } from "@/components/layout/app-header";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { useLanguage } from "@/context/language-context";
-import { 
-  Trophy, 
-  Timer, 
-  Info, 
-  Crown, 
-  Maximize2, 
-  X, 
-  Award,
-  CheckCircle2,
-  History,
-  Medal
-} from "lucide-react";
+import { Trophy, Timer, Info, Crown, Maximize2, X, Award, CircleCheck as CheckCircle2, History, Medal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

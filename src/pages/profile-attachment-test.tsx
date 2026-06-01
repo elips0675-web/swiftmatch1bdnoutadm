@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from "@/shims/next-navigation";
 import { useUser, useFirestore } from "@/shims/firebase";
 import { doc, setDoc } from 'firebase/firestore';
-import { ChevronLeft, Check, Home, Repeat } from 'lucide-react';
+import { ChevronLeft, Check, Chrome as Home, Repeat } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';

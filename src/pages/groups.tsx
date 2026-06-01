@@ -5,32 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/context/language-context";
 import { GROUP_CATEGORIES } from "@/lib/demo-data";
 import Link from "@/shims/next-link";
-import {
-  Users,
-  Search,
-  Star,
-  Music,
-  Dumbbell,
-  Palette,
-  Gamepad2,
-  Film,
-  Globe,
-  ChefHat,
-  Cpu,
-  BookOpen,
-  Sparkles,
-  Shirt,
-  HeartPulse,
-  Dog,
-  FlaskConical,
-  Briefcase,
-  Home as HomeIcon,
-  Car,
-  Laugh,
-  Scroll,
-  PlusCircle,
-  ChevronUp
-} from "lucide-react";
+import { Users, Search, Star, Music, Dumbbell, Palette, Gamepad2, Film, Globe, ChefHat, Cpu, BookOpen, Sparkles, Shirt, HeartPulse, Dog, FlaskConical, Briefcase, Chrome as HomeIcon, Car, Laugh, Scroll, CirclePlus as PlusCircle, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";

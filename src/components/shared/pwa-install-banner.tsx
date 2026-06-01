@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, X, Share, PlusSquare } from 'lucide-react';
+import { Download, X, Share, SquarePlus as PlusSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/context/language-context';
 import { toast } from '@/hooks/use-toast';

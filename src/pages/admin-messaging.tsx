@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Send, Mail, Bell, Download, Globe, Loader2 } from 'lucide-react';
+import { Send, Mail, Bell, Download, Globe, Loader as Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateMockCampaigns, exportToCsv, type MockCampaign } from '@/lib/admin-mock-data';
 
@@ -48,7 +48,6 @@ export default function AdminMessagingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Composer */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
@@ -96,7 +95,6 @@ export default function AdminMessagingPage() {
         </CardFooter>
       </Card>
 
-      {/* Campaigns History */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-black">История рассылок</CardTitle>

@@ -1,17 +1,7 @@
 
 import { AppHeader } from "@/components/layout/app-header";
 import { useLanguage } from "@/context/language-context";
-import { 
-  Code2, 
-  Cpu, 
-  Database, 
-  Layers, 
-  Zap, 
-  Sparkles, 
-  Layout, 
-  Smartphone,
-  CheckCircle2
-} from "lucide-react";
+import { Code as Code2, Cpu, Database, Layers, Zap, Sparkles, LayoutGrid as Layout, Smartphone, CircleCheck as CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";

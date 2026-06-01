@@ -1,8 +1,6 @@
 
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { 
-  Search, ChevronLeft, Send, MoreVertical, Sparkles, Smile, Heart, Laugh, Compass, Coffee, Zap, MessageSquareQuote, Flame, Star, Ghost, Rocket, Crown, Music, Phone, Video, Flag, Check, CheckCheck, Info, Users, MessageSquare, ChevronRight
-} from "lucide-react";
+import { Search, ChevronLeft, Send, MoveVertical as MoreVertical, Sparkles, Smile, Heart, Laugh, Compass, Coffee, Zap, MessageSquareQuote, Flame, Star, Ghost, Rocket, Crown, Music, Phone, Video, Flag, Check, CheckCheck, Info, Users, MessageSquare, ChevronRight } from "lucide-react";
 import Image from "@/shims/next-image";
 import { useSearchParams, useRouter } from "@/shims/next-navigation";
 import dynamic from "@/shims/next-dynamic";

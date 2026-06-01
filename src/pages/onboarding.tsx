@@ -3,21 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "@/shims/next-navigation";
 import { useUser, useFirestore } from "@/shims/firebase";
 import { doc, setDoc, onSnapshot } from "firebase/firestore";
-import { 
-  ArrowRight, 
-  Sparkles, 
-  MapPin, 
-  Camera,
-  ChevronLeft,
-  Navigation,
-  Target,
-  Search,
-  VenetianMask,
-  Upload,
-  Loader2,
-  Moon,
-  Sun
-} from "lucide-react";
+import { ArrowRight, Sparkles, MapPin, Camera, ChevronLeft, Navigation, Target, Search, VenetianMask, Upload, Loader as Loader2, Moon, Sun } from "lucide-react";
 import Image from "@/shims/next-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

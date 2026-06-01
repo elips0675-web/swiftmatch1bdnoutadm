@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Flag, MoreHorizontal, Download, ShieldCheck, Ban, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { Flag, MoveHorizontal as MoreHorizontal, Download, ShieldCheck, Ban, TriangleAlert as AlertTriangle, Circle as XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { generateMockUsers, generateMockReports, generateModerationLog, exportToCsv, type MockReport, type ModerationLogEntry } from "@/lib/admin-mock-data";
 
@@ -41,7 +41,6 @@ export default function AdminReportsPage() {
           <TabsTrigger value="log" className="rounded-lg font-bold text-xs">Лог действий</TabsTrigger>
         </TabsList>
 
-        {/* Moderation Queue */}
         <TabsContent value="queue">
           <Card className="border-0 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -95,7 +94,6 @@ export default function AdminReportsPage() {
           </Card>
         </TabsContent>
 
-        {/* Blocked Users */}
         <TabsContent value="blocked">
           <Card className="border-0 shadow-sm">
             <CardHeader>
@@ -126,7 +124,6 @@ export default function AdminReportsPage() {
           </Card>
         </TabsContent>
 
-        {/* Moderation Log */}
         <TabsContent value="log">
           <Card className="border-0 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">

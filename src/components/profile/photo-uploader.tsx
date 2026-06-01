@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import Image from "@/shims/next-image";
-import { Camera, Trash2, Loader2, UploadCloud } from 'lucide-react';
+import { Camera, Trash2, Loader as Loader2, CloudUpload as UploadCloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 

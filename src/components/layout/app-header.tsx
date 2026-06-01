@@ -13,15 +13,55 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-// Динамическая загрузка для исправления hydration error и снижения TBT
 const DropdownMenu = dynamic(() => import("@/components/ui/dropdown-menu").then((mod) => mod.DropdownMenu), { ssr: false });
 const DropdownMenuContent = dynamic(() => import("@/components/ui/dropdown-menu").then((mod) => mod.DropdownMenuContent), { ssr: false });
 const DropdownMenuItem = dynamic(() => import("@/components/ui/dropdown-menu").then((mod) => mod.DropdownMenuItem), { ssr: false });
 const DropdownMenuTrigger = dynamic(() => import("@/components/ui/dropdown-menu").then((mod) => mod.DropdownMenuTrigger), { ssr: false });
 
-// Динамическая загрузка контента для оптимизации
 const PopoverContent = dynamic(() => import("@/components/ui/popover").then(mod => mod.PopoverContent), { ssr: false });
 const ScrollArea = dynamic(() => import("@/components/ui/scroll-area").then(mod => mod.ScrollArea), { ssr: false });
+
+const PAGE_TITLES: Record<string, { ru: string; en: string }> = {
+  "/": { ru: "", en: "" },
+  "/search": { ru: "Поиск", en: "Search" },
+  "/search/filters": { ru: "Фильтры", en: "Filters" },
+  "/chats": { ru: "Чаты", en: "Chats" },
+  "/profile": { ru: "Профиль", en: "Profile" },
+  "/profile/edit": { ru: "Редактировать", en: "Edit Profile" },
+  "/profile/attachment-test": { ru: "Тест привязанности", en: "Attachment Test" },
+  "/activity": { ru: "Активность", en: "Activity" },
+  "/groups": { ru: "Группы", en: "Groups" },
+  "/contest": { ru: "Конкурс", en: "Contest" },
+  "/settings": { ru: "Настройки", en: "Settings" },
+  "/onboarding": { ru: "Добро пожаловать", en: "Welcome" },
+  "/login": { ru: "Вход", en: "Login" },
+  "/register": { ru: "Регистрация", en: "Register" },
+  "/about": { ru: "О приложении", en: "About" },
+  "/faq": { ru: "Вопросы", en: "FAQ" },
+  "/support-chat": { ru: "Поддержка", en: "Support" },
+  "/legal/privacy": { ru: "Конфиденциальность", en: "Privacy" },
+  "/legal/terms": { ru: "Условия", en: "Terms" },
+  "/legal/data-processing": { ru: "Обработка данных", en: "Data Processing" },
+  "/admin": { ru: "Админ", en: "Admin" },
+  "/admin/analytics": { ru: "Аналитика", en: "Analytics" },
+  "/admin/users": { ru: "Пользователи", en: "Users" },
+  "/admin/content": { ru: "Контент", en: "Content" },
+  "/admin/features": { ru: "Функции", en: "Features" },
+  "/admin/messaging": { ru: "Рассылки", en: "Messaging" },
+  "/admin/monetization": { ru: "Монетизация", en: "Monetization" },
+  "/admin/reports": { ru: "Жалобы", en: "Reports" },
+};
+
+function getPageTitle(pathname: string, language: string): string {
+  const exact = PAGE_TITLES[pathname];
+  if (exact) return language === "RU" ? exact.ru : exact.en;
+
+  if (pathname.startsWith("/chats/")) return language === "RU" ? "Чат" : "Chat";
+  if (pathname.startsWith("/groups/")) return language === "RU" ? "Группа" : "Group";
+  if (pathname.startsWith("/admin")) return language === "RU" ? "Админ" : "Admin";
+
+  return "";
+}
 
 export function AppHeader() {
   const { language, setLanguage, t } = useLanguage();
@@ -32,41 +72,42 @@ export function AppHeader() {
 
   const isHomePage = pathname === "/";
   const isLoginPage = pathname === "/login";
+  const pageTitle = getPageTitle(pathname, language);
 
   const NOTIFICATIONS = useMemo(() => [
-    { 
-      id: 1, 
-      type: 'like', 
-      text: language === 'RU' ? 'Анна поставила вам лайк!' : 'Anna liked you!', 
-      time: language === 'RU' ? '2 мин назад' : '2 min ago', 
-      icon: Heart, 
+    {
+      id: 1,
+      type: 'like',
+      text: language === 'RU' ? 'Анна поставила вам лайк!' : 'Anna liked you!',
+      time: language === 'RU' ? '2 мин назад' : '2 min ago',
+      icon: Heart,
       color: 'text-[#fe3c72]',
       bgColor: 'bg-[#fe3c72]/10'
     },
-    { 
-      id: 2, 
-      type: 'match', 
-      text: language === 'RU' ? 'У вас новое совпадение с Максимом!' : 'New match with Maxim!', 
-      time: language === 'RU' ? '15 мин назад' : '15 min ago', 
-      icon: Sparkles, 
+    {
+      id: 2,
+      type: 'match',
+      text: language === 'RU' ? 'У вас новое совпадение с Максимом!' : 'New match with Maxim!',
+      time: language === 'RU' ? '15 мин назад' : '15 min ago',
+      icon: Sparkles,
       color: 'text-amber-500',
       bgColor: 'bg-amber-500/10'
     },
-    { 
-      id: 3, 
-      type: 'message', 
-      text: language === 'RU' ? 'Елена прислала вам сообщение' : 'Elena sent you a message', 
-      time: language === 'RU' ? '1 час назад' : '1 hour ago', 
-      icon: MessageCircle, 
+    {
+      id: 3,
+      type: 'message',
+      text: language === 'RU' ? 'Елена прислала вам сообщение' : 'Elena sent you a message',
+      time: language === 'RU' ? '1 час назад' : '1 hour ago',
+      icon: MessageCircle,
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10'
     },
-    { 
-      id: 4, 
-      type: 'system', 
-      text: language === 'RU' ? 'Ваш профиль стал популярнее на 20%' : 'Your profile is 20% more popular', 
-      time: language === 'RU' ? '3 часа назад' : '3 hours ago', 
-      icon: Zap, 
+    {
+      id: 4,
+      type: 'system',
+      text: language === 'RU' ? 'Ваш профиль стал популярнее на 20%' : 'Your profile is 20% more popular',
+      time: language === 'RU' ? '3 часа назад' : '3 hours ago',
+      icon: Zap,
       color: 'text-emerald-500',
       bgColor: 'bg-emerald-500/10'
     },
@@ -86,10 +127,10 @@ export function AppHeader() {
     <header className="sticky top-0 w-full bg-white/95 backdrop-blur-xl border-b border-border/50 px-4 py-3 flex items-center justify-between z-50 h-16">
       <div className="flex items-center min-w-[40px]">
         {!isHomePage && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => router.back()} 
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.back()}
             className="rounded-full h-10 w-10 hover:bg-muted transition-colors"
           >
             <ChevronLeft size={24} />
@@ -98,11 +139,17 @@ export function AppHeader() {
       </div>
 
       <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-        <Link href="/" prefetch={true}>
-          <h1 className="text-xl font-black font-headline gradient-text cursor-pointer tracking-tighter select-none active:scale-95 transition-transform">
-            SwiftMatch
+        {isHomePage || !pageTitle ? (
+          <Link href="/" prefetch={true}>
+            <h1 className="text-xl font-black font-headline gradient-text cursor-pointer tracking-tighter select-none active:scale-95 transition-transform">
+              SwiftMatch
+            </h1>
+          </Link>
+        ) : (
+          <h1 className="text-base font-black tracking-tight text-foreground select-none">
+            {pageTitle}
           </h1>
-        </Link>
+        )}
       </div>
 
       <div className="flex items-center gap-1.5">
@@ -114,13 +161,13 @@ export function AppHeader() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="rounded-2xl border-0 app-shadow p-1.5 min-w-[140px] bg-white">
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => handleLangChange("RU")}
               className="rounded-xl font-bold text-[11px] uppercase tracking-wider cursor-pointer py-2.5 px-4"
             >
               Русский (RU)
             </DropdownMenuItem>
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => handleLangChange("EN")}
               className="rounded-xl font-bold text-[11px] uppercase tracking-wider cursor-pointer py-2.5 px-4"
             >
@@ -163,8 +210,8 @@ export function AppHeader() {
                       NOTIFICATIONS.map((note) => {
                         const Icon = note.icon;
                         return (
-                          <div 
-                            key={note.id} 
+                          <div
+                            key={note.id}
                             className="p-3.5 rounded-2xl hover:bg-muted/40 transition-all cursor-pointer group relative flex gap-4"
                           >
                             <div className={cn("mt-0.5 w-11 h-11 shrink-0 rounded-2xl flex items-center justify-center shadow-sm border border-white transition-transform group-hover:scale-105", note.bgColor, note.color)}>
@@ -202,8 +249,8 @@ export function AppHeader() {
                   </div>
                 </ScrollArea>
                 <div className="p-4 bg-muted/5 text-center border-t border-border/50">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     onClick={() => {
                       router.push('/activity');
                       setIsNotificationsOpen(false);
@@ -218,10 +265,10 @@ export function AppHeader() {
           </PopoverContent>
         </Popover>
 
-        <Button 
+        <Button
           asChild
-          variant="ghost" 
-          size="sm" 
+          variant="ghost"
+          size="sm"
           className="text-[10px] font-black uppercase tracking-widest gap-2 text-muted-foreground hover:text-foreground hover:bg-muted transition-all h-9 px-3 ml-0.5 rounded-full"
         >
           <Link href="/login" prefetch={true}>

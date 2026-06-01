@@ -1,33 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";
-import { 
-  Zap, 
-  Search, 
-  Sparkles, 
-  Trophy, 
-  ChevronRight, 
-  Music,
-  Dumbbell,
-  Palette,
-  Gamepad2,
-  Film,
-  Globe,
-  ChefHat,
-  Cpu,
-  BookOpen,
-  Shirt,
-  HeartPulse,
-  Dog,
-  FlaskConical,
-  Briefcase,
-  Home as HomeIcon,
-  Car,
-  Laugh,
-  Star,
-  Scroll,
-  Users,
-  ChevronLeft
-} from "lucide-react";
+import { Zap, Search, Sparkles, Trophy, ChevronRight, Music, Dumbbell, Palette, Gamepad2, Film, Globe, ChefHat, Cpu, BookOpen, Shirt, HeartPulse, Dog, FlaskConical, Briefcase, Chrome as HomeIcon, Car, Laugh, Star, Scroll, Users, ChevronLeft } from "lucide-react";
 import Link from "@/shims/next-link";
 import dynamic from "@/shims/next-dynamic";
 import { AppHeader } from "@/components/layout/app-header";

@@ -1,6 +1,5 @@
 import { CAPITALS, INTEREST_OPTIONS, DATING_GOALS, EDUCATION_OPTIONS } from './constants';
 
-// Seed-based pseudo-random for deterministic data
 function seededRandom(seed: number) {
   let s = seed;
   return () => {
@@ -76,7 +75,6 @@ function randomDate(start: string, end: string): string {
   return new Date(s + rand() * (e - s)).toISOString().split('T')[0];
 }
 
-// Generate 120 mock users
 export function generateMockUsers(): MockUser[] {
   const users: MockUser[] = [];
   for (let i = 1; i <= 120; i++) {
@@ -111,7 +109,6 @@ export function generateMockUsers(): MockUser[] {
   return users;
 }
 
-// Generate reports
 const REPORT_REASONS = ['Фейковый профиль','Оскорбительное поведение','Спам','Неприемлемый контент','Мошенничество','Домогательства','Несовершеннолетний','Другое'];
 export function generateMockReports(users: MockUser[]): MockReport[] {
   const reports: MockReport[] = [];
@@ -136,7 +133,6 @@ export function generateMockReports(users: MockUser[]): MockReport[] {
   return reports.sort((a, b) => b.date.localeCompare(a.date));
 }
 
-// Registration trend data
 export function generateRegistrationTrend(days: number) {
   const data: { date: string; users: number }[] = [];
   const now = new Date('2026-05-04');
@@ -151,7 +147,6 @@ export function generateRegistrationTrend(days: number) {
   return data;
 }
 
-// City distribution
 export function generateCityDistribution(users: MockUser[]) {
   const counts: Record<string, number> = {};
   users.forEach(u => { counts[u.city] = (counts[u.city] || 0) + 1; });
@@ -161,7 +156,6 @@ export function generateCityDistribution(users: MockUser[]) {
     .slice(0, 8);
 }
 
-// Recent activity
 export interface ActivityItem {
   id: number;
   type: 'registration' | 'match' | 'report' | 'premium';
@@ -169,7 +163,7 @@ export interface ActivityItem {
   time: string;
 }
 export function generateRecentActivity(): ActivityItem[] {
-  const items: ActivityItem[] = [
+  return [
     { id: 1, type: 'registration', text: 'Новый пользователь: Алина из Москвы', time: '2 мин назад' },
     { id: 2, type: 'match', text: 'Новый мэтч: Артем ❤️ Елена', time: '5 мин назад' },
     { id: 3, type: 'premium', text: 'Максим оформил Gold подписку', time: '12 мин назад' },
@@ -179,10 +173,8 @@ export function generateRecentActivity(): ActivityItem[] {
     { id: 7, type: 'premium', text: 'София оформила Plus подписку', time: '45 мин назад' },
     { id: 8, type: 'registration', text: 'Новый пользователь: Кристина из Питера', time: '1 ч назад' },
   ];
-  return items;
 }
 
-// Campaigns
 export function generateMockCampaigns(): MockCampaign[] {
   return [
     { id: 1, title: '🔥 Весенняя акция — Premium со скидкой 50%', body: 'Только до конца мая...', target: 'all', channel: 'push', status: 'sent', sentAt: '2026-04-28', delivered: 8420, opened: 3210, clicked: 890 },
@@ -193,7 +185,6 @@ export function generateMockCampaigns(): MockCampaign[] {
   ];
 }
 
-// Revenue data
 export function generateRevenueData() {
   const months = ['Янв','Фев','Мар','Апр','Май'];
   return months.map((m, i) => ({
@@ -204,7 +195,6 @@ export function generateRevenueData() {
   }));
 }
 
-// Conversion funnel
 export function generateConversionFunnel() {
   return [
     { stage: 'Регистрация', count: 12480 },
@@ -216,7 +206,6 @@ export function generateConversionFunnel() {
   ];
 }
 
-// Moderation log
 export interface ModerationLogEntry {
   id: number;
   date: string;
@@ -236,7 +225,6 @@ export function generateModerationLog(): ModerationLogEntry[] {
   ];
 }
 
-// CSV export utility
 export function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
   if (!rows.length) return;
   const headers = Object.keys(rows[0]);
@@ -252,7 +240,6 @@ export function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
   URL.revokeObjectURL(link.href);
 }
 
-// Forbidden words
 export const FORBIDDEN_WORDS_DEFAULT = [
   'спам','мошенничество','фейк','скам','развод','обман',
   'реклама','казино','ставки','заработок','крипта','инвестиции',

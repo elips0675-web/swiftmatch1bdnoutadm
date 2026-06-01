@@ -1,7 +1,7 @@
 
 import Link from "@/shims/next-link";
 import { usePathname } from "@/shims/next-navigation";
-import { Home, Search, MessageCircle, User, Users } from "lucide-react";
+import { Chrome as Home, Search, MessageCircle, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 

@@ -7,9 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Search, MoreHorizontal, Download, ChevronLeft, ChevronRight, Ban, Trash2, AlertTriangle, UserCheck } from "lucide-react";
+import { Search, MoveHorizontal as MoreHorizontal, Download, ChevronLeft, ChevronRight, Ban, Trash2, TriangleAlert as AlertTriangle, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { generateMockUsers, exportToCsv, type MockUser, type UserStatus, type PremiumTier } from "@/lib/admin-mock-data";
 
@@ -35,7 +34,6 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [drawerUser, setDrawerUser] = useState<MockUser | null>(null);
-  const [isLoading] = useState(false);
 
   const cities = useMemo(() => [...new Set(allUsers.map(u => u.city))].sort(), [allUsers]);
 
@@ -94,7 +92,6 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -132,7 +129,6 @@ export default function AdminUsersPage() {
         </Button>
       </div>
 
-      {/* Bulk actions */}
       {selected.size > 0 && (
         <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border">
           <span className="text-sm font-bold">{selected.size} выбрано</span>
@@ -144,70 +140,64 @@ export default function AdminUsersPage() {
 
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6 space-y-3">
-              {Array.from({length: 10}).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10"><Checkbox checked={selected.size === pageUsers.length && pageUsers.length > 0} onCheckedChange={toggleAll} /></TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('name')}>Имя {sortField === 'name' && (sortDir === 'asc' ? '↑' : '↓')}</TableHead>
-                  <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => toggleSort('age')}>Возраст {sortField === 'age' && (sortDir === 'asc' ? '↑' : '↓')}</TableHead>
-                  <TableHead className="hidden lg:table-cell">Email</TableHead>
-                  <TableHead className="hidden md:table-cell">Город</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead className="hidden sm:table-cell">Подписка</TableHead>
-                  <TableHead className="hidden lg:table-cell cursor-pointer select-none" onClick={() => toggleSort('joined')}>Регистрация {sortField === 'joined' && (sortDir === 'asc' ? '↑' : '↓')}</TableHead>
-                  <TableHead className="w-10" />
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10"><Checkbox checked={selected.size === pageUsers.length && pageUsers.length > 0} onCheckedChange={toggleAll} /></TableHead>
+                <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('name')}>Имя {sortField === 'name' && (sortDir === 'asc' ? '↑' : '↓')}</TableHead>
+                <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => toggleSort('age')}>Возраст {sortField === 'age' && (sortDir === 'asc' ? '↑' : '↓')}</TableHead>
+                <TableHead className="hidden lg:table-cell">Email</TableHead>
+                <TableHead className="hidden md:table-cell">Город</TableHead>
+                <TableHead>Статус</TableHead>
+                <TableHead className="hidden sm:table-cell">Подписка</TableHead>
+                <TableHead className="hidden lg:table-cell cursor-pointer select-none" onClick={() => toggleSort('joined')}>Регистрация {sortField === 'joined' && (sortDir === 'asc' ? '↑' : '↓')}</TableHead>
+                <TableHead className="w-10" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pageUsers.map(user => (
+                <TableRow key={user.id} className="group">
+                  <TableCell><Checkbox checked={selected.has(user.id)} onCheckedChange={() => toggleSelect(user.id)} /></TableCell>
+                  <TableCell>
+                    <button onClick={() => setDrawerUser(user)} className="font-bold text-sm hover:text-primary transition-colors text-left">
+                      {user.name}, {user.age}
+                    </button>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-sm">{user.age}</TableCell>
+                  <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">{user.email}</TableCell>
+                  <TableCell className="hidden md:table-cell text-xs">{user.city}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={`text-[9px] ${STATUS_COLORS[user.status]}`}>{STATUS_LABELS[user.status]}</Badge>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <Badge variant="outline" className={`text-[9px] ${user.premium !== 'free' ? 'bg-amber-50 text-amber-700 border-amber-200' : ''}`}>
+                      {PREMIUM_LABELS[user.premium]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">{user.joined}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted"><MoreHorizontal className="h-4 w-4" /></button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="rounded-xl">
+                        <DropdownMenuItem onClick={() => setDrawerUser(user)}>Просмотр</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          setAllUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: u.status === 'banned' ? 'active' : 'banned' } : u));
+                          toast.success(user.status === 'banned' ? 'Разблокирован' : 'Заблокирован');
+                        }}>{user.status === 'banned' ? 'Разблокировать' : 'Заблокировать'}</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive" onClick={() => {
+                          setAllUsers(prev => prev.filter(u => u.id !== user.id));
+                          toast.success(`${user.name} удален`);
+                        }}>Удалить</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pageUsers.map(user => (
-                  <TableRow key={user.id} className="group">
-                    <TableCell><Checkbox checked={selected.has(user.id)} onCheckedChange={() => toggleSelect(user.id)} /></TableCell>
-                    <TableCell>
-                      <button onClick={() => setDrawerUser(user)} className="font-bold text-sm hover:text-primary transition-colors text-left">
-                        {user.name}, {user.age}
-                      </button>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm">{user.age}</TableCell>
-                    <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">{user.email}</TableCell>
-                    <TableCell className="hidden md:table-cell text-xs">{user.city}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`text-[9px] ${STATUS_COLORS[user.status]}`}>{STATUS_LABELS[user.status]}</Badge>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <Badge variant="outline" className={`text-[9px] ${user.premium !== 'free' ? 'bg-amber-50 text-amber-700 border-amber-200' : ''}`}>
-                        {PREMIUM_LABELS[user.premium]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">{user.joined}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted"><MoreHorizontal className="h-4 w-4" /></button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-xl">
-                          <DropdownMenuItem onClick={() => setDrawerUser(user)}>Просмотр</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            setAllUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: u.status === 'banned' ? 'active' : 'banned' } : u));
-                            toast.success(user.status === 'banned' ? 'Разблокирован' : 'Заблокирован');
-                          }}>{user.status === 'banned' ? 'Разблокировать' : 'Заблокировать'}</DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive" onClick={() => {
-                            setAllUsers(prev => prev.filter(u => u.id !== user.id));
-                            toast.success(`${user.name} удален`);
-                          }}>Удалить</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
         <CardFooter className="flex items-center justify-between border-t p-4">
           <span className="text-xs text-muted-foreground">Показано {(page-1)*PAGE_SIZE+1}–{Math.min(page*PAGE_SIZE, filtered.length)} из {filtered.length}</span>
@@ -219,7 +209,6 @@ export default function AdminUsersPage() {
         </CardFooter>
       </Card>
 
-      {/* User Detail Drawer */}
       <Sheet open={!!drawerUser} onOpenChange={(open) => !open && setDrawerUser(null)}>
         <SheetContent className="overflow-y-auto">
           {drawerUser && (

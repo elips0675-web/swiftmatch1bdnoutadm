@@ -93,7 +93,6 @@ export default function ContentManagementPage() {
         </CardContent>
       </Card>
 
-      {/* Forbidden Words */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg font-black flex items-center gap-2">

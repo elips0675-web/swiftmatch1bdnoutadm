@@ -1,7 +1,7 @@
 import { AppHeader } from "@/components/layout/app-header";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLanguage } from "@/context/language-context";
-import { HelpCircle } from "lucide-react";
+import { CircleHelp as HelpCircle } from "lucide-react";
 
 const FAQ_ITEMS = [
   { id: 'q1', question: 'faq.q1.question', answer: 'faq.q1.answer' },

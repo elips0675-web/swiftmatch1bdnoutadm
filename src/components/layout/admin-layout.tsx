@@ -8,8 +8,10 @@ import {
 import { AdminSidebar } from '@/components/navigation/admin-sidebar';
 import { PanelLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '@/context/language-context';
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { t } = useLanguage();
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -25,7 +27,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <span className="sr-only">Toggle Menu</span>
             </SidebarTrigger>
             <Link to="/admin" className="flex-1">
-              <h1 className="font-black text-lg uppercase tracking-tight">Admin Panel</h1>
+              <h1 className="font-black text-lg uppercase tracking-tight">{t('admin.panel')}</h1>
             </Link>
           </header>
           <main className="flex-1 p-4 sm:p-6">{children}</main>

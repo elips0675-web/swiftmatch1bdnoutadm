@@ -7,25 +7,28 @@ import {
   SidebarContent,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Users, Flag, Chrome as Home, Shield, LogOut, ChevronsLeft, ChevronsRight, SlidersHorizontal, DollarSign, Package, Mail, ChartBar as BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Users, Flag, Chrome as Home, Shield, LogOut, ChevronsLeft, ChevronsRight, SlidersHorizontal, DollarSign, Package, Mail, ChartBar as BarChart3, Languages, Check } from 'lucide-react';
 import { NavLink, useLocation, Link } from 'react-router-dom';
 import { Button } from '../ui/button';
-
-const NAV_ITEMS = [
-  { title: 'Dashboard', path: '/admin', icon: LayoutDashboard, exact: true },
-  { title: 'Analytics', path: '/admin/analytics', icon: BarChart3 },
-  { title: 'Users', path: '/admin/users', icon: Users },
-  { title: 'Reports', path: '/admin/reports', icon: Flag },
-  { title: 'Features', path: '/admin/features', icon: SlidersHorizontal },
-  { title: 'Monetization', path: '/admin/monetization', icon: DollarSign },
-  { title: 'Content', path: '/admin/content', icon: Package },
-  { title: 'Messaging', path: '/admin/messaging', icon: Mail },
-];
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useLanguage } from '@/context/language-context';
 
 export function AdminSidebar() {
   const { pathname } = useLocation();
   const { state, toggleSidebar } = useSidebar();
+  const { language, setLanguage, t } = useLanguage();
   const collapsed = state === 'collapsed';
+
+  const NAV_ITEMS = [
+    { title: t('admin.dashboard'), path: '/admin', icon: LayoutDashboard, exact: true },
+    { title: t('admin.analytics'), path: '/admin/analytics', icon: BarChart3 },
+    { title: t('admin.users'), path: '/admin/users', icon: Users },
+    { title: t('admin.reports'), path: '/admin/reports', icon: Flag },
+    { title: t('admin.features'), path: '/admin/features', icon: SlidersHorizontal },
+    { title: t('admin.monetization'), path: '/admin/monetization', icon: DollarSign },
+    { title: t('admin.content'), path: '/admin/content', icon: Package },
+    { title: t('admin.messaging'), path: '/admin/messaging', icon: Mail },
+  ];
 
   const isActive = (path: string, exact?: boolean) => exact ? pathname === path : pathname === path;
 
@@ -58,13 +61,33 @@ export function AdminSidebar() {
       <SidebarFooter className="mt-auto border-t border-slate-700/50 p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Back to App" className="text-slate-400 hover:text-white hover:bg-slate-700/50">
-              <Link to="/"><Home /><span>Back to App</span></Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton tooltip={t('admin.language')} className="text-slate-400 hover:text-white hover:bg-slate-700/50">
+                  <Languages />
+                  <span>{t('admin.language')}: {language}</span>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="end" className="min-w-[140px]">
+                <DropdownMenuItem onClick={() => setLanguage('RU')}>
+                  <span className="flex-1">Русский</span>
+                  {language === 'RU' && <Check size={14} />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage('EN')}>
+                  <span className="flex-1">English</span>
+                  {language === 'EN' && <Check size={14} />}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip={t('admin.back_to_app')} className="text-slate-400 hover:text-white hover:bg-slate-700/50">
+              <Link to="/"><Home /><span>{t('admin.back_to_app')}</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Logout" className="text-slate-400 hover:text-white hover:bg-slate-700/50">
-              <Link to="/login"><LogOut /><span>Logout</span></Link>
+            <SidebarMenuButton asChild tooltip={t('admin.logout')} className="text-slate-400 hover:text-white hover:bg-slate-700/50">
+              <Link to="/login"><LogOut /><span>{t('admin.logout')}</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

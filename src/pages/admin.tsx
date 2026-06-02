@@ -12,6 +12,7 @@ import {
   generateMockUsers, generateRegistrationTrend, generateCityDistribution,
   generateRecentActivity, type ActivityItem
 } from '@/lib/admin-mock-data';
+import { useLanguage } from '@/context/language-context';
 
 const COLORS = ['#fe3c72','#ff8e53','#3b82f6','#8b5cf6','#10b981','#f59e0b','#ec4899','#6366f1'];
 
@@ -24,6 +25,7 @@ const activityIcons: Record<ActivityItem['type'], React.ReactNode> = {
 
 export default function AdminDashboardPage() {
   const [trendPeriod, setTrendPeriod] = useState<'7' | '30' | '90'>('7');
+  const { t, language } = useLanguage();
 
   const users = useMemo(() => generateMockUsers(), []);
   const trendData = useMemo(() => generateRegistrationTrend(Number(trendPeriod)), [trendPeriod]);
@@ -32,12 +34,14 @@ export default function AdminDashboardPage() {
 
   const activeToday = users.filter(u => u.online).length;
   const totalMatches = users.reduce((s, u) => s + u.matchesCount, 0);
+  const dSuffix = language === 'RU' ? 'д' : 'd';
+  const currency = language === 'RU' ? '₽324,800' : '$3,248';
 
   const kpis = [
-    { title: 'Всего пользователей', value: users.length.toLocaleString(), icon: Users, color: 'text-blue-500', change: '+24.1%' },
-    { title: 'Активных сегодня', value: activeToday, icon: UserCheck, color: 'text-emerald-500', change: `${Math.round(activeToday / users.length * 100)}% от всех` },
-    { title: 'Всего мэтчей', value: totalMatches.toLocaleString(), icon: Heart, color: 'text-primary', change: '+19.2%' },
-    { title: 'Доход за месяц', value: '₽324,800', icon: DollarSign, color: 'text-amber-500', change: '+32%' },
+    { title: t('admin.dash.total_users'), value: users.length.toLocaleString(), icon: Users, color: 'text-blue-500', change: '+24.1%' },
+    { title: t('admin.dash.active_today'), value: activeToday, icon: UserCheck, color: 'text-emerald-500', change: `${Math.round(activeToday / users.length * 100)}% ${t('admin.dash.from_all')}` },
+    { title: t('admin.dash.total_matches'), value: totalMatches.toLocaleString(), icon: Heart, color: 'text-primary', change: '+19.2%' },
+    { title: t('admin.dash.revenue_month'), value: currency, icon: DollarSign, color: 'text-amber-500', change: '+32%' },
   ];
 
   return (
@@ -62,12 +66,12 @@ export default function AdminDashboardPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="border-0 shadow-sm lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-black">Тренд регистраций</CardTitle>
+            <CardTitle className="text-lg font-black">{t('admin.dash.reg_trend')}</CardTitle>
             <Tabs value={trendPeriod} onValueChange={(v) => setTrendPeriod(v as '7'|'30'|'90')}>
               <TabsList className="h-8">
-                <TabsTrigger value="7" className="text-xs px-3 h-6">7д</TabsTrigger>
-                <TabsTrigger value="30" className="text-xs px-3 h-6">30д</TabsTrigger>
-                <TabsTrigger value="90" className="text-xs px-3 h-6">90д</TabsTrigger>
+                <TabsTrigger value="7" className="text-xs px-3 h-6">7{dSuffix}</TabsTrigger>
+                <TabsTrigger value="30" className="text-xs px-3 h-6">30{dSuffix}</TabsTrigger>
+                <TabsTrigger value="90" className="text-xs px-3 h-6">90{dSuffix}</TabsTrigger>
               </TabsList>
             </Tabs>
           </CardHeader>
@@ -92,7 +96,7 @@ export default function AdminDashboardPage() {
 
         <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg font-black">Топ городов</CardTitle>
+            <CardTitle className="text-lg font-black">{t('admin.dash.top_cities')}</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px] flex flex-col items-center">
             <ResponsiveContainer width="100%" height={180}>
@@ -120,7 +124,7 @@ export default function AdminDashboardPage() {
 
       <Card className="border-0 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-black">Последняя активность</CardTitle>
+          <CardTitle className="text-lg font-black">{t('admin.dash.recent_activity')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">

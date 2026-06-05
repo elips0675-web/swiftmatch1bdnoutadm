@@ -622,7 +622,128 @@ export default function ProfilePage() {
                 </div>
               </section>
             </TabsContent>
-             <TabsContent value="stories">
+            <TabsContent value="guests">
+              <div className="bg-white rounded-2xl p-6 app-shadow border border-border/40">
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex items-center gap-2">
+                    <Eye size={18} className="text-primary" />
+                    <h4 className="font-black text-[11px] uppercase tracking-widest text-muted-foreground">
+                      {language === 'RU' ? 'Гости профиля' : 'Profile visitors'}
+                    </h4>
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    {visitors.length} {language === 'RU' ? 'визитов' : 'visits'}
+                  </span>
+                </div>
+
+                {visitors.length === 0 ? (
+                  <div className="py-12 flex flex-col items-center justify-center text-center text-muted-foreground">
+                    <Eye size={32} className="mb-3 opacity-50" />
+                    <p className="text-xs font-bold uppercase tracking-widest">
+                      {language === 'RU' ? 'Пока никто не заходил' : 'No visitors yet'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {visitors.map((v, idx) => {
+                      const minutesAgo = Math.max(1, Math.round((Date.now() - v.visitedAt) / 60000));
+                      const timeLabel = minutesAgo < 60
+                        ? `${minutesAgo} ${language === 'RU' ? 'мин' : 'min'}`
+                        : minutesAgo < 60 * 24
+                          ? `${Math.round(minutesAgo / 60)} ${language === 'RU' ? 'ч' : 'h'}`
+                          : `${Math.round(minutesAgo / 60 / 24)} ${language === 'RU' ? 'дн' : 'd'}`;
+                      const blurred = !isPremium && idx >= 2;
+                      return (
+                        <div
+                          key={v.id}
+                          onClick={() => {
+                            if (blurred) {
+                              toast({
+                                title: language === 'RU' ? 'Premium функция' : 'Premium feature',
+                                description: language === 'RU'
+                                  ? 'Откройте Premium, чтобы видеть всех гостей профиля.'
+                                  : 'Unlock Premium to see all profile visitors.',
+                              });
+                              return;
+                            }
+                            // mark visited as not new
+                            const updated = visitors.map(x => x.id === v.id ? { ...x, isNew: false } : x);
+                            setVisitors(updated);
+                            localStorage.setItem('userProfileVisitors', JSON.stringify(updated));
+                            router.push(`/user?id=${v.id}`);
+                          }}
+                          className="flex items-center gap-3 p-2 rounded-2xl hover:bg-muted/60 active:scale-[0.99] transition-all cursor-pointer relative"
+                        >
+                          <div className={cn("relative w-14 h-14 rounded-2xl overflow-hidden bg-muted shrink-0", blurred && "blur-md")}>
+                            <Image src={v.photo} alt={v.name} fill className="object-cover" />
+                          </div>
+                          {blurred && (
+                            <div className="absolute left-2 top-1/2 -translate-y-1/2 w-14 h-14 rounded-2xl bg-black/20 flex items-center justify-center pointer-events-none">
+                              <Lock size={18} className="text-white" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className={cn("font-black text-sm tracking-tight truncate", blurred && "blur-sm select-none")}>
+                                {v.name}, {v.age}
+                              </p>
+                              {v.isNew && !blurred && (
+                                <span className="px-1.5 h-4 rounded-full bg-primary text-white text-[9px] font-black uppercase tracking-wider flex items-center">
+                                  new
+                                </span>
+                              )}
+                            </div>
+                            <p className={cn("text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5 flex items-center gap-2", blurred && "blur-sm select-none")}>
+                              <span>{v.city}</span>
+                              <span className="opacity-50">•</span>
+                              <span className="flex items-center gap-1"><Clock size={10} /> {timeLabel}</span>
+                            </p>
+                          </div>
+                          {!blurred && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/chats/${v.id}`);
+                              }}
+                              className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center active:scale-95 transition-all shrink-0"
+                            >
+                              <MessageCircle size={16} />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {!isPremium && visitors.length > 2 && (
+                  <div className="mt-5 p-4 rounded-2xl gradient-bg text-white flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md">
+                      <Lock size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-black text-sm">
+                        {language === 'RU' ? 'Откройте всех гостей' : 'Unlock all visitors'}
+                      </p>
+                      <p className="text-[10px] text-white/80 font-bold uppercase tracking-wider">
+                        {language === 'RU' ? 'Доступно с Premium' : 'Premium feature'}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        localStorage.setItem('isPremium', 'true');
+                        setIsPremium(true);
+                        toast({ title: language === 'RU' ? 'Premium активирован' : 'Premium activated' });
+                      }}
+                      className="h-10 px-4 rounded-xl bg-white text-primary font-black uppercase text-[10px] tracking-widest hover:bg-white/90"
+                    >
+                      {language === 'RU' ? 'Открыть' : 'Unlock'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            <TabsContent value="stories">
               <div className="bg-white rounded-2xl p-6 app-shadow border border-border/40">
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center gap-2">

@@ -408,10 +408,18 @@ export default function ProfilePage() {
           </div>
 
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-muted p-1 rounded-xl mb-6">
-              <TabsTrigger value="profile">Данные</TabsTrigger>
-              <TabsTrigger value="gallery">Галерея</TabsTrigger>
-              <TabsTrigger value="stories">Сторис</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 bg-muted p-1 rounded-xl mb-6">
+              <TabsTrigger value="profile" className="text-[11px]">{language === 'RU' ? 'Данные' : 'Profile'}</TabsTrigger>
+              <TabsTrigger value="gallery" className="text-[11px]">{language === 'RU' ? 'Галерея' : 'Gallery'}</TabsTrigger>
+              <TabsTrigger value="guests" className="text-[11px] relative">
+                {language === 'RU' ? 'Гости' : 'Guests'}
+                {visitors.some(v => v.isNew) && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-white text-[9px] font-black flex items-center justify-center">
+                    {visitors.filter(v => v.isNew).length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="stories" className="text-[11px]">{language === 'RU' ? 'Сторис' : 'Stories'}</TabsTrigger>
             </TabsList>
             <TabsContent value="profile">
               <div className="bg-white rounded-2xl p-6 app-shadow border border-border/40 space-y-6">

@@ -74,6 +74,10 @@ export default function ProfilePage() {
   // Boost Dialog
   const [isBoostDialogOpen, setIsBoostDialogOpen] = useState(false);
 
+  // Guests / Visitors
+  const [visitors, setVisitors] = useState<any[]>([]);
+  const [isPremium, setIsPremium] = useState(false);
+
   useEffect(() => {
     setIsMounted(true);
     const savedProfile = localStorage.getItem('userProfile');

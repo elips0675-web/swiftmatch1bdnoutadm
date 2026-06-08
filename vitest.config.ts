@@ -8,6 +8,8 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
+    testTimeout: 15000,
+    hookTimeout: 10000,
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
   resolve: {

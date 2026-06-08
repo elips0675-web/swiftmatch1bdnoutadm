@@ -1,52 +1,63 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { LanguageProvider } from "@/context/language-context";
-import { FeatureFlagsProvider } from "@/context/feature-flags-context";
-import { FirebaseClientProvider } from "@/shims/firebase";
-import { AppContainer } from "@/components/layout/app-container";
-import { AdminLayout } from "@/components/layout/admin-layout";
-import { ClientOnly } from "@/components/shared/client-only";
-import { CookieConsent } from "@/components/shared/cookie-consent";
-import { PwaInstallBanner } from "@/components/shared/pwa-install-banner";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom"
+import { Toaster as Sonner } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/toaster"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { LanguageProvider } from "@/context/language-context"
+import { FeatureFlagsProvider } from "@/context/feature-flags-context"
+import { AuthProvider } from "@/context/auth-context"
+import { FirebaseClientProvider } from "@/shims/firebase"
+import { ErrorBoundary } from "@/components/shared/error-boundary"
+import { PageLoading } from "@/components/shared/loading-screen"
+import { AppContainer } from "@/components/layout/app-container"
+import { AdminLayout } from "@/components/layout/admin-layout"
+import { ClientOnly } from "@/components/shared/client-only"
+import { CookieConsent } from "@/components/shared/cookie-consent"
+import { PwaInstallBanner } from "@/components/shared/pwa-install-banner"
 
-import Home from "./pages/Home";
-import NotFound from "./pages/NotFound";
-import About from "./pages/about";
-import Activity from "./pages/activity";
-import Admin from "./pages/admin";
-import AdminAnalytics from "./pages/admin-analytics";
-import AdminContent from "./pages/admin-content";
-import AdminFeatures from "./pages/admin-features";
-import AdminMessaging from "./pages/admin-messaging";
-import AdminMonetization from "./pages/admin-monetization";
-import AdminReports from "./pages/admin-reports";
-import AdminUsers from "./pages/admin-users";
-import Chats from "./pages/chats";
-import ChatId from "./pages/_chats-chatId-adapter";
-import Contest from "./pages/contest";
-import Faq from "./pages/faq";
-import Groups from "./pages/groups";
-import GroupCategory from "./pages/groups-category";
-import LegalDataProcessing from "./pages/legal-data-processing";
-import LegalPrivacy from "./pages/legal-privacy";
-import LegalTerms from "./pages/legal-terms";
-import Login from "./pages/login";
-import Onboarding from "./pages/onboarding";
-import Profile from "./pages/profile";
-import ProfileEdit from "./pages/profile-edit";
-import ProfileAttachmentTest from "./pages/profile-attachment-test";
-import Register from "./pages/register";
-import Search from "./pages/search";
-import SearchFilters from "./pages/search-filters";
-import Settings from "./pages/settings";
-import SupportChat from "./pages/support-chat";
-import User from "./pages/user";
+const Home = lazy(() => import("./pages/Home"))
+const NotFound = lazy(() => import("./pages/NotFound"))
+const About = lazy(() => import("./pages/about"))
+const Activity = lazy(() => import("./pages/activity"))
+const Admin = lazy(() => import("./pages/admin"))
+const AdminAnalytics = lazy(() => import("./pages/admin-analytics"))
+const AdminContent = lazy(() => import("./pages/admin-content"))
+const AdminFeatures = lazy(() => import("./pages/admin-features"))
+const AdminMessaging = lazy(() => import("./pages/admin-messaging"))
+const AdminMonetization = lazy(() => import("./pages/admin-monetization"))
+const AdminReports = lazy(() => import("./pages/admin-reports"))
+const AdminUsers = lazy(() => import("./pages/admin-users"))
+const Chats = lazy(() => import("./pages/chats"))
+const ChatId = lazy(() => import("./pages/_chats-chatId-adapter"))
+const Contest = lazy(() => import("./pages/contest"))
+const Faq = lazy(() => import("./pages/faq"))
+const Groups = lazy(() => import("./pages/groups"))
+const GroupCategory = lazy(() => import("./pages/groups-category"))
+const LegalDataProcessing = lazy(() => import("./pages/legal-data-processing"))
+const LegalPrivacy = lazy(() => import("./pages/legal-privacy"))
+const LegalTerms = lazy(() => import("./pages/legal-terms"))
+const Login = lazy(() => import("./pages/login"))
+const Onboarding = lazy(() => import("./pages/onboarding"))
+const Profile = lazy(() => import("./pages/profile"))
+const ProfileEdit = lazy(() => import("./pages/profile-edit"))
+const ProfileAttachmentTest = lazy(() => import("./pages/profile-attachment-test"))
+const Register = lazy(() => import("./pages/register"))
+const Search = lazy(() => import("./pages/search"))
+const SearchFilters = lazy(() => import("./pages/search-filters"))
+const Settings = lazy(() => import("./pages/settings"))
+const SupportChat = lazy(() => import("./pages/support-chat"))
+const User = lazy(() => import("./pages/user"))
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
 const PAGE_TITLES: Record<string, string> = {
   "/": "SwiftMatch",
@@ -77,77 +88,86 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/messaging": "Рассылки — SwiftMatch",
   "/admin/monetization": "Монетизация — SwiftMatch",
   "/admin/reports": "Жалобы — SwiftMatch",
-};
+}
 
 function DocumentTitle() {
-  const { pathname } = useLocation();
+  const { pathname } = useLocation()
   useEffect(() => {
-    const title = PAGE_TITLES[pathname] || "SwiftMatch";
-    document.title = title;
-  }, [pathname]);
-  return null;
+    document.title = PAGE_TITLES[pathname] || "SwiftMatch"
+  }, [pathname])
+  return null
+}
+
+function SuspenseWrapper({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<PageLoading />}>{children}</Suspense>
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <LanguageProvider>
-          <FirebaseClientProvider>
-            <FeatureFlagsProvider>
-              <DocumentTitle />
-              <Routes>
-                <Route path="/admin" element={<AdminLayout><Admin /></AdminLayout>} />
-                <Route path="/admin/analytics" element={<AdminLayout><AdminAnalytics /></AdminLayout>} />
-                <Route path="/admin/content" element={<AdminLayout><AdminContent /></AdminLayout>} />
-                <Route path="/admin/features" element={<AdminLayout><AdminFeatures /></AdminLayout>} />
-                <Route path="/admin/messaging" element={<AdminLayout><AdminMessaging /></AdminLayout>} />
-                <Route path="/admin/monetization" element={<AdminLayout><AdminMonetization /></AdminLayout>} />
-                <Route path="/admin/reports" element={<AdminLayout><AdminReports /></AdminLayout>} />
-                <Route path="/admin/users" element={<AdminLayout><AdminUsers /></AdminLayout>} />
-                <Route path="*" element={<>
-                  <AppContainer>
-                    <Routes>
-                      <Route path="/" element={<Home />} />
-                      <Route path="/about" element={<About />} />
-                      <Route path="/activity" element={<Activity />} />
-                      <Route path="/chats" element={<Chats />} />
-                      <Route path="/chats/:chatId" element={<ChatId />} />
-                      <Route path="/contest" element={<Contest />} />
-                      <Route path="/faq" element={<Faq />} />
-                      <Route path="/groups" element={<Groups />} />
-                      <Route path="/groups/:category" element={<GroupCategory />} />
-                      <Route path="/legal/data-processing" element={<LegalDataProcessing />} />
-                      <Route path="/legal/privacy" element={<LegalPrivacy />} />
-                      <Route path="/legal/terms" element={<LegalTerms />} />
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/onboarding" element={<Onboarding />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/profile/edit" element={<ProfileEdit />} />
-                      <Route path="/profile/attachment-test" element={<ProfileAttachmentTest />} />
-                      <Route path="/register" element={<Register />} />
-                      <Route path="/search" element={<Search />} />
-                      <Route path="/search/filters" element={<SearchFilters />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/support-chat" element={<SupportChat />} />
-                      <Route path="/user" element={<User />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                    <ClientOnly>
-                      <CookieConsent />
-                      <PwaInstallBanner />
-                    </ClientOnly>
-                  </AppContainer>
-                </>} />
-              </Routes>
-            </FeatureFlagsProvider>
-          </FirebaseClientProvider>
-        </LanguageProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <LanguageProvider>
+              <FirebaseClientProvider>
+                <FeatureFlagsProvider>
+                  <DocumentTitle />
+                  <Routes>
+                    <Route path="/admin" element={<AdminLayout><SuspenseWrapper><Admin /></SuspenseWrapper></AdminLayout>} />
+                    <Route path="/admin/analytics" element={<AdminLayout><SuspenseWrapper><AdminAnalytics /></SuspenseWrapper></AdminLayout>} />
+                    <Route path="/admin/content" element={<AdminLayout><SuspenseWrapper><AdminContent /></SuspenseWrapper></AdminLayout>} />
+                    <Route path="/admin/features" element={<AdminLayout><SuspenseWrapper><AdminFeatures /></SuspenseWrapper></AdminLayout>} />
+                    <Route path="/admin/messaging" element={<AdminLayout><SuspenseWrapper><AdminMessaging /></SuspenseWrapper></AdminLayout>} />
+                    <Route path="/admin/monetization" element={<AdminLayout><SuspenseWrapper><AdminMonetization /></SuspenseWrapper></AdminLayout>} />
+                    <Route path="/admin/reports" element={<AdminLayout><SuspenseWrapper><AdminReports /></SuspenseWrapper></AdminLayout>} />
+                    <Route path="/admin/users" element={<AdminLayout><SuspenseWrapper><AdminUsers /></SuspenseWrapper></AdminLayout>} />
+                    <Route path="*" element={
+                      <SuspenseWrapper>
+                        <AppContainer>
+                          <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/about" element={<About />} />
+                            <Route path="/activity" element={<Activity />} />
+                            <Route path="/chats" element={<Chats />} />
+                            <Route path="/chats/:chatId" element={<ChatId />} />
+                            <Route path="/contest" element={<Contest />} />
+                            <Route path="/faq" element={<Faq />} />
+                            <Route path="/groups" element={<Groups />} />
+                            <Route path="/groups/:category" element={<GroupCategory />} />
+                            <Route path="/legal/data-processing" element={<LegalDataProcessing />} />
+                            <Route path="/legal/privacy" element={<LegalPrivacy />} />
+                            <Route path="/legal/terms" element={<LegalTerms />} />
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/onboarding" element={<Onboarding />} />
+                            <Route path="/profile" element={<Profile />} />
+                            <Route path="/profile/edit" element={<ProfileEdit />} />
+                            <Route path="/profile/attachment-test" element={<ProfileAttachmentTest />} />
+                            <Route path="/register" element={<Register />} />
+                            <Route path="/search" element={<Search />} />
+                            <Route path="/search/filters" element={<SearchFilters />} />
+                            <Route path="/settings" element={<Settings />} />
+                            <Route path="/support-chat" element={<SupportChat />} />
+                            <Route path="/user" element={<User />} />
+                            <Route path="*" element={<NotFound />} />
+                          </Routes>
+                          <ClientOnly>
+                            <CookieConsent />
+                            <PwaInstallBanner />
+                          </ClientOnly>
+                        </AppContainer>
+                      </SuspenseWrapper>
+                    } />
+                  </Routes>
+                </FeatureFlagsProvider>
+              </FirebaseClientProvider>
+            </LanguageProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
+)
 
-export default App;
+export default App

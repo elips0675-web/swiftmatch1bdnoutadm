@@ -23,6 +23,7 @@ import { toast } from "@/hooks/use-toast";
 import { useFeatureFlags } from "@/context/feature-flags-context";
 import { ALL_DEMO_USERS, GROUP_CATEGORIES } from "@/lib/demo-data";
 import { containsForbiddenWords, isGibberish } from "@/lib/word-filter";
+import { encryptStorage, decryptStorage } from "@/lib/crypto";
 import { FootballFeed } from "@/components/feeds/football-feed";
 
 const VideoCallDialog = dynamic(() => import('@/components/video-call').then(mod => mod.VideoCallDialog), { ssr: false });
@@ -39,15 +40,34 @@ const CHAT_THEMES = [
 
 const STORAGE_PREFIX = 'swiftchat_';
 
-function loadMessages(chatId: number): any[] | null {
-  try {
-    const raw = localStorage.getItem(`${STORAGE_PREFIX}messages_${chatId}`);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
+async function loadMessages(chatId: number): Promise<any[] | null> {
+  return decryptStorage<any[]>(`${STORAGE_PREFIX}messages_${chatId}`);
 }
 
-function saveMessages(chatId: number, msgs: any[]) {
-  try { localStorage.setItem(`${STORAGE_PREFIX}messages_${chatId}`, JSON.stringify(msgs)); } catch {}
+async function saveMessages(chatId: number, msgs: any[]) {
+  await encryptStorage(`${STORAGE_PREFIX}messages_${chatId}`, msgs);
+  if (msgs.length > 0) {
+    const last = msgs[msgs.length - 1];
+    updateLastMsgCache(chatId, last.text, last.time);
+  }
+}
+
+// Unencrypted cache for chat list preview only (last message text/time)
+// Full message history stays encrypted in localStorage
+function updateLastMsgCache(chatId: number, text: string, time: string) {
+  try {
+    const raw = localStorage.getItem(`${STORAGE_PREFIX}lastmsg_cache`);
+    const cache = raw ? JSON.parse(raw) : {};
+    cache[chatId] = { text, time };
+    localStorage.setItem(`${STORAGE_PREFIX}lastmsg_cache`, JSON.stringify(cache));
+  } catch {}
+}
+
+function getLastMsgCache(): Record<number, { text: string; time: string }> {
+  try {
+    const raw = localStorage.getItem(`${STORAGE_PREFIX}lastmsg_cache`);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
 }
 
 function getRecentChatIds(): number[] {
@@ -66,6 +86,10 @@ function saveRecentChatId(chatId: number) {
 function removeRecentChatId(chatId: number) {
   const recent = getRecentChatIds().filter(id => id !== chatId);
   try { localStorage.setItem(`${STORAGE_PREFIX}recent`, JSON.stringify(recent)); } catch {}
+  localStorage.removeItem(`${STORAGE_PREFIX}messages_${chatId}`);
+  const cache = getLastMsgCache();
+  delete cache[chatId];
+  try { localStorage.setItem(`${STORAGE_PREFIX}lastmsg_cache`, JSON.stringify(cache)); } catch {}
 }
 
 const QUICK_REACTIONS = [
@@ -182,12 +206,12 @@ function ChatsContent() {
   }, []);
 
   const allDirectChats = useMemo(() => {
+    const cache = getLastMsgCache();
     const recent = recentIds.map(id => {
       const user = ALL_DEMO_USERS.find(u => u.id === id);
       if (!user) return null;
-      const msgs = loadMessages(id);
-      const last = msgs && msgs.length > 0 ? msgs[msgs.length - 1] : null;
-      return { ...user, lastMessage: last ? last.text : t('chats.hi'), time: last ? last.time : (id % 2 === 0 ? "10:30" : t('chats.yesterday')) };
+      const cached = cache[id];
+      return { ...user, lastMessage: cached ? cached.text : '', time: cached ? cached.time : '' };
     }).filter(Boolean);
 
     const remaining = ALL_DEMO_USERS.filter(u => !u.isSystem && !recentIds.includes(u.id)).map(u => ({
@@ -423,16 +447,17 @@ function ChatsContent() {
       if (chat) { 
         setSelectedChat(chat); 
         setActiveTab("direct");
-        const saved = loadMessages(id);
-        if (saved && saved.length > 0) {
-          setMessages(saved);
-        } else {
-          const msgs = [{ id: Date.now(), text: t('chats.match_greeting'), sender: "me", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
-          setMessages(msgs);
-          saveMessages(id, msgs);
-          saveRecentChatId(id);
-          setRecentIds(getRecentChatIds());
-        }
+        loadMessages(id).then(saved => {
+          if (saved && saved.length > 0) {
+            setMessages(saved);
+          } else {
+            const msgs = [{ id: Date.now(), text: t('chats.match_greeting'), sender: "me", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
+            setMessages(msgs);
+            saveMessages(id, msgs);
+            saveRecentChatId(id);
+            setRecentIds(getRecentChatIds());
+          }
+        });
         loadIcebreakers(chat); 
       }
     } else if (groupId) {
@@ -444,16 +469,17 @@ function ChatsContent() {
       if (group) {
         setSelectedChat(group);
         setActiveTab("groups");
-        const saved = loadMessages(id);
-        if (saved && saved.length > 0) {
-          setMessages(saved);
-        } else {
-          const msgs = [{ id: Date.now(), text: t('chats.welcome_group'), sender: "other", time: "12:00" }];
-          setMessages(msgs);
-          saveMessages(id, msgs);
-          saveRecentChatId(id);
-          setRecentIds(getRecentChatIds());
-        }
+        loadMessages(id).then(saved => {
+          if (saved && saved.length > 0) {
+            setMessages(saved);
+          } else {
+            const msgs = [{ id: Date.now(), text: t('chats.welcome_group'), sender: "other", time: "12:00" }];
+            setMessages(msgs);
+            saveMessages(id, msgs);
+            saveRecentChatId(id);
+            setRecentIds(getRecentChatIds());
+          }
+        });
       }
     }
   }, [matchId, groupId, language, loadIcebreakers]);
@@ -497,8 +523,9 @@ function ChatsContent() {
 
   const openChat = (chat: any) => { 
     setSelectedChat(chat);
-    const saved = loadMessages(chat.id);
-    setMessages(saved && saved.length > 0 ? saved : getInitialMessages(t));
+    loadMessages(chat.id).then(saved => {
+      setMessages(saved && saved.length > 0 ? saved : getInitialMessages(t));
+    });
     setShowThemeGrid(false);
     setIcebreakers([]);
     loadIcebreakers(chat); 

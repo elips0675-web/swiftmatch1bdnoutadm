@@ -92,9 +92,17 @@ export default function SettingsPage() {
 
   const handleLogout = () => {
     auth.signOut().then(() => {
+      localStorage.removeItem('authToken');
       localStorage.removeItem('userProfile');
       localStorage.removeItem('userProfileGallery');
       localStorage.removeItem('incognito-mode');
+      // Clear encrypted chat data
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('swiftchat_')) keysToRemove.push(key);
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
       toast({
         title: t('logout.title'),
       });

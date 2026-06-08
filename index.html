@@ -19,6 +19,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://picsum.photos" />
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
+
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self';
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data: https://picsum.photos https://www.transparenttextures.com;
+      font-src 'self' https://fonts.gstatic.com data:;
+      connect-src 'self' https://*.supabase.co http://localhost:* https://nominatim.openstreetmap.org;
+      frame-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      worker-src 'self';
+    ">
   </head>
 
   <body>

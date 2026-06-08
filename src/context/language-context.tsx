@@ -627,6 +627,13 @@ const translations = {
     'chats.tab.direct': 'Личные',
     'chats.tab.groups': 'Группы',
     'chats.welcome_group': 'Добро пожаловать в группу!',
+    'chats.delete_conversation': 'Удалить переписку',
+    'chats.theme.romantic': 'Романтика',
+    'chats.theme.funny': 'Юмор',
+    'chats.theme.hobbies': 'Хобби',
+    'chats.theme.daily': 'Повседневное',
+    'chats.theme.deep': 'Глубокое',
+    'chats.theme.bold': 'Дерзкое',
     'chats.yesterday': 'Вчера',
 
     // Match
@@ -1571,6 +1578,13 @@ const translations = {
     'chats.tab.direct': 'Direct',
     'chats.tab.groups': 'Groups',
     'chats.welcome_group': 'Welcome to the group!',
+    'chats.delete_conversation': 'Delete conversation',
+    'chats.theme.romantic': 'Romantic',
+    'chats.theme.funny': 'Funny',
+    'chats.theme.hobbies': 'Hobbies',
+    'chats.theme.daily': 'Daily',
+    'chats.theme.deep': 'Deep',
+    'chats.theme.bold': 'Bold',
     'chats.yesterday': 'Yesterday',
 
     // Match

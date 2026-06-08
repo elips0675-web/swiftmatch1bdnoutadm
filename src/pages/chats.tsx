@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { Search, ChevronLeft, Send, MoveVertical as MoreVertical, Sparkles, Smile, Heart, Laugh, Compass, Coffee, Zap, MessageSquareQuote, Flame, Star, Ghost, Rocket, Crown, Music, Phone, Video, Flag, Check, CheckCheck, Info, Users, MessageSquare, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, Send, MoveVertical as MoreVertical, Sparkles, Smile, Heart, Laugh, Compass, Coffee, Zap, MessageSquareQuote, Flame, Star, Ghost, Rocket, Crown, Music, Phone, Video, Flag, Check, CheckCheck, Info, Users, MessageSquare, ChevronRight, Trash2, ThumbsUp, PartyPopper, Eye, Frown, Award } from "lucide-react";
 import Image from "@/shims/next-image";
 import { useSearchParams, useRouter } from "@/shims/next-navigation";
 import dynamic from "@/shims/next-dynamic";
@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { generateIcebreakerSuggestions } from "@/shims/ai-flows";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/context/language-context";
 import { toast } from "@/hooks/use-toast";
@@ -37,6 +37,37 @@ const CHAT_THEMES = [
   { id: 'bold', labelKey: 'chats.theme.bold', icon: Zap, color: 'text-yellow-500', mood: 'Bold, confident and slightly flirty' },
 ];
 
+const STORAGE_PREFIX = 'swiftchat_';
+
+function loadMessages(chatId: number): any[] | null {
+  try {
+    const raw = localStorage.getItem(`${STORAGE_PREFIX}messages_${chatId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function saveMessages(chatId: number, msgs: any[]) {
+  try { localStorage.setItem(`${STORAGE_PREFIX}messages_${chatId}`, JSON.stringify(msgs)); } catch {}
+}
+
+function getRecentChatIds(): number[] {
+  try {
+    const raw = localStorage.getItem(`${STORAGE_PREFIX}recent`);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveRecentChatId(chatId: number) {
+  const recent = getRecentChatIds().filter(id => id !== chatId);
+  recent.unshift(chatId);
+  try { localStorage.setItem(`${STORAGE_PREFIX}recent`, JSON.stringify(recent.slice(0, 50))); } catch {}
+}
+
+function removeRecentChatId(chatId: number) {
+  const recent = getRecentChatIds().filter(id => id !== chatId);
+  try { localStorage.setItem(`${STORAGE_PREFIX}recent`, JSON.stringify(recent)); } catch {}
+}
+
 const QUICK_REACTIONS = [
   { id: 'heart', icon: Heart, color: 'text-red-500', label: '❤️' },
   { id: 'flame', icon: Flame, color: 'text-orange-500', label: '🔥' },
@@ -44,10 +75,15 @@ const QUICK_REACTIONS = [
   { id: 'star', icon: Star, color: 'text-yellow-500', label: '⭐' },
   { id: 'smile', icon: Smile, color: 'text-green-500', label: '😊' },
   { id: 'laugh', icon: Laugh, color: 'text-orange-400', label: '😂' },
+  { id: 'thumbsup', icon: ThumbsUp, color: 'text-blue-500', label: '👍' },
+  { id: 'partypopper', icon: PartyPopper, color: 'text-pink-500', label: '🎉' },
   { id: 'ghost', icon: Ghost, color: 'text-purple-400', label: '👻' },
   { id: 'rocket', icon: Rocket, color: 'text-blue-500', label: '🚀' },
   { id: 'crown', icon: Crown, color: 'text-amber-500', label: '👑' },
   { id: 'music', icon: Music, color: 'text-pink-400', label: '🎵' },
+  { id: 'eye', icon: Eye, color: 'text-sky-500', label: '👀' },
+  { id: 'frown', icon: Frown, color: 'text-orange-400', label: '😢' },
+  { id: 'award', icon: Award, color: 'text-yellow-600', label: '💯' },
 ];
 
 function getInitialMessages(t: (k: string) => string) {
@@ -112,14 +148,13 @@ function ChatsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { t, language } = useLanguage();
-  const { videoCallsEnabled, aiIcebreakersEnabled } = useFeatureFlags();
+  const { videoCallsEnabled } = useFeatureFlags();
   const matchId = searchParams.get('matchId');
   const groupId = searchParams.get('groupId');
 
   const [activeTab, setActiveTab] = useState<"direct" | "groups">("direct");
   const [selectedChat, setSelectedChat] = useState<any>(null);
-  const getInitialMsgs = useCallback(() => getInitialMessages(t), [t]);
-  const [messages, setMessages] = useState(getInitialMsgs);
+  const [messages, setMessages] = useState<any[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -127,15 +162,14 @@ function ChatsContent() {
   const [loadingIcebreakers, setLoadingIcebreakers] = useState(false);
   const [showThemeGrid, setShowThemeGrid] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportDescription, setReportDescription] = useState('');
   const [isVideoCall, setIsVideoCall] = useState(false);
-  const [isVoiceCall, setIsVoiceCall] = useState(false);
-  
+  const [isVoiceCall, setIsVoiceCall] = useState(false);  
   const [joinedGroupNames, setJoinedGroupNames] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [recentIds, setRecentIds] = useState<number[]>(() => getRecentChatIds());
 
   useEffect(() => {
     const saved = localStorage.getItem('userProfile');
@@ -148,12 +182,20 @@ function ChatsContent() {
   }, []);
 
   const allDirectChats = useMemo(() => {
-    return ALL_DEMO_USERS.filter(u => !u.isSystem).map(u => ({ 
-      ...u, 
-      lastMessage: t('chats.hi'), 
-      time: u.id % 2 === 0 ? "10:30" : t('chats.yesterday') 
+    const recent = recentIds.map(id => {
+      const user = ALL_DEMO_USERS.find(u => u.id === id);
+      if (!user) return null;
+      const msgs = loadMessages(id);
+      const last = msgs && msgs.length > 0 ? msgs[msgs.length - 1] : null;
+      return { ...user, lastMessage: last ? last.text : t('chats.hi'), time: last ? last.time : (id % 2 === 0 ? "10:30" : t('chats.yesterday')) };
+    }).filter(Boolean);
+
+    const remaining = ALL_DEMO_USERS.filter(u => !u.isSystem && !recentIds.includes(u.id)).map(u => ({
+      ...u, lastMessage: '', time: ''
     }));
-  }, [language]);
+
+    return [...recent, ...remaining];
+  }, [language, recentIds]);
 
   const allGroupChats = useMemo(() => {
     const groups: any[] = [];
@@ -201,18 +243,178 @@ function ChatsContent() {
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   useEffect(() => { if (selectedChat) scrollToBottom(); }, [messages, selectedChat]);
 
+  const getIcebreakerPool = (themeId: string) => {
+    const pools: Record<string, Record<string, string[]>> = {
+      romantic: {
+        RU: [
+          'Ты веришь в любовь с первого взгляда?',
+          'Какое твое самое романтичное воспоминание?',
+          'Любишь смотреть на звезды?',
+          'Какой твой идеальный первый шаг?',
+          'Что для тебя идеальное свидание?',
+          'Какой твой любимый фильм о любви?',
+          'Ты предпочитаешь уютный вечер дома или шумную вечеринку?',
+          'Какое у тебя самое милое свидание в жизни?',
+          'Что ты думаешь о любви на расстоянии?',
+          'Какой комплимент тебе запомнился больше всего?'
+        ],
+        EN: [
+          'Do you believe in love at first sight?',
+          'What is your most romantic memory?',
+          'Do you like stargazing?',
+          'What is your perfect first date?',
+          'What does your ideal date look like?',
+          'What is your favorite love movie?',
+          'Do you prefer a cozy night in or a party?',
+          'What is the cutest date you have ever had?',
+          'What do you think about long-distance love?',
+          'What compliment do you still remember?'
+        ]
+      },
+      funny: {
+        RU: [
+          'Какой мем описывает твою жизнь сегодня?',
+          'Если бы ты был животным, кем бы ты был?',
+          'Расскажи самую неловкую историю из жизни',
+          'Какой твой супергеройский талант?',
+          'Что смешного случилось с тобой на этой неделе?',
+          'Какую шутку ты можешь рассказать?',
+          'Твой самый странный страх?',
+          'Если бы ты стал невидимкой на день, что бы сделал?',
+          'Какая самая глупая покупка в твоей жизни?',
+          'Что бы ты сказал себе 10-летнему?'
+        ],
+        EN: [
+          'What meme describes your life today?',
+          'If you were an animal, what would you be?',
+          'Tell me your most awkward story',
+          'What is your superhero talent?',
+          'What funny thing happened to you this week?',
+          'Can you tell me a joke?',
+          'What is your weirdest fear?',
+          'If you were invisible for a day, what would you do?',
+          'What is the dumbest thing you have ever bought?',
+          'What would you tell your 10-year-old self?'
+        ]
+      },
+      hobbies: {
+        RU: [
+          'Как ты проводишь свободное время?',
+          'Есть ли у тебя необычное хобби?',
+          'Что ты любишь делать на выходных?',
+          'Какой книгой или фильмом можешь поделиться?',
+          'Какое твое любимое занятие для релакса?',
+          'Ты занимаешься спортом?',
+          'Что ты любишь готовить?',
+          'Какую музыку предпочитаешь?',
+          'Ты больше любишь природу или город?',
+          'Какое место мечтаешь посетить?'
+        ],
+        EN: [
+          'How do you spend your free time?',
+          'Do you have any unusual hobbies?',
+          'What do you like to do on weekends?',
+          'Any book or movie recommendation?',
+          'What is your favorite way to relax?',
+          'Do you play any sports?',
+          'What do you enjoy cooking?',
+          'What kind of music do you like?',
+          'Do you prefer nature or the city?',
+          'What place do you dream of visiting?'
+        ]
+      },
+      daily: {
+        RU: [
+          'Как прошел твой день?',
+          'Что вкусного сегодня ел(а)?',
+          'Какие планы на вечер?',
+          'Как настроение сегодня?',
+          'Что тебя сегодня вдохновило?',
+          'Какой момент дня был лучшим?',
+          'Что нового узнал(а) сегодня?',
+          'Какая песня играет у тебя в голове?',
+          'Что бы ты хотел(а) изменить в этом дне?',
+          'Что тебя сегодня удивило?'
+        ],
+        EN: [
+          'How was your day?',
+          'Had anything tasty today?',
+          'Any plans for tonight?',
+          'How are you feeling today?',
+          'What inspired you today?',
+          'What was the best moment of your day?',
+          'Did you learn anything new today?',
+          'What song is stuck in your head?',
+          'What would you change about today?',
+          'What surprised you today?'
+        ]
+      },
+      deep: {
+        RU: [
+          'Что для тебя счастье?',
+          'Какой момент изменил твою жизнь?',
+          'Что ты ценишь в людях больше всего?',
+          'О чем ты мечтаешь?',
+          'Что для тебя настоящая дружба?',
+          'Что тебя мотивирует по утрам?',
+          'Какой совет изменил твое мышление?',
+          'Что ты считаешь самым важным в отношениях?',
+          'Какая твоя самая большая цель в жизни?',
+          'Что бы ты сделал(а), если бы не боялся(ась)?'
+        ],
+        EN: [
+          'What does happiness mean to you?',
+          'What moment changed your life?',
+          'What do you value most in people?',
+          'What do you dream about?',
+          'What does true friendship mean to you?',
+          'What motivates you in the morning?',
+          'What advice changed your mindset?',
+          'What do you think is most important in a relationship?',
+          'What is your biggest goal in life?',
+          'What would you do if you were not afraid?'
+        ]
+      },
+      bold: {
+        RU: [
+          'У тебя классная улыбка 😊',
+          'Твой стиль меня впечатляет',
+          'Хочешь узнать обо мне что-то интересное?',
+          'Спорим, я угадаю твой знак зодиака?',
+          'Что в тебе привлекает людей?',
+          'Ты любишь быть в центре внимания?',
+          'Какой твой самый смелый поступок?',
+          'Что бы ты делал(а), если бы денег не было проблемой?',
+          'Ты больше слушаешь сердце или разум?',
+          'Что ты думаешь о химии между людьми?'
+        ],
+        EN: [
+          'You have a great smile 😊',
+          'Your style really impresses me',
+          'Want to know something interesting about me?',
+          'Bet I can guess your zodiac sign?',
+          'What attracts people to you?',
+          'Do you like being the center of attention?',
+          'What is the boldest thing you have ever done?',
+          'What would you do if money were no object?',
+          'Do you follow your heart or your head?',
+          'What do you think about chemistry between people?'
+        ]
+      }
+    };
+    return pools[themeId]?.[language] || pools[themeId]?.RU || pools.daily.RU;
+  };
+
   const loadIcebreakers = useCallback(async (chat: any, mood?: string) => {
-    if (!aiIcebreakersEnabled || chat.isGroup) return;
     setLoadingIcebreakers(true);
-    try {
-      const res = await generateIcebreakerSuggestions({ currentUserInterests: ["Спорт", "Кофе", "Кино"], matchedUserName: chat.name, matchedUserInterests: chat.interests || [], matchedUserBio: chat.bio || "", mood: mood || "Friendly and polite" });
-      setIcebreakers(res.suggestions);
-    } catch (e) {
-      setIcebreakers([t('chats.icebreaker.1'), t('chats.icebreaker.2'), t('chats.icebreaker.3')]);
-    } finally {
-      setLoadingIcebreakers(false); if (mood) setShowThemeGrid(false);
-    }
-  }, [aiIcebreakersEnabled, language]);
+    await new Promise(r => setTimeout(r, 600));
+    const themeId = mood ? CHAT_THEMES.find(t => t.mood === mood)?.id || 'daily' : 'daily';
+    const pool = getIcebreakerPool(themeId);
+    const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 10);
+    setIcebreakers(shuffled);
+    setLoadingIcebreakers(false);
+    if (mood) setShowThemeGrid(false);
+  }, [language]);
 
   useEffect(() => {
     if (matchId) {
@@ -221,7 +423,16 @@ function ChatsContent() {
       if (chat) { 
         setSelectedChat(chat); 
         setActiveTab("direct");
-        setMessages([{ id: Date.now(), text: t('chats.match_greeting'), sender: "me", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]); 
+        const saved = loadMessages(id);
+        if (saved && saved.length > 0) {
+          setMessages(saved);
+        } else {
+          const msgs = [{ id: Date.now(), text: t('chats.match_greeting'), sender: "me", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
+          setMessages(msgs);
+          saveMessages(id, msgs);
+          saveRecentChatId(id);
+          setRecentIds(getRecentChatIds());
+        }
         loadIcebreakers(chat); 
       }
     } else if (groupId) {
@@ -233,7 +444,16 @@ function ChatsContent() {
       if (group) {
         setSelectedChat(group);
         setActiveTab("groups");
-        setMessages([{ id: Date.now(), text: t('chats.welcome_group'), sender: "other", time: "12:00" }]);
+        const saved = loadMessages(id);
+        if (saved && saved.length > 0) {
+          setMessages(saved);
+        } else {
+          const msgs = [{ id: Date.now(), text: t('chats.welcome_group'), sender: "other", time: "12:00" }];
+          setMessages(msgs);
+          saveMessages(id, msgs);
+          saveRecentChatId(id);
+          setRecentIds(getRecentChatIds());
+        }
       }
     }
   }, [matchId, groupId, language, loadIcebreakers]);
@@ -253,7 +473,12 @@ function ChatsContent() {
     }
 
     const newMessage = { id: Date.now(), text: textToSend, sender: "me", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-    setMessages([...messages, newMessage]); if (!textOverride) setInputValue(""); setShowThemeGrid(false);
+    const updated = [...messages, newMessage];
+    setMessages(updated);
+    saveMessages(selectedChat.id, updated);
+    saveRecentChatId(selectedChat.id);
+    setRecentIds(getRecentChatIds());
+    if (!textOverride) setInputValue(""); setShowThemeGrid(false);
     
     if (!selectedChat.isGroup) {
       setTimeout(() => { 
@@ -261,8 +486,10 @@ function ChatsContent() {
         setTimeout(() => { 
           setIsTyping(false); 
           const text = t('chats.demo.reply');
-          const response = { id: Date.now() + 1, text, sender: "other", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }; 
-          setMessages(prev => [...prev, response]); 
+          const response = { id: Date.now() + 1, text, sender: "other", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+          const withReply = [...updated, response];
+          setMessages(withReply);
+          saveMessages(selectedChat.id, withReply);
         }, 2000); 
       }, 1000);
     }
@@ -270,7 +497,8 @@ function ChatsContent() {
 
   const openChat = (chat: any) => { 
     setSelectedChat(chat);
-    setMessages(getInitialMessages(t));
+    const saved = loadMessages(chat.id);
+    setMessages(saved && saved.length > 0 ? saved : getInitialMessages(t));
     setShowThemeGrid(false);
     setIcebreakers([]);
     loadIcebreakers(chat); 
@@ -344,6 +572,10 @@ function ChatsContent() {
                     <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50"><MoreVertical size={18} /></Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="rounded-2xl border-0 app-shadow p-1.5 min-w-[160px] bg-white">
+                    <DropdownMenuItem onSelect={() => { removeRecentChatId(selectedChat.id); setRecentIds(getRecentChatIds()); handleBack(); }} className="rounded-xl font-bold text-[10px] uppercase tracking-wider cursor-pointer py-2 text-destructive focus:text-destructive focus:bg-destructive/10">
+                        <Trash2 size={14} className="mr-2" />
+                        {t('chats.delete_conversation')}
+                    </DropdownMenuItem>
                     <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsReportDialogOpen(true); }} className="rounded-xl font-bold text-[10px] uppercase tracking-wider cursor-pointer py-2 text-destructive focus:text-destructive focus:bg-destructive/10">
                         <Flag size={14} className="mr-2" />
                         {t('button.report')}
@@ -354,7 +586,7 @@ function ChatsContent() {
         </header>
         <main className="flex-1 overflow-y-auto p-4 space-y-2"><div className="text-center my-2"><Badge variant="secondary" className="bg-white/50 text-[9px] text-muted-foreground border-0 font-black uppercase tracking-widest px-2.5 py-0.5">{t('chats.today')}</Badge></div><AnimatePresence>{messages.map((msg: any) => (<motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} key={msg.id} className={cn("flex flex-col max-w-[80%]", msg.sender === "me" ? "ml-auto items-end" : "items-start")}><div className={cn("px-3 py-2 rounded-lg text-sm shadow-sm font-medium leading-snug", msg.sender === "me" ? "gradient-bg text-white rounded-br-none shadow-primary/10" : "bg-white text-foreground rounded-bl-none border border-border/40")}>{msg.text}</div><span className="text-[9px] text-muted-foreground mt-1.5 px-1 font-bold uppercase tracking-tighter opacity-60">{msg.time}</span></motion.div>))}</AnimatePresence>{isTyping && (<motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-1.5 text-muted-foreground"><div className="flex gap-1 bg-white px-3 py-2.5 rounded-lg border border-border/40 shadow-sm rounded-bl-none"><span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce"></span><span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]"></span><span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]"></span></div><span className="text-[9px] font-bold uppercase tracking-widest">{t('chats.typing')}</span></motion.div>)}<div ref={messagesEndRef} /></main>
         <div className="p-4 bg-white border-t border-border shadow-[0_-10px_40px_-20px_rgba(0,0,0,0.1)] relative z-10">
-          {!selectedChat.isGroup && aiIcebreakersEnabled && (<><div className="flex items-center justify-between mb-3 px-1"><button onClick={() => setShowThemeGrid(!showThemeGrid)} className={cn("flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.1em] transition-all", showThemeGrid ? "gradient-bg text-white shadow-lg shadow-primary/20" : "bg-primary/5 text-primary border border-primary/10")}> <Sparkles size={14} className={cn(loadingIcebreakers && "animate-spin")} /> {showThemeGrid ? t('chats.close_themes') : t('chats.ai_themes')} </button>{!showThemeGrid && icebreakers.length > 0 && !loadingIcebreakers && (<p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest opacity-40 italic">{t('chats.swipe')}</p>)}</div><AnimatePresence>{showThemeGrid && (<motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="grid grid-cols-3 gap-2.5 mb-5 overflow-hidden">{CHAT_THEMES.map((theme) => { const Icon = theme.icon; return (<button key={theme.id} onClick={() => loadIcebreakers(selectedChat, theme.mood)} className="flex flex-col items-center justify-center p-3.5 rounded-lg bg-muted/40 border border-border/50 transition-all group active:scale-95"><Icon size={22} className={cn("mb-1.5 group-hover:scale-110", theme.color)} /><span className="text-[9px] font-black uppercase tracking-tighter text-foreground/70">{t(theme.labelKey)}</span></button>) })}</motion.div>)}</AnimatePresence>{!showThemeGrid && (<div className="flex gap-2.5 overflow-x-auto no-scrollbar mb-5 h-10 items-center px-1">{loadingIcebreakers ? (<div className="flex gap-2"><div className="h-8 w-32 bg-muted animate-pulse rounded-full"></div><div className="h-8 w-28 bg-muted animate-pulse rounded-full"></div></div>) : (icebreakers.map((text, i) => (<button key={i} onClick={() => setInputValue(text)} className="whitespace-nowrap px-4 py-2 bg-white hover:bg-muted transition-all text-[11px] font-bold rounded-full text-foreground/80 border border-border/60 shadow-sm active:scale-95">{text}</button>)))}</div>)}</>)}
+          {!selectedChat.isGroup && (<><div className="flex items-center justify-between mb-3 px-1"><button onClick={() => setShowThemeGrid(!showThemeGrid)} className={cn("flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.1em] transition-all", showThemeGrid ? "gradient-bg text-white shadow-lg shadow-primary/20" : "bg-primary/5 text-primary border border-primary/10")}> <Sparkles size={14} className={cn(loadingIcebreakers && "animate-spin")} /> {showThemeGrid ? t('chats.close_themes') : t('chats.ai_themes')} </button>{!showThemeGrid && icebreakers.length > 0 && !loadingIcebreakers && (<p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest opacity-40 italic">{t('chats.swipe')}</p>)}</div><AnimatePresence>{showThemeGrid && (<motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="grid grid-cols-3 gap-2.5 mb-5 overflow-hidden">{CHAT_THEMES.map((theme) => { const Icon = theme.icon; return (<button key={theme.id} onClick={() => loadIcebreakers(selectedChat, theme.mood)} className="flex flex-col items-center justify-center p-3.5 rounded-lg bg-muted/40 border border-border/50 transition-all group active:scale-95"><Icon size={22} className={cn("mb-1.5 group-hover:scale-110", theme.color)} /><span className="text-[9px] font-black uppercase tracking-tighter text-foreground/70">{t(theme.labelKey)}</span></button>) })}</motion.div>)}</AnimatePresence>{!showThemeGrid && (<div className="flex gap-2.5 overflow-x-auto no-scrollbar mb-5 h-10 items-center px-1">{loadingIcebreakers ? (<div className="flex gap-2"><div className="h-8 w-32 bg-muted animate-pulse rounded-full"></div><div className="h-8 w-28 bg-muted animate-pulse rounded-full"></div></div>) : (icebreakers.map((text, i) => (<button key={i} onClick={() => setInputValue(text)} className="whitespace-nowrap px-4 py-2 bg-white hover:bg-muted transition-all text-[11px] font-bold rounded-full text-foreground/80 border border-border/60 shadow-sm active:scale-95">{text}</button>)))}</div>)}</>)}
           <div className="flex items-center gap-3"><div className="flex-1 relative group"><Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder={t('chats.placeholder')} className="pr-12 h-11 bg-muted/50 border-0 rounded-2xl font-medium px-6 text-sm" /><Popover><PopoverTrigger asChild><button className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"><Smile size={20} /></button></PopoverTrigger><PopoverContent className="w-full max-w-[280px] p-2 rounded-2xl border-0 shadow-2xl bg-white" side="top" align="end"><div className="grid grid-cols-5 gap-1">{QUICK_REACTIONS.map(reaction => { const ReactionIcon = reaction.icon; return (<button key={reaction.id} onClick={() => handleSendMessage(reaction.label)} className="w-10 h-10 flex items-center justify-center hover:bg-muted rounded-xl transition-all active:scale-90"><ReactionIcon size={24} className={reaction.color} /></button>); })}</div></PopoverContent></Popover></div><Button size="icon" onClick={() => handleSendMessage()} disabled={!inputValue.trim()} className="h-11 w-11 rounded-2xl gradient-bg text-white shadow-xl shadow-primary/30 active:scale-95 transition-all"><Send size={18} className="ml-0.5" /></Button></div>
         </div>
         {selectedChat && !selectedChat.isGroup && isVideoCall && <VideoCallDialog open={isVideoCall} onOpenChange={setIsVideoCall} user={selectedChat} />}

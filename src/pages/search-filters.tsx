@@ -6,15 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ALL_DEMO_USERS } from "@/lib/demo-data"; // Using demo data for now
+import { ALL_DEMO_USERS } from "@/lib/demo-data";
+import { POPULAR_CITIES } from "@/lib/constants";
 import { useLanguage } from "@/context/language-context";
 import { ChevronLeft } from "lucide-react";
+
+const ALL_COUNTRIES = Object.keys(POPULAR_CITIES);
+const ALL_CITIES = Object.values(POPULAR_CITIES).flat();
 
 export default function FiltersPage() {
   const router = useRouter();
   const { t } = useLanguage();
   const [ageRange, setAgeRange] = useState([18, 40]);
   const [distance, setDistance] = useState([50]);
+  const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedCity, setSelectedCity] = useState("all");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
 
@@ -35,11 +40,24 @@ export default function FiltersPage() {
         setDistance(parsed.distance || [50]);
         setSelectedCity(parsed.selectedCity || "all");
         setSelectedInterests(parsed.selectedInterests || []);
+        if (parsed.selectedCity && parsed.selectedCity !== "all") {
+          for (const [country, cities] of Object.entries(POPULAR_CITIES)) {
+            if (cities.includes(parsed.selectedCity)) {
+              setSelectedCountry(country);
+              break;
+            }
+          }
+        }
       } catch (e) {
         console.error("Failed to parse filters from localStorage", e);
       }
     }
   }, []);
+
+  const cityOptions = useMemo(() => {
+    if (!selectedCountry) return ["all"];
+    return ["all", ...(POPULAR_CITIES[selectedCountry] || [])];
+  }, [selectedCountry]);
 
   const handleApply = () => {
     const filters = {
@@ -97,16 +115,32 @@ export default function FiltersPage() {
         </FilterSection>
 
         <FilterSection title={t('filters.city')}>
-          <Select value={selectedCity} onValueChange={setSelectedCity}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={t('filters.select_city')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все города</SelectItem>
-              <SelectItem value="Москва">Москва</SelectItem>
-              {/* Add more cities if needed from demo data */}
-            </SelectContent>
-          </Select>
+          <div className="space-y-3">
+            <Select value={selectedCountry} onValueChange={(v) => { setSelectedCountry(v); setSelectedCity("all"); }}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Выберите страну" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                <SelectItem value="">Все страны</SelectItem>
+                {ALL_COUNTRIES.map(country => (
+                  <SelectItem key={country} value={country}>{country}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedCountry && (
+              <Select value={selectedCity} onValueChange={setSelectedCity}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={t('filters.select_city')} />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  <SelectItem value="all">Все города</SelectItem>
+                  {POPULAR_CITIES[selectedCountry].map(city => (
+                    <SelectItem key={city} value={city}>{city}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </FilterSection>
 
         <FilterSection title={t('filters.interests')}>

@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { DATING_GOALS, INTEREST_OPTIONS, CAPITALS, CIRCADIAN_RHYTHM_OPTIONS, ATTACHMENT_STYLE_OPTIONS } from "@/lib/constants";
+import { POPULAR_CITIES, DATING_GOALS, INTEREST_OPTIONS, CIRCADIAN_RHYTHM_OPTIONS, ATTACHMENT_STYLE_OPTIONS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/shims/firebase";
 import { PremiumDialog } from "./premium-dialog";
@@ -44,6 +44,7 @@ export function FiltersDialog({
   const [ageRange, setAgeRange] = useState(currentFilters.ageRange || [18, 40]);
   const [distance, setDistance] = useState(currentFilters.distance || [50]);
   const [selectedCity, setSelectedCity] = useState(currentFilters.selectedCity || "Все");
+  const [selectedCountryFilters, setSelectedCountryFilters] = useState("");
   const [genderPref, setGenderPref] = useState(currentFilters.genderPref || "all");
   const [selectedDatingGoal, setSelectedDatingGoal] = useState(currentFilters.selectedDatingGoal || "all");
   const [selectedInterests, setSelectedInterests] = useState<string[]>(currentFilters.selectedInterests || []);
@@ -51,7 +52,23 @@ export function FiltersDialog({
   const [selectedAttachment, setSelectedAttachment] = useState(currentFilters.selectedAttachment || "all");
   const [premiumDialogOpen, setPremiumDialogOpen] = useState(false);
 
-  const cities = useMemo(() => ["Все", ...CAPITALS], []);
+  const cities = useMemo(() => {
+    if (!selectedCountryFilters || selectedCountryFilters === "Все") return ["Все"];
+    return ["Все", ...(POPULAR_CITIES[selectedCountryFilters] || [])];
+  }, [selectedCountryFilters]);
+
+  const ALL_COUNTRIES = useMemo(() => Object.keys(POPULAR_CITIES), []);
+
+  useEffect(() => {
+    if (selectedCity && selectedCity !== "Все" && !selectedCountryFilters) {
+      for (const [country, cities] of Object.entries(POPULAR_CITIES)) {
+        if (cities.includes(selectedCity)) {
+          setSelectedCountryFilters(country);
+          break;
+        }
+      }
+    }
+  }, [selectedCity, selectedCountryFilters]);
 
   const handlePremiumFeatureClick = () => {
     if (!isPro) {
@@ -148,13 +165,22 @@ export function FiltersDialog({
 
               {/* City */}
               <div className="space-y-3">
-                <Label className="font-bold">Город</Label>
-                <Select value={selectedCity} onValueChange={setSelectedCity}>
-                  <SelectTrigger className="rounded-xl h-12 font-medium"><SelectValue /></SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {cities.map(city => <SelectItem key={city} value={city}>{city}</SelectItem>)}
+                <Label className="font-bold">Страна и город</Label>
+                <Select value={selectedCountryFilters} onValueChange={(v) => { setSelectedCountryFilters(v); setSelectedCity("Все"); }}>
+                  <SelectTrigger className="rounded-xl h-12 font-medium"><SelectValue placeholder="Выберите страну" /></SelectTrigger>
+                  <SelectContent className="rounded-xl max-h-60">
+                    <SelectItem value="Все">Все страны</SelectItem>
+                    {ALL_COUNTRIES.map(country => <SelectItem key={country} value={country}>{country}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {selectedCountryFilters && (
+                  <Select value={selectedCity} onValueChange={setSelectedCity}>
+                    <SelectTrigger className="rounded-xl h-12 font-medium"><SelectValue /></SelectTrigger>
+                    <SelectContent className="rounded-xl max-h-60">
+                      {cities.map(city => <SelectItem key={city} value={city}>{city}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               
               {/* Gender Preference */}

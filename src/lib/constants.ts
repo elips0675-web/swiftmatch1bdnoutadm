@@ -85,6 +85,129 @@ export const CAPITALS: readonly string[] = [
     "Волгоград"
 ];
 
+export const POPULAR_CITIES: Record<string, string[]> = {
+  "Россия": [
+    "Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Казань",
+    "Нижний Новгород", "Челябинск", "Самара", "Омск", "Ростов-на-Дону",
+    "Уфа", "Красноярск", "Воронеж", "Пермь", "Волгоград", "Краснодар",
+    "Саратов", "Тюмень", "Тольятти", "Ижевск", "Барнаул", "Ульяновск",
+    "Иркутск", "Хабаровск", "Ярославль", "Владивосток", "Махачкала",
+    "Томск", "Оренбург", "Кемерово", "Рязань", "Астрахань", "Пенза",
+    "Липецк", "Тула", "Калининград", "Курск", "Ставрополь", "Улан-Удэ",
+    "Тверь", "Магнитогорск", "Иваново", "Брянск", "Сочи", "Белгород",
+    "Сургут", "Владимир", "Нижний Тагил", "Архангельск", "Чита",
+    "Калуга", "Смоленск", "Волжский", "Саранск", "Мурманск", "Кострома",
+    "Новороссийск", "Подольск", "Комсомольск-на-Амуре", "Таганрог"
+  ],
+  "США": [
+    "New York", "Los Angeles", "Chicago", "Houston", "Phoenix",
+    "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose",
+    "Austin", "Jacksonville", "Fort Worth", "Columbus", "Charlotte",
+    "Indianapolis", "San Francisco", "Seattle", "Denver", "Nashville",
+    "Oklahoma City", "El Paso", "Washington", "Boston", "Las Vegas",
+    "Portland", "Memphis", "Louisville", "Baltimore", "Milwaukee",
+    "Albuquerque", "Tucson", "Fresno", "Sacramento", "Mesa",
+    "Kansas City", "Atlanta", "Omaha", "Colorado Springs", "Raleigh",
+    "Long Beach", "Virginia Beach", "Miami", "Oakland", "Minneapolis",
+    "Tampa", "Tulsa", "Arlington", "New Orleans", "Cleveland"
+  ],
+  "Великобритания": [
+    "London", "Birmingham", "Leeds", "Glasgow", "Sheffield",
+    "Manchester", "Edinburgh", "Liverpool", "Bristol", "Cardiff",
+    "Leicester", "Nottingham", "Newcastle upon Tyne", "Southampton",
+    "Oxford", "Cambridge", "Brighton", "York", "Bath", "Belfast"
+  ],
+  "Германия": [
+    "Berlin", "Hamburg", "Munich", "Cologne", "Frankfurt",
+    "Stuttgart", "Düsseldorf", "Leipzig", "Dortmund", "Essen",
+    "Bremen", "Dresden", "Hanover", "Nuremberg", "Duisburg",
+    "Bochum", "Wuppertal", "Bonn", "Münster", "Mannheim"
+  ],
+  "Франция": [
+    "Paris", "Marseille", "Lyon", "Toulouse", "Nice",
+    "Nantes", "Strasbourg", "Montpellier", "Bordeaux", "Lille",
+    "Rennes", "Reims", "Saint-Étienne", "Le Havre", "Grenoble",
+    "Dijon", "Angers", "Nîmes", "Villeurbanne", "Clermont-Ferrand"
+  ],
+  "Испания": [
+    "Madrid", "Barcelona", "Valencia", "Seville", "Zaragoza",
+    "Málaga", "Murcia", "Palma de Mallorca", "Las Palmas", "Bilbao",
+    "Alicante", "Córdoba", "Valladolid", "Vigo", "Gijón",
+    "Granada", "Santander", "Pamplona", "San Sebastián", "Toledo"
+  ],
+  "Италия": [
+    "Rome", "Milan", "Naples", "Turin", "Palermo",
+    "Genoa", "Bologna", "Florence", "Catania", "Bari",
+    "Venice", "Verona", "Messina", "Padua", "Trieste",
+    "Brescia", "Parma", "Taranto", "Modena", "Reggio Calabria"
+  ],
+  "Китай": [
+    "Beijing", "Shanghai", "Guangzhou", "Shenzhen", "Chengdu",
+    "Nanjing", "Wuhan", "Xi'an", "Hangzhou", "Dongguan",
+    "Foshan", "Shenyang", "Qingdao", "Harbin", "Dalian",
+    "Jinan", "Zhengzhou", "Changsha", "Kunming", "Suzhou"
+  ],
+  "Индия": [
+    "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Ahmedabad",
+    "Chennai", "Kolkata", "Surat", "Pune", "Jaipur",
+    "Lucknow", "Kanpur", "Nagpur", "Indore", "Thane",
+    "Bhopal", "Visakhapatnam", "Pimpri-Chinchwad", "Patna", "Vadodara"
+  ],
+  "Турция": [
+    "Istanbul", "Ankara", "Izmir", "Bursa", "Antalya",
+    "Adana", "Gaziantep", "Konya", "Mersin", "Diyarbakır",
+    "Kayseri", "Eskişehir", "Samsun", "Denizli", "Trabzon",
+    "Malatya", "Şanlıurfa", "Kahramanmaraş", "Van", "Elazığ"
+  ],
+  "Казахстан": [
+    "Almaty", "Astana (Nur-Sultan)", "Shymkent", "Karagandy", "Aktobe",
+    "Taraz", "Pavlodar", "Ust-Kamenogorsk", "Semey", "Atyrau",
+    "Kostanay", "Kyzylorda", "Uralsk", "Petropavl", "Aktau"
+  ],
+  "Украина": [
+    "Kyiv", "Kharkiv", "Odesa", "Dnipro", "Lviv",
+    "Zaporizhzhia", "Kryvyi Rih", "Mykolaiv", "Vinnytsia", "Poltava",
+    "Chernihiv", "Cherkasy", "Sumy", "Zhytomyr", "Rivne"
+  ],
+  "Узбекистан": [
+    "Tashkent", "Samarkand", "Bukhara", "Namangan", "Andijan",
+    "Fergana", "Nukus", "Qarshi", "Kokand", "Margilan"
+  ],
+  "Беларусь": [
+    "Minsk", "Gomel", "Mogilev", "Vitebsk", "Grodno",
+    "Brest", "Babruysk", "Baranovichi", "Borisov", "Pinsk"
+  ],
+  "Польша": [
+    "Warsaw", "Kraków", "Łódź", "Wrocław", "Poznań",
+    "Gdańsk", "Szczecin", "Bydgoszcz", "Lublin", "Katowice"
+  ],
+  "Япония": [
+    "Tokyo", "Yokohama", "Osaka", "Nagoya", "Sapporo",
+    "Fukuoka", "Kobe", "Kyoto", "Kawasaki", "Saitama",
+    "Hiroshima", "Sendai", "Chiba", "Kitakyushu", "Naha"
+  ],
+  "ОАЭ": [
+    "Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah",
+    "Fujairah", "Al Ain", "Umm Al Quwain"
+  ],
+  "Израиль": [
+    "Jerusalem", "Tel Aviv", "Haifa", "Rishon LeZion", "Petah Tikva",
+    "Ashdod", "Netanya", "Beer Sheva", "Holon", "Ramat Gan"
+  ],
+  "Таиланд": [
+    "Bangkok", "Phuket", "Chiang Mai", "Pattaya", "Nonthaburi",
+    "Hat Yai", "Nakhon Ratchasima", "Khon Kaen", "Udon Thani", "Chon Buri"
+  ],
+  "Египет": [
+    "Cairo", "Alexandria", "Giza", "Sharm El Sheikh", "Hurghada",
+    "Luxor", "Aswan", "Port Said", "Suez", "Mansoura"
+  ],
+  "Вьетнам": [
+    "Ho Chi Minh City", "Hanoi", "Da Nang", "Haiphong", "Can Tho",
+    "Nha Trang", "Hue", "Da Lat", "Vung Tau", "Quy Nhon"
+  ],
+};
+
 export const CIRCADIAN_RHYTHM_OPTIONS = [
     { value: 'early-bird', label: 'Жаворонок (ранние подъемы)' },
     { value: 'night-owl', label: 'Сова (поздние отбои)' },

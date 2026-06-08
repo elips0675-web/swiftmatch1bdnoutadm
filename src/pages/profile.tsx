@@ -396,7 +396,7 @@ export default function ProfilePage() {
             </div>
             <h3 className="text-2xl font-black font-headline tracking-tight flex items-center justify-center gap-2">{profile.displayName}, {profile.age} <CheckCircle2 size={20} className="text-primary" fill="currentColor" /></h3>
             <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest opacity-80 mt-1">{profile.city}</p>
-            <div className="mt-4">
+            <div className="mt-4 flex justify-center">
                 <Button 
                     onClick={() => setIsBoostDialogOpen(true)} 
                     className={cn("h-12 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg transition-all text-white active:scale-95 px-6", isBoosted ? "bg-purple-600 shadow-purple-600/40 animate-pulse" : "bg-orange-500 shadow-orange-500/40")}

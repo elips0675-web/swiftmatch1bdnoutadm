@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useReducer, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useReducer, useCallback, useRef, type ReactNode } from 'react'
 import { getSupabase } from '@/lib/supabase'
 import type { AuthState } from '@/types'
-import type { User } from '@supabase/supabase-js'
+import type { User, SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/supabase'
 
 interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<void>
@@ -10,6 +11,7 @@ interface AuthContextValue extends AuthState {
   logout: () => void
   clearError: () => void
   supabaseUser: User | null
+  isDemo: boolean
 }
 
 type AuthAction =
@@ -47,10 +49,21 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState)
+  const supabaseRef = useRef<SupabaseClient<Database> | null>(null)
   const supabase = getSupabase()
+  supabaseRef.current = supabase
+  const isDemo = !supabase
 
   useEffect(() => {
+    if (!supabase) {
+      dispatch({ type: 'AUTH_LOGOUT' })
+      return
+    }
+
+    let cancelled = false
+
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (cancelled) return
       if (event === 'SIGNED_IN' && session?.user) {
         const user = session.user
         dispatch({
@@ -65,12 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
       } else if (event === 'SIGNED_OUT') {
         dispatch({ type: 'AUTH_LOGOUT' })
-      } else if (event === 'TOKEN_REFRESHED') {
-        // session refreshed
       }
     })
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (cancelled) return
       if (session?.user) {
         const user = session.user
         dispatch({
@@ -88,44 +100,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    return () => listener?.subscription.unsubscribe()
+    return () => {
+      cancelled = true
+      listener?.subscription.unsubscribe()
+    }
   }, [supabase])
+
+  const getClient = useCallback((): SupabaseClient<Database> => {
+    const sb = supabaseRef.current
+    if (!sb) throw new Error('Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')
+    return sb
+  }, [])
 
   const login = useCallback(async (email: string, password: string) => {
     dispatch({ type: 'AUTH_START' })
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      dispatch({ type: 'AUTH_FAILURE', payload: error.message })
-      throw error
+    try {
+      const sb = getClient()
+      const { error } = await sb.auth.signInWithPassword({ email, password })
+      if (error) throw error
+    } catch (err: any) {
+      dispatch({ type: 'AUTH_FAILURE', payload: err.message || 'Login failed' })
+      throw err
     }
-  }, [supabase])
+  }, [getClient])
 
   const loginWithGoogle = useCallback(async () => {
     dispatch({ type: 'AUTH_START' })
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' })
-    if (error) {
-      dispatch({ type: 'AUTH_FAILURE', payload: error.message })
-      throw error
+    try {
+      const sb = getClient()
+      const { error } = await sb.auth.signInWithOAuth({ provider: 'google' })
+      if (error) throw error
+    } catch (err: any) {
+      dispatch({ type: 'AUTH_FAILURE', payload: err.message || 'Google login failed' })
+      throw err
     }
-  }, [supabase])
+  }, [getClient])
 
   const register = useCallback(async (email: string, password: string, name: string) => {
     dispatch({ type: 'AUTH_START' })
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name } },
-    })
-    if (error) {
-      dispatch({ type: 'AUTH_FAILURE', payload: error.message })
-      throw error
+    try {
+      const sb = getClient()
+      const { error } = await sb.auth.signUp({
+        email, password,
+        options: { data: { name } },
+      })
+      if (error) throw error
+    } catch (err: any) {
+      dispatch({ type: 'AUTH_FAILURE', payload: err.message || 'Registration failed' })
+      throw err
     }
-  }, [supabase])
+  }, [getClient])
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut()
+    try {
+      const sb = supabaseRef.current
+      if (sb) await sb.auth.signOut()
+    } catch { /* ignore */ }
     dispatch({ type: 'AUTH_LOGOUT' })
-  }, [supabase])
+  }, [])
 
   const clearError = useCallback(() => {
     dispatch({ type: 'CLEAR_ERROR' })
@@ -137,7 +169,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ ...state, login, loginWithGoogle, register, logout, clearError, supabaseUser }}
+      value={{
+        ...state,
+        login,
+        loginWithGoogle,
+        register,
+        logout,
+        clearError,
+        supabaseUser,
+        isDemo,
+      }}
     >
       {children}
     </AuthContext.Provider>

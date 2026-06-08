@@ -2,34 +2,41 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/supabase'
 
 let client: SupabaseClient<Database> | null = null
+let initAttempted = false
 
-export function getSupabase(): SupabaseClient<Database> {
+export function getSupabase(): SupabaseClient<Database> | null {
   if (client) return client
+  if (initAttempted) return null
+
+  initAttempted = true
 
   const url = import.meta.env.VITE_SUPABASE_URL
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
   if (!url || !anonKey) {
-    throw new Error(
-      'Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY env vars. ' +
-      'Create a Supabase project at https://supabase.com and copy the keys.',
+    console.warn(
+      '[Supabase] VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY not set. ' +
+      'Falling back to demo mode. Set these env vars for production.',
     )
+    return null
   }
 
-  client = createClient<Database>(url, anonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-    realtime: {
-      params: {
-        eventsPerSecond: 10,
+  try {
+    client = createClient<Database>(url, anonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
       },
-    },
-  })
-
-  return client
+      realtime: {
+        params: { eventsPerSecond: 10 },
+      },
+    })
+    return client
+  } catch (err) {
+    console.warn('[Supabase] Failed to init:', err)
+    return null
+  }
 }
 
 export function getSupabaseAdmin() {

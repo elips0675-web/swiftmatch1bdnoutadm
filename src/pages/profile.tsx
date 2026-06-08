@@ -917,14 +917,14 @@ export default function ProfilePage() {
           <div className="p-6 flex flex-col items-center gap-3">
             <Button 
               onClick={() => handleBoost('ad')}
-              className="h-14 rounded-2xl bg-green-500 hover:bg-green-600 text-white font-black uppercase tracking-widest shadow-xl shadow-green-500/20 border-0 active:scale-95 transition-all flex items-center gap-2 px-8"
+              className="h-14 rounded-2xl bg-green-500 hover:bg-green-600 text-white font-bold shadow-xl shadow-green-500/20 border-0 active:scale-95 transition-all flex items-center gap-2 w-full justify-center"
             >
               <Video size={20} />
               <span>Смотреть рекламу (бесплатно)</span>
             </Button>
             <Button 
               onClick={() => handleBoost('payment')}
-              className="h-14 rounded-2xl gradient-bg text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20 border-0 active:scale-95 transition-all flex items-center gap-2 px-8"
+              className="h-14 rounded-2xl gradient-bg text-white font-bold shadow-xl shadow-primary/20 border-0 active:scale-95 transition-all flex items-center gap-2 w-full justify-center"
             >
               <CreditCard size={20} />
               <span>Оплатить (49 ₽)</span>

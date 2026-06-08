@@ -4,38 +4,38 @@ export type AttachmentStyle = 'secure' | 'anxious' | 'avoidant';
 export const ATTACHMENT_STYLE_QUESTIONS = [
   {
     id: 'q1',
-    text: 'Когда вы сближаетесь с кем-то, как вы обычно себя чувствуете?',
+    text: 'attach.q1.text',
     options: [
-      { id: 'a', text: 'Спокойно и уверенно, я наслаждаюсь близостью.', style: 'secure' as AttachmentStyle },
-      { id: 'b', text: 'Немного тревожно, я боюсь, что человек может уйти.', style: 'anxious' as AttachmentStyle },
-      { id: 'c', text: 'Некомфортно, я предпочитаю держать дистанцию.', style: 'avoidant' as AttachmentStyle },
+      { id: 'a', text: 'attach.q1.a', style: 'secure' as AttachmentStyle },
+      { id: 'b', text: 'attach.q1.b', style: 'anxious' as AttachmentStyle },
+      { id: 'c', text: 'attach.q1.c', style: 'avoidant' as AttachmentStyle },
     ],
   },
   {
     id: 'q2',
-    text: 'Как вы ведете себя в конфликте с партнером?',
+    text: 'attach.q2.text',
     options: [
-      { id: 'a', text: 'Я стараюсь открыто обсудить проблему и найти решение.', style: 'secure' as AttachmentStyle },
-      { id: 'b', text: 'Я сильно переживаю и могу быть очень эмоциональным, боясь разрыва.', style: 'anxious' as AttachmentStyle },
-      { id: 'c', text: 'Я склонен замыкаться в себе и избегать обсуждения.', style: 'avoidant' as AttachmentStyle },
+      { id: 'a', text: 'attach.q2.a', style: 'secure' as AttachmentStyle },
+      { id: 'b', text: 'attach.q2.b', style: 'anxious' as AttachmentStyle },
+      { id: 'c', text: 'attach.q2.c', style: 'avoidant' as AttachmentStyle },
     ],
   },
   {
     id: 'q3',
-    text: 'Насколько для вас важна независимость в отношениях?',
+    text: 'attach.q3.text',
     options: [
-      { id: 'a', text: 'Важна, но я ценю и взаимную поддержку.', style: 'secure' as AttachmentStyle },
-      { id: 'b', text: 'Я предпочитаю проводить как можно больше времени вместе.', style: 'anxious' as AttachmentStyle },
-      { id: 'c', text: 'Очень важна, мне нужно много личного пространства.', style: 'avoidant' as AttachmentStyle },
+      { id: 'a', text: 'attach.q3.a', style: 'secure' as AttachmentStyle },
+      { id: 'b', text: 'attach.q3.b', style: 'anxious' as AttachmentStyle },
+      { id: 'c', text: 'attach.q3.c', style: 'avoidant' as AttachmentStyle },
     ],
   },
     {
     id: 'q4',
-    text: 'Что вы чувствуете, если партнер долго не отвечает на сообщения?',
+    text: 'attach.q4.text',
     options: [
-      { id: 'a', text: 'Скорее всего, он просто занят. Напишет, когда освободится.', style: 'secure' as AttachmentStyle },
-      { id: 'b', text: 'Я начинаю волноваться, что что-то случилось или я что-то сделал не так.', style: 'anxious' as AttachmentStyle },
-      { id: 'c', text: 'Я не обращаю на это особого внимания, у всех свои дела.', style: 'avoidant' as AttachmentStyle },
+      { id: 'a', text: 'attach.q4.a', style: 'secure' as AttachmentStyle },
+      { id: 'b', text: 'attach.q4.b', style: 'anxious' as AttachmentStyle },
+      { id: 'c', text: 'attach.q4.c', style: 'avoidant' as AttachmentStyle },
     ],
   },
 ];
@@ -67,20 +67,20 @@ export function calculateAttachmentStyle(answers: { [questionId: string]: Attach
   return resultStyle;
 }
 
-export const ATTACHMENT_STYLE_INFO: { [key in AttachmentStyle]: { label: string; description: string; emoji: string; } } = {
+export const ATTACHMENT_STYLE_INFO: { [key in AttachmentStyle]: { labelKey: string; descKey: string; emoji: string; } } = {
     secure: {
-        label: 'Надежный',
-        description: 'Вы легко сближаетесь с людьми и не боитесь зависимости. Вы не беспокоитесь о том, что вас покинут.',
+        labelKey: 'attach.style.secure.label',
+        descKey: 'attach.style.secure.desc',
         emoji: '✅'
     },
     anxious: {
-        label: 'Тревожный',
-        description: 'Вы жаждете близости, но часто боитесь, что партнер не захочет быть с вами так же сильно. Вы очень чувствительны к настроению партнера.',
+        labelKey: 'attach.style.anxious.label',
+        descKey: 'attach.style.anxious.desc',
         emoji: '😟'
     },
     avoidant: {
-        label: 'Избегающий',
-        description: 'Вам некомфортна слишком большая близость. Вы цените свою независимость и самостоятельность, и не любите зависеть от других.',
+        labelKey: 'attach.style.avoidant.label',
+        descKey: 'attach.style.avoidant.desc',
         emoji: '💨'
     }
 }

@@ -308,7 +308,7 @@ export default function OnboardingPage() {
                     <SelectValue placeholder={t('onboarding.step3.goal_placeholder')} />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-0 shadow-2xl">
-                    {dynamicGoals.map(goal => <SelectItem key={goal} value={goal} className="font-bold py-3">{goal}</SelectItem>)}
+                    {dynamicGoals.map(goal => <SelectItem key={goal} value={goal} className="font-bold py-3">{t(goal)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -394,7 +394,10 @@ export default function OnboardingPage() {
             <div key={i} className={cn("w-2 h-2 rounded-full transition-all", step === i + 1 ? "w-6 bg-primary" : "bg-muted")}></div>
           ))}
         </div>
-        <Button variant="ghost" onClick={handleFinish} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t('button.skip')}</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" onClick={() => router.push("/")} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t('button.go_home')}</Button>
+          <Button variant="ghost" onClick={handleFinish} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t('button.skip')}</Button>
+        </div>
       </header>
       <main className="flex-1 px-8 pt-4 pb-24 max-w-md mx-auto w-full">{renderStep()}</main>
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] p-6 bg-white/80 backdrop-blur-md">

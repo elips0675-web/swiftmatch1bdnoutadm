@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { Button } from '@/components/ui/button';
 import { AppHeader } from '@/components/layout/app-header';
+import { useLanguage } from '@/context/language-context';
 import { 
     ATTACHMENT_STYLE_QUESTIONS, 
     calculateAttachmentStyle, 
@@ -21,6 +22,7 @@ export default function AttachmentStyleTestPage() {
   const router = useRouter();
   const { user } = useUser();
   const firestore = useFirestore();
+  const { t } = useLanguage();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<{ [key: string]: AttachmentStyle }>({});
@@ -55,16 +57,16 @@ export default function AttachmentStyleTestPage() {
 
     if (!user || !firestore) {
         setIsSaving(false);
-        toast({ title: "Тест пройден!", description: `Ваш стиль привязанности: ${ATTACHMENT_STYLE_INFO[result].label}` });
+        toast({ title: t('attach.toast.done'), description: `${t('attach.toast.your_style')} ${t(ATTACHMENT_STYLE_INFO[result].labelKey)}` });
         return;
     };
     try {
         const userDocRef = doc(firestore, 'users', user.uid);
         await setDoc(userDocRef, { attachmentStyle: result }, { merge: true });
-        toast({ title: "Тест пройден и сохранен! ✨", description: `Ваш стиль привязанности: ${ATTACHMENT_STYLE_INFO[result].label}` });
+        toast({ title: t('attach.toast.saved'), description: `${t('attach.toast.your_style')} ${t(ATTACHMENT_STYLE_INFO[result].labelKey)}` });
     } catch (error) {
         console.error("Error saving attachment style:", error);
-        toast({ title: "Ошибка сохранения", variant: "destructive" });
+        toast({ title: t('attach.toast.save_error'), variant: "destructive" });
     } finally {
         setIsSaving(false);
     }
@@ -98,10 +100,10 @@ export default function AttachmentStyleTestPage() {
                         {ATTACHMENT_STYLE_INFO[testResult].emoji}
                     </div>
                     <h2 className="text-3xl font-black font-headline tracking-tighter text-purple-700">
-                        {ATTACHMENT_STYLE_INFO[testResult].label}
+                        {t(ATTACHMENT_STYLE_INFO[testResult].labelKey)}
                     </h2>
                     <p className="text-sm text-muted-foreground mt-4 mb-8 leading-relaxed">
-                        {ATTACHMENT_STYLE_INFO[testResult].description}
+                        {t(ATTACHMENT_STYLE_INFO[testResult].descKey)}
                     </p>
                     
                     <div className="space-y-4">
@@ -110,11 +112,11 @@ export default function AttachmentStyleTestPage() {
                             className="w-full h-14 rounded-2xl gradient-bg text-white font-black uppercase tracking-widest shadow-xl shadow-primary/30 border-0 hover:brightness-110 active:scale-95 transition-all"
                         >
                             <Home className="mr-2" size={16}/>
-                            Вернуться в профиль
+                            {t('attach.to_profile')}
                         </Button>
                         <Button onClick={resetTest} variant="ghost" className="w-full h-12 rounded-xl">
                             <Repeat className="mr-2" size={14}/>
-                            Пройти заново
+                            {t('attach.retake')}
                         </Button>
                     </div>
                   </div>
@@ -129,8 +131,8 @@ export default function AttachmentStyleTestPage() {
                 className="max-w-md mx-auto"
               >
                 <div className="text-center mb-6">
-                    <h1 className="text-xl font-black font-headline tracking-tight">Тест на стиль привязанности</h1>
-                    <p className="text-muted-foreground text-xs mt-1">Узнайте, как вы строите отношения.</p>
+                    <h1 className="text-xl font-black font-headline tracking-tight">{t('attach.test.title')}</h1>
+                    <p className="text-muted-foreground text-xs mt-1">{t('attach.test.subtitle')}</p>
                 </div>
 
                 <div className="bg-white rounded-3xl p-6 app-shadow space-y-6 border border-border/40">
@@ -144,12 +146,12 @@ export default function AttachmentStyleTestPage() {
                             />
                         </div>
                         <div className="text-center text-[10px] font-black uppercase text-muted-foreground tracking-widest">
-                            Вопрос {currentQuestionIndex + 1} из {ATTACHMENT_STYLE_QUESTIONS.length}
+                            {t('attach.question_of', { current: currentQuestionIndex + 1, total: ATTACHMENT_STYLE_QUESTIONS.length })}
                         </div>
                     </div>
                     
                     <div className="text-center pt-2">
-                        <h3 className="font-semibold text-lg leading-snug min-h-[50px]">{currentQuestion.text}</h3>
+                        <h3 className="font-semibold text-lg leading-snug min-h-[50px]">{t(currentQuestion.text)}</h3>
                     </div>
 
                     <div className="space-y-3 pt-2">
@@ -166,7 +168,7 @@ export default function AttachmentStyleTestPage() {
                                         : 'border-transparent hover:border-primary/50'
                                 )}
                             >
-                                <span>{option.text}</span>
+                                <span>{t(option.text)}</span>
                                 {answers[currentQuestion.id] === option.style && <Check size={20} className="text-primary" />}
                             </motion.button>
                         ))}
@@ -174,7 +176,7 @@ export default function AttachmentStyleTestPage() {
                 </div>
                  <Button onClick={() => router.back()} variant="ghost" className="w-full mt-4 text-muted-foreground">
                     <ChevronLeft size={16} className="mr-1" />
-                    Назад
+                    {t('attach.back')}
                 </Button>
               </motion.div>
           )}

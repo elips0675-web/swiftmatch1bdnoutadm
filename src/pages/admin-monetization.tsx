@@ -8,6 +8,7 @@ import { Save, DollarSign, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { generateRevenueData, generateConversionFunnel } from '@/lib/admin-mock-data';
+import { useLanguage } from '@/context/language-context';
 
 const PRICING = [
   { tier: 'Plus', prices: { '1': 299, '6': 1499, '12': 2399 }, color: '#3b82f6' },
@@ -16,6 +17,7 @@ const PRICING = [
 ];
 
 export default function MonetizationPage() {
+  const { t } = useLanguage();
   const [pricing, setPricing] = useState(PRICING);
   const [ads, setAds] = useState({ google: true, yandex: false, googleId: 'ca-app-pub-3940256099942544/5224354917', yandexId: 'R-M-DEMO-rewarded' });
   const revenueData = generateRevenueData();
@@ -30,7 +32,7 @@ export default function MonetizationPage() {
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
-            <Crown className="h-5 w-5 text-amber-500" /> Тарифы подписок (₽)
+            <Crown className="h-5 w-5 text-amber-500" /> {t('admin.monetization.pricing_title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -43,9 +45,9 @@ export default function MonetizationPage() {
                 </div>
                 {(['1', '6', '12'] as const).map(period => (
                   <div key={period} className="flex items-center gap-2">
-                    <Label className="text-xs text-muted-foreground w-16">{period} мес</Label>
+                    <Label className="text-xs text-muted-foreground w-16">{period} {t('units.month_short')}</Label>
                     <Input type="number" value={tier.prices[period]} onChange={e => updatePrice(ti, period, e.target.value)} className="h-9 rounded-lg text-right font-bold" />
-                    <span className="text-xs text-muted-foreground">₽</span>
+                    <span className="text-xs text-muted-foreground">{t('units.ruble')}</span>
                   </div>
                 ))}
               </div>
@@ -53,8 +55,8 @@ export default function MonetizationPage() {
           </div>
         </CardContent>
         <CardFooter className="border-t p-4 flex justify-end">
-          <Button onClick={() => toast.success('Цены сохранены')} className="rounded-full h-10 px-8 font-bold">
-            <Save className="mr-2 h-3 w-3" /> Сохранить
+          <Button onClick={() => toast.success(t('admin.monetization.prices_saved'))} className="rounded-full h-10 px-8 font-bold">
+            <Save className="mr-2 h-3 w-3" /> {t('admin.monetization.save')}
           </Button>
         </CardFooter>
       </Card>
@@ -62,7 +64,7 @@ export default function MonetizationPage() {
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg font-black flex items-center gap-2">
-            <DollarSign className="h-5 w-5" /> Рекламные блоки
+            <DollarSign className="h-5 w-5" /> {t('admin.monetization.ad_blocks')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -91,7 +93,7 @@ export default function MonetizationPage() {
 
       <Card className="border-0 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-black">Доход по месяцам</CardTitle>
+          <CardTitle className="text-lg font-black">{t('admin.monetization.monthly_revenue')}</CardTitle>
         </CardHeader>
         <CardContent className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -101,9 +103,9 @@ export default function MonetizationPage() {
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
               <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
               <Legend />
-              <Bar dataKey="subscriptions" name="Подписки" fill="#fe3c72" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="ads" name="Реклама" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="boosts" name="Бусты" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="subscriptions" name={t('admin.monetization.subscriptions')} fill="#fe3c72" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="ads" name={t('admin.monetization.ads')} fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="boosts" name={t('admin.monetization.boosts')} fill="#f59e0b" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
@@ -111,7 +113,7 @@ export default function MonetizationPage() {
 
       <Card className="border-0 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-black">Воронка конверсии</CardTitle>
+          <CardTitle className="text-lg font-black">{t('admin.monetization.conversion_funnel')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">

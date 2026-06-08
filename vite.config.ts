@@ -27,10 +27,9 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks(id: string) {
-          if (id.includes("node_modules/react-dom") || id.includes("node_modules/react/") || id.includes("node_modules/react-router")) return "vendor";
+          if (id.includes("node_modules/react-dom") || id.includes("node_modules/react/") || id.includes("node_modules/react-router") || id.includes("node_modules/recharts") || id.includes("node_modules/date-fns")) return "vendor";
           if (id.includes("node_modules/@radix-ui")) return "ui";
           if (id.includes("node_modules/framer-motion")) return "animations";
-          if (id.includes("node_modules/recharts") || id.includes("node_modules/date-fns")) return "charts";
           if (id.includes("node_modules/@supabase")) return "supabase";
         },
       },

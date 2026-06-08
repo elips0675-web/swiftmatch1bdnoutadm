@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { getSupabase } from '@/lib/supabase'
-import { useAuth } from '@/context/auth-context'
+import { useAuth as useAuthContext } from '@/context/auth-context'
 import type { ProfileRow } from '@/types/supabase'
 
 interface DocState<T> {
@@ -37,7 +37,7 @@ export function useFirestore() {
 }
 
 export function useAuth(): { user: FirebaseUser | null; loading: boolean } {
-  const { supabaseUser, isLoading } = useAuth()
+  const { supabaseUser, isLoading } = useAuthContext()
   if (!supabaseUser) return { user: null, loading: isLoading }
 
   return {

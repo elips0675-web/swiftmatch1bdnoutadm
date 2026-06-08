@@ -173,7 +173,7 @@ export default function ActivityPage() {
 }
 
 function ActivityItem({ item, onUnlock }: { item: any, onUnlock: () => void }) {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   
   const getIcon = () => {
     switch (item.type) {
@@ -250,7 +250,7 @@ function ActivityItem({ item, onUnlock }: { item: any, onUnlock: () => void }) {
           )}
         </div>
         <p className="text-xs text-muted-foreground font-black tracking-widest uppercase opacity-40 mt-1">
-          {item.time.replace('мин назад', language === 'RU' ? 'мин назад' : 'min ago').replace('час назад', language === 'RU' ? 'час назад' : 'hour ago').replace('дня назад', language === 'RU' ? 'дня назад' : 'days ago')}
+          {item.time.replace('мин назад', t('time.min_ago')).replace('час назад', t('time.hour_ago')).replace('дня назад', t('time.days_ago'))}
         </p>
         
         {item.blurred && (
@@ -258,7 +258,7 @@ function ActivityItem({ item, onUnlock }: { item: any, onUnlock: () => void }) {
             onClick={(e) => { e.stopPropagation(); onUnlock(); }}
             className="text-[10px] font-black text-primary flex items-center gap-1 mt-1 bg-primary/5 px-2 py-0.5 rounded-full w-fit hover:bg-primary/10 transition-all uppercase tracking-widest shadow-sm border border-primary/10"
           >
-            <Sparkles size={8} className="animate-pulse" /> {language === 'RU' ? 'Раскрыть' : 'Reveal'}
+            <Sparkles size={8} className="animate-pulse" /> {t('button.reveal')}
           </button>
         )}
       </div>

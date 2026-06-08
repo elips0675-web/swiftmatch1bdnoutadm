@@ -117,7 +117,7 @@ export default function EditProfilePage() {
 
   const handleRemovePhoto = (index: number) => {
     if (photos.length <= 1) {
-      toast({ title: "Нельзя удалить", description: "В профиле должна быть хотя бы одна фотография.", variant: "destructive" });
+      toast({ title: t('toast.cannot_delete'), description: t('toast.cannot_delete_desc'), variant: "destructive" });
       return;
     }
     const url = photos[index];
@@ -133,9 +133,9 @@ export default function EditProfilePage() {
     try {
       const result = await generateProfileBio({ keywords: profile.interests, description: profile.bio });
       setProfile((prev: any) => ({ ...prev, bio: result.bio }));
-      toast({ title: t('profile.ai_improve'), description: "Ваше био было улучшено с помощью AI." });
+      toast({ title: t('profile.ai_improve'), description: t('toast.bio_improved') });
     } catch (error) {
-      toast({ variant: "destructive", title: "AI Error", description: "Не удалось сгенерировать био." });
+      toast({ variant: "destructive", title: t('toast.ai_error'), description: t('toast.ai_error_desc') });
     } finally {
       setIsGeneratingBio(false);
     }
@@ -143,7 +143,7 @@ export default function EditProfilePage() {
 
   const handleSave = () => {
     if (photos.length === 0) {
-      toast({ title: "Ошибка сохранения", description: "Загрузите хотя бы одну фотографию.", variant: "destructive" });
+      toast({ title: t('toast.save_error'), description: t('toast.save_error_desc'), variant: "destructive" });
       return;
     }
 
@@ -160,7 +160,7 @@ export default function EditProfilePage() {
     localStorage.setItem('userProfile', JSON.stringify(dataToSave));
     localStorage.setItem('userProfileGallery', JSON.stringify(photos.filter(p => !p.startsWith('blob:'))));
 
-    toast({ title: "Профиль сохранен", description: "Ваши данные успешно обновлены." });
+    toast({ title: t('toast.profile_saved'), description: t('toast.profile_saved_desc') });
     setIsSaving(false);
     router.push("/profile");
   };
@@ -206,10 +206,10 @@ export default function EditProfilePage() {
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center text-red-600"><Info size={14} /></div>
-                <h3 className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Фотографии</h3>
+                <h3 className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">{t('profile.photos')}</h3>
               </div>
               <label htmlFor="photo-upload" className="cursor-pointer text-primary font-bold text-xs uppercase tracking-widest hover:text-primary/80 transition-colors">
-                Загрузить
+                {t('button.upload')}
               </label>
               <input id="photo-upload" type="file" accept="image/*" multiple onChange={handleAddPhoto} className="hidden" />
             </div>
@@ -229,7 +229,7 @@ export default function EditProfilePage() {
               ))}
               <label htmlFor="photo-upload" className="cursor-pointer aspect-square rounded-xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 hover:border-primary transition-colors">
                 <UploadCloud size={24} />
-                <span className="text-[10px] font-bold mt-1 text-center">Добавить фото</span>
+                <span className="text-[10px] font-bold mt-1 text-center">{t('profile.add_photo')}</span>
               </label>
             </div>
           </div>
@@ -260,7 +260,7 @@ export default function EditProfilePage() {
 
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Имя</Label>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">{t('profile.label.name')}</Label>
               <Input value={profile.displayName || ''} onChange={e => setProfile({ ...profile, displayName: e.target.value })} className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4 focus-visible:ring-primary/20" />
             </div>
 
@@ -270,33 +270,33 @@ export default function EditProfilePage() {
                 <Select value={profile.gender || ''} onValueChange={(val) => setProfile({ ...profile, gender: val, lookingFor: val === 'female' ? 'male' : profile.lookingFor })}>
                   <SelectTrigger className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4"><SelectValue /></SelectTrigger>
                   <SelectContent className="rounded-xl border-0 shadow-2xl">
-                    <SelectItem value="male" className="font-bold text-[11px]">Мужчина</SelectItem>
-                    <SelectItem value="female" className="font-bold text-[11px]">Женщина</SelectItem>
+                    <SelectItem value="male" className="font-bold text-[11px]">{t('gender.male')}</SelectItem>
+                    <SelectItem value="female" className="font-bold text-[11px]">{t('gender.female')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Дата рождения</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">{t('profile.label.birth_date')}</Label>
                 <Input type="date" value={profile.birthDate?.split('T')[0] || ''} onChange={e => setProfile({ ...profile, birthDate: e.target.value })} className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4 focus-visible:ring-primary/20" />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Город</Label>
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">{t('profile.label.city')}</Label>
               <div className="relative"><MapPin size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/60" /><Input value={profile.location || profile.city || ''} onChange={e => setProfile({ ...profile, location: e.target.value, city: e.target.value })} className="rounded-xl bg-muted/30 border-0 h-11 font-bold pl-10 pr-4 focus-visible:ring-primary/20" /></div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Рост (см)</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">{t('profile.label.height_cm')}</Label>
                 <Input type="number" value={profile.height || ''} onChange={e => setProfile({ ...profile, height: parseInt(e.target.value) || 0 })} className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4 focus-visible:ring-primary/20" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Знак зодиака</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">{t('profile.label.zodiac_sign')}</Label>
                 <Select value={profile.zodiac || ''} onValueChange={(val) => setProfile({ ...profile, zodiac: val })}>
                   <SelectTrigger className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4"><SelectValue /></SelectTrigger>
                   <SelectContent className="rounded-xl border-0 shadow-2xl">
-                    {ZODIAC_SIGNS.map(sign => <SelectItem key={sign} value={sign} className="font-bold text-[11px]">{sign}</SelectItem>)}
+                    {ZODIAC_SIGNS.map(sign => <SelectItem key={sign} value={sign} className="font-bold text-[11px]">{t(sign)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -309,7 +309,7 @@ export default function EditProfilePage() {
                   <SelectValue placeholder={t('onboarding.step3.goal_placeholder')} />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-0 shadow-2xl">
-                  {DATING_GOALS.map(goal => <SelectItem key={goal} value={goal} className="font-bold text-[11px]">{goal}</SelectItem>)}
+                  {DATING_GOALS.map(goal => <SelectItem key={goal} value={goal} className="font-bold text-[11px]">{t(goal)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

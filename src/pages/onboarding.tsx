@@ -31,7 +31,7 @@ const GENDER_OPTIONS = [
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
   const totalSteps = 5;
@@ -201,7 +201,7 @@ export default function OnboardingPage() {
         router.push("/"); 
     } catch (error) {
         console.error("Error saving profile:", error);
-        toast({ title: "Ошибка сохранения", variant: "destructive" });
+        toast({ title: t('onboarding.save_error'), variant: "destructive" });
     }
   };
 
@@ -268,7 +268,7 @@ export default function OnboardingPage() {
               <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-1.5">
                       {formData.circadian === 'lark' ? <Sun size={12}/> : <Moon size={12}/>}
-                      Режим сна
+                      {t('onboarding.step2.sleep_label')}
                   </Label>
                   <div className="flex flex-wrap gap-2">
                       {CIRCADIAN_RHYTHM_OPTIONS.map(opt => (
@@ -283,9 +283,9 @@ export default function OnboardingPage() {
                                       : "bg-muted text-muted-foreground hover:bg-border"
                               )}
                           >
-                              {opt.label}
-                          </Badge>
-                      ))}
+                               {t(opt.label)}
+                           </Badge>
+                       ))}
                   </div>
               </div>
             </div>
@@ -314,16 +314,16 @@ export default function OnboardingPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
-                  <Search size={14} className="text-primary" /> {language === 'RU' ? 'Кого вы ищете?' : 'Who are you looking for?'}
+                  <Search size={14} className="text-primary" /> {t('onboarding.step3.looking_for')}
                 </Label>
                 <Select value={formData.lookingFor} onValueChange={(val) => setFormData({...formData, lookingFor: val})}>
                   <SelectTrigger className="h-14 rounded-xl bg-muted/30 border-0 font-bold px-6">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-0 shadow-2xl">
-                    <SelectItem value="male" className="font-bold py-3">{language === 'RU' ? 'Мужчин' : 'Men'}</SelectItem>
-                    <SelectItem value="female" className="font-bold py-3">{language === 'RU' ? 'Женщин' : 'Women'}</SelectItem>
-                    <SelectItem value="all" className="font-bold py-3">{language === 'RU' ? 'Всех' : 'All'}</SelectItem>
+                    <SelectItem value="male" className="font-bold py-3">{t('gender.men')}</SelectItem>
+                    <SelectItem value="female" className="font-bold py-3">{t('gender.women')}</SelectItem>
+                    <SelectItem value="all" className="font-bold py-3">{t('gender.all')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

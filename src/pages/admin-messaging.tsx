@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Send, Mail, Bell, Download, Globe, Loader as Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateMockCampaigns, exportToCsv, type MockCampaign } from '@/lib/admin-mock-data';
+import { useLanguage } from '@/context/language-context';
 
 const STATUS_BADGE: Record<string, string> = {
   sent: 'bg-emerald-100 text-emerald-800',
@@ -19,6 +20,7 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 export default function AdminMessagingPage() {
+  const { t } = useLanguage();
   const [campaigns, setCampaigns] = useState<MockCampaign[]>(generateMockCampaigns);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -27,7 +29,7 @@ export default function AdminMessagingPage() {
   const [isSending, setIsSending] = useState(false);
 
   const handleSend = () => {
-    if (!title || !body) { toast.error('Заполните все поля'); return; }
+    if (!title || !body) { toast.error(t('admin.messaging.fill_all')); return; }
     setIsSending(true);
     setTimeout(() => {
       const newCampaign: MockCampaign = {
@@ -42,7 +44,7 @@ export default function AdminMessagingPage() {
       setCampaigns(prev => [newCampaign, ...prev]);
       setTitle(''); setBody('');
       setIsSending(false);
-      toast.success('Сообщение отправлено');
+      toast.success(t('admin.messaging.sent'));
     }, 1500);
   };
 
@@ -51,13 +53,13 @@ export default function AdminMessagingPage() {
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
-            <Globe className="h-5 w-5 text-primary" /> Рассылка
+            <Globe className="h-5 w-5 text-primary" /> {t('admin.messaging.title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase text-muted-foreground">Канал</Label>
+              <Label className="text-[10px] font-bold uppercase text-muted-foreground">{t('admin.messaging.channel')}</Label>
               <Select value={channel} onValueChange={setChannel}>
                 <SelectTrigger className="h-10 rounded-xl"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -67,37 +69,37 @@ export default function AdminMessagingPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase text-muted-foreground">Аудитория</Label>
+              <Label className="text-[10px] font-bold uppercase text-muted-foreground">{t('admin.messaging.audience')}</Label>
               <Select value={target} onValueChange={setTarget}>
                 <SelectTrigger className="h-10 rounded-xl"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Все пользователи</SelectItem>
+                  <SelectItem value="all">{t('admin.messaging.all_users')}</SelectItem>
                   <SelectItem value="premium">Premium</SelectItem>
-                  <SelectItem value="new">Новые (7 дней)</SelectItem>
+                  <SelectItem value="new">{t('admin.messaging.new_users')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase text-muted-foreground">Заголовок</Label>
-              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Заголовок..." className="h-10 rounded-xl" />
+              <Label className="text-[10px] font-bold uppercase text-muted-foreground">{t('admin.messaging.subject')}</Label>
+              <Input value={title} onChange={e => setTitle(e.target.value)} placeholder={t('admin.messaging.subject_placeholder')} className="h-10 rounded-xl" />
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase text-muted-foreground">Текст сообщения</Label>
-            <Textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Текст..." className="min-h-[120px] rounded-xl" />
+              <Label className="text-[10px] font-bold uppercase text-muted-foreground">{t('admin.messaging.message_text')}</Label>
+            <Textarea value={body} onChange={e => setBody(e.target.value)} placeholder={t('admin.messaging.text_placeholder')} className="min-h-[120px] rounded-xl" />
           </div>
         </CardContent>
         <CardFooter className="border-t p-4 flex justify-end">
           <Button onClick={handleSend} disabled={isSending || !title || !body} className="rounded-full h-10 px-8 font-bold">
             {isSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-            Отправить
+            {t('admin.messaging.send')}
           </Button>
         </CardFooter>
       </Card>
 
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg font-black">История рассылок</CardTitle>
+          <CardTitle className="text-lg font-black">{t('admin.messaging.history')}</CardTitle>
           <Button variant="outline" size="sm" className="rounded-xl h-8" onClick={() => {
             exportToCsv('campaigns.csv', campaigns.map(c => ({ Заголовок: c.title, Канал: c.channel, Аудитория: c.target, Статус: c.status, Дата: c.sentAt, Доставлено: c.delivered, Открыто: c.opened, Клики: c.clicked })));
             toast.success('CSV скачан');
@@ -107,13 +109,13 @@ export default function AdminMessagingPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Заголовок</TableHead>
-                <TableHead className="hidden sm:table-cell">Канал</TableHead>
-                <TableHead className="hidden md:table-cell">Аудитория</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead className="hidden md:table-cell">Доставлено</TableHead>
-                <TableHead className="hidden lg:table-cell">Открыто</TableHead>
-                <TableHead className="hidden lg:table-cell">Клики</TableHead>
+                <TableHead>{t('admin.messaging.subject')}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t('admin.messaging.channel')}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('admin.messaging.audience')}</TableHead>
+                <TableHead>{t('admin.messaging.status')}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('admin.messaging.delivered')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t('admin.messaging.opened')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t('admin.messaging.clicked')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -25,7 +25,7 @@ import { requestNotificationPermission } from "@/lib/push-notifications";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const auth = useAuth();
   
   const [settings, setSettings] = useState({
@@ -59,10 +59,8 @@ export default function SettingsPage() {
       if (!granted) {
         toast({
           variant: "destructive",
-          title: language === 'RU' ? "Доступ запрещен" : "Permission denied",
-          description: language === 'RU' 
-            ? "Разрешите уведомления в настройках браузера." 
-            : "Please enable notifications in your browser settings.",
+          title: t('settings.push_denied_title'),
+          description: t('settings.push_denied_desc'),
         });
         return;
       }
@@ -70,7 +68,7 @@ export default function SettingsPage() {
     setSettings({ ...settings, pushNotifications: val });
     toast({
       title: t('settings.push_notifications'),
-      description: val ? "Enabled" : "Disabled",
+      description: val ? t('settings.enabled') : t('settings.disabled'),
     });
   };
 
@@ -88,7 +86,7 @@ export default function SettingsPage() {
     localStorage.setItem('data-processing-consent', JSON.stringify(val));
     toast({
       title: t('settings.data_consent'),
-      description: val ? "Consent enabled" : "Consent withdrawn",
+      description: val ? t('settings.consent_enabled') : t('settings.consent_withdrawn'),
     });
   };
 
@@ -98,7 +96,7 @@ export default function SettingsPage() {
       localStorage.removeItem('userProfileGallery');
       localStorage.removeItem('incognito-mode');
       toast({
-        title: t('logout.title') || "Вы вышли из системы",
+        title: t('logout.title'),
       });
       router.push("/login");
     });
@@ -111,7 +109,7 @@ export default function SettingsPage() {
       <main className="flex-1 overflow-y-auto p-6 flex flex-col">
         <div className="space-y-6 flex-1 pb-12">
           <section className="space-y-4">
-            <h5 className="text-[10px] font-black uppercase tracking-[2px] text-muted-foreground">{t('settings.account') || 'Аккаунт'}</h5>
+            <h5 className="text-[10px] font-black uppercase tracking-[2px] text-muted-foreground">{t('settings.account')}</h5>
             <div className="space-y-1">
               <div className="flex items-center justify-between py-3 border-b border-border/50">
                 <div className="flex items-center gap-3">
@@ -119,7 +117,7 @@ export default function SettingsPage() {
                     <Bell size={18} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold">{t('settings.push_notifications') || 'Push-уведомления'}</p>
+                    <p className="text-sm font-bold">{t('settings.push_notifications')}</p>
                   </div>
                 </div>
                 <Switch 
@@ -134,7 +132,7 @@ export default function SettingsPage() {
                     <Mail size={18} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold">{t('settings.email_newsletter') || 'Email-рассылка'}</p>
+                    <p className="text-sm font-bold">{t('settings.email_newsletter')}</p>
                   </div>
                 </div>
                 <Switch checked={isClient ? settings.emailNewsletter : false} onCheckedChange={(val) => setSettings({...settings, emailNewsletter: val})} />
@@ -146,7 +144,7 @@ export default function SettingsPage() {
                     <MapPin size={18} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold">{t('settings.location') || 'Геолокация'}</p>
+                    <p className="text-sm font-bold">{t('settings.location')}</p>
                   </div>
                 </div>
                 <Switch checked={isClient ? settings.location : true} onCheckedChange={(val) => setSettings({...settings, location: val})} />
@@ -158,7 +156,7 @@ export default function SettingsPage() {
                     <Search size={18} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold">{t('settings.discovery') || 'Показывать меня'}</p>
+                    <p className="text-sm font-bold">{t('settings.discovery')}</p>
                   </div>
                 </div>
                 <Switch checked={isClient ? settings.discovery : true} onCheckedChange={(val) => setSettings({...settings, discovery: val})} />
@@ -167,7 +165,7 @@ export default function SettingsPage() {
           </section>
 
           <section className="space-y-4">
-            <h5 className="text-[10px] font-black uppercase tracking-[2px] text-muted-foreground">{t('settings.privacy') || 'Приватность'}</h5>
+            <h5 className="text-[10px] font-black uppercase tracking-[2px] text-muted-foreground">{t('settings.privacy')}</h5>
             <div className="space-y-1">
               <div className="flex items-center justify-between py-3 border-b border-border/50">
                 <div className="flex items-center gap-3">
@@ -175,7 +173,7 @@ export default function SettingsPage() {
                     <EyeOff size={18} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold">{t('settings.incognito') || 'Инкогнито'}</p>
+                    <p className="text-sm font-bold">{t('settings.incognito')}</p>
                   </div>
                 </div>
                 <Switch checked={isClient ? settings.incognito : false} onCheckedChange={handleIncognitoChange} />
@@ -187,10 +185,10 @@ export default function SettingsPage() {
                     <ShieldCheck size={18} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold">{t('settings.security') || 'Безопасность'}</p>
+                    <p className="text-sm font-bold">{t('settings.security')}</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="text-[10px] text-primary border-primary/20">{t('settings.security.status') || 'OK'}</Badge>
+                <Badge variant="outline" className="text-[10px] text-primary border-primary/20">{t('settings.security.status')}</Badge>
               </div>
 
               <div className="flex items-center justify-between py-3 border-b border-border/50">
@@ -270,12 +268,12 @@ export default function SettingsPage() {
             <Button 
                 onClick={handleLogout}
                 className="w-full h-12 rounded-full gradient-bg text-white font-black uppercase tracking-wider shadow-lg shadow-primary/20 active:scale-95 transition-all border-0">
-                <LogOut size={16} className="mr-2" /> {t('logout.button') || 'Выйти'}
+                <LogOut size={16} className="mr-2" /> {t('logout.button')}
             </Button>
             <Button 
                 variant="ghost" 
                 className="w-full justify-center text-muted-foreground/60 hover:text-destructive text-xs font-normal h-auto py-3 gap-2 px-0 transition-colors">
-                <Trash2 size={14} /> {t('delete_profile.button') || 'Удалить профиль'}
+                <Trash2 size={14} /> {t('delete_profile.button')}
             </Button>
         </div>
       </main>

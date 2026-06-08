@@ -29,12 +29,12 @@ const VideoCallDialog = dynamic(() => import('@/components/video-call').then(mod
 const VoiceCallDialog = dynamic(() => import('@/components/voice-call').then(mod => mod.VoiceCallDialog), { ssr: false });
 
 const CHAT_THEMES = [
-  { id: 'romantic', label_ru: 'Романтика', label_en: 'Romantic', icon: Heart, color: 'text-pink-500', mood: 'Romantic, sweet and poetic' },
-  { id: 'funny', label_ru: 'Юмор', label_en: 'Humor', icon: Laugh, color: 'text-orange-500', mood: 'Funny, witty and lighthearted' },
-  { id: 'hobbies', label_ru: 'О хобби', label_en: 'Hobbies', icon: Compass, color: 'text-blue-500', mood: 'Focus on shared interests and activities' },
-  { id: 'daily', label_ru: 'Про день', label_en: 'Daily', icon: Coffee, color: 'text-amber-600', mood: 'Casual, relaxed daily life conversation' },
-  { id: 'deep', label_ru: 'Глубокое', label_en: 'Deep', icon: MessageSquareQuote, color: 'text-purple-500', mood: 'Deep, philosophical and meaningful questions' },
-  { id: 'bold', label_ru: 'Смело', label_en: 'Bold', icon: Zap, color: 'text-yellow-500', mood: 'Bold, confident and slightly flirty' },
+  { id: 'romantic', labelKey: 'chats.theme.romantic', icon: Heart, color: 'text-pink-500', mood: 'Romantic, sweet and poetic' },
+  { id: 'funny', labelKey: 'chats.theme.funny', icon: Laugh, color: 'text-orange-500', mood: 'Funny, witty and lighthearted' },
+  { id: 'hobbies', labelKey: 'chats.theme.hobbies', icon: Compass, color: 'text-blue-500', mood: 'Focus on shared interests and activities' },
+  { id: 'daily', labelKey: 'chats.theme.daily', icon: Coffee, color: 'text-amber-600', mood: 'Casual, relaxed daily life conversation' },
+  { id: 'deep', labelKey: 'chats.theme.deep', icon: MessageSquareQuote, color: 'text-purple-500', mood: 'Deep, philosophical and meaningful questions' },
+  { id: 'bold', labelKey: 'chats.theme.bold', icon: Zap, color: 'text-yellow-500', mood: 'Bold, confident and slightly flirty' },
 ];
 
 const QUICK_REACTIONS = [
@@ -50,11 +50,13 @@ const QUICK_REACTIONS = [
   { id: 'music', icon: Music, color: 'text-pink-400', label: '🎵' },
 ];
 
-const INITIAL_MESSAGES = [
-  { id: 1, text: "Привет! 👋 Видел твой профиль, у нас много общих интересов.", sender: "other", time: "10:00" },
-  { id: 2, text: "Привет! Да, я тоже заметила. Ты тоже любишь кофе?", sender: "me", time: "10:02" },
-  { id: 3, text: "О да, без него утро не начинается! Знаешь какое-нибудь уютное место?", sender: "other", time: "10:05" },
-];
+function getInitialMessages(t: (k: string) => string) {
+  return [
+    { id: 1, text: t('chats.demo.msg1'), sender: "other", time: "10:00" },
+    { id: 2, text: t('chats.demo.msg2'), sender: "me", time: "10:02" },
+    { id: 3, text: t('chats.demo.msg3'), sender: "other", time: "10:05" },
+  ];
+}
 
 const ITEMS_PER_PAGE = 8;
 
@@ -116,7 +118,8 @@ function ChatsContent() {
 
   const [activeTab, setActiveTab] = useState<"direct" | "groups">("direct");
   const [selectedChat, setSelectedChat] = useState<any>(null);
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const getInitialMsgs = useCallback(() => getInitialMessages(t), [t]);
+  const [messages, setMessages] = useState(getInitialMsgs);
   const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -147,8 +150,8 @@ function ChatsContent() {
   const allDirectChats = useMemo(() => {
     return ALL_DEMO_USERS.filter(u => !u.isSystem).map(u => ({ 
       ...u, 
-      lastMessage: language === 'RU' ? 'Привет!' : 'Hi!', 
-      time: u.id % 2 === 0 ? "10:30" : (language === 'RU' ? 'Вчера' : 'Yesterday') 
+      lastMessage: t('chats.hi'), 
+      time: u.id % 2 === 0 ? "10:30" : t('chats.yesterday') 
     }));
   }, [language]);
 
@@ -167,7 +170,7 @@ function ChatsContent() {
             img: cat.img,
             categoryName: language === 'RU' ? cat.name_ru : cat.name_en,
             name: language === 'RU' ? sub.name_ru : sub.name_en,
-            lastMessage: language === 'RU' ? 'Новое сообщение в группе' : 'New message in group',
+            lastMessage: t('chats.new_group_message'),
             time: "12:45"
           });
         }
@@ -205,7 +208,7 @@ function ChatsContent() {
       const res = await generateIcebreakerSuggestions({ currentUserInterests: ["Спорт", "Кофе", "Кино"], matchedUserName: chat.name, matchedUserInterests: chat.interests || [], matchedUserBio: chat.bio || "", mood: mood || "Friendly and polite" });
       setIcebreakers(res.suggestions);
     } catch (e) {
-      setIcebreakers(language === 'RU' ? ["Привет! Как прошел твой день?", "Чем любишь заниматься в свободное время?", "Какой твой любимый фильм?"] : ["Hi! How was your day?", "What do you like doing in your free time?", "What's your favorite movie?"]);
+      setIcebreakers([t('chats.icebreaker.1'), t('chats.icebreaker.2'), t('chats.icebreaker.3')]);
     } finally {
       setLoadingIcebreakers(false); if (mood) setShowThemeGrid(false);
     }
@@ -218,7 +221,7 @@ function ChatsContent() {
       if (chat) { 
         setSelectedChat(chat); 
         setActiveTab("direct");
-        setMessages([{ id: Date.now(), text: language === 'RU' ? "Привет! Это совпадение, рад(а) знакомству! 😊" : "Hi! It's a match, glad to meet you! 😊", sender: "me", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]); 
+        setMessages([{ id: Date.now(), text: t('chats.match_greeting'), sender: "me", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]); 
         loadIcebreakers(chat); 
       }
     } else if (groupId) {
@@ -230,7 +233,7 @@ function ChatsContent() {
       if (group) {
         setSelectedChat(group);
         setActiveTab("groups");
-        setMessages([{ id: Date.now(), text: language === 'RU' ? "Добро пожаловать в группу!" : "Welcome to the group!", sender: "other", time: "12:00" }]);
+        setMessages([{ id: Date.now(), text: t('chats.welcome_group'), sender: "other", time: "12:00" }]);
       }
     }
   }, [matchId, groupId, language, loadIcebreakers]);
@@ -257,7 +260,7 @@ function ChatsContent() {
         setIsTyping(true); 
         setTimeout(() => { 
           setIsTyping(false); 
-          const text = (language === 'RU' ? "Звучит здорово! Давай это обсудим." : "Sounds great! Let's discuss it.");
+          const text = t('chats.demo.reply');
           const response = { id: Date.now() + 1, text, sender: "other", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }; 
           setMessages(prev => [...prev, response]); 
         }, 2000); 
@@ -267,7 +270,7 @@ function ChatsContent() {
 
   const openChat = (chat: any) => { 
     setSelectedChat(chat);
-    setMessages(INITIAL_MESSAGES);
+    setMessages(getInitialMessages(t));
     setShowThemeGrid(false);
     setIcebreakers([]);
     loadIcebreakers(chat); 
@@ -351,7 +354,7 @@ function ChatsContent() {
         </header>
         <main className="flex-1 overflow-y-auto p-4 space-y-2"><div className="text-center my-2"><Badge variant="secondary" className="bg-white/50 text-[9px] text-muted-foreground border-0 font-black uppercase tracking-widest px-2.5 py-0.5">{t('chats.today')}</Badge></div><AnimatePresence>{messages.map((msg: any) => (<motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} key={msg.id} className={cn("flex flex-col max-w-[80%]", msg.sender === "me" ? "ml-auto items-end" : "items-start")}><div className={cn("px-3 py-2 rounded-lg text-sm shadow-sm font-medium leading-snug", msg.sender === "me" ? "gradient-bg text-white rounded-br-none shadow-primary/10" : "bg-white text-foreground rounded-bl-none border border-border/40")}>{msg.text}</div><span className="text-[9px] text-muted-foreground mt-1.5 px-1 font-bold uppercase tracking-tighter opacity-60">{msg.time}</span></motion.div>))}</AnimatePresence>{isTyping && (<motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-1.5 text-muted-foreground"><div className="flex gap-1 bg-white px-3 py-2.5 rounded-lg border border-border/40 shadow-sm rounded-bl-none"><span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce"></span><span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]"></span><span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]"></span></div><span className="text-[9px] font-bold uppercase tracking-widest">{t('chats.typing')}</span></motion.div>)}<div ref={messagesEndRef} /></main>
         <div className="p-4 bg-white border-t border-border shadow-[0_-10px_40px_-20px_rgba(0,0,0,0.1)] relative z-10">
-          {!selectedChat.isGroup && aiIcebreakersEnabled && (<><div className="flex items-center justify-between mb-3 px-1"><button onClick={() => setShowThemeGrid(!showThemeGrid)} className={cn("flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.1em] transition-all", showThemeGrid ? "gradient-bg text-white shadow-lg shadow-primary/20" : "bg-primary/5 text-primary border border-primary/10")}> <Sparkles size={14} className={cn(loadingIcebreakers && "animate-spin")} /> {showThemeGrid ? t('chats.close_themes') : t('chats.ai_themes')} </button>{!showThemeGrid && icebreakers.length > 0 && !loadingIcebreakers && (<p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest opacity-40 italic">{language === 'RU' ? 'Листайте →' : 'Swipe →'}</p>)}</div><AnimatePresence>{showThemeGrid && (<motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="grid grid-cols-3 gap-2.5 mb-5 overflow-hidden">{CHAT_THEMES.map((theme) => { const Icon = theme.icon; return (<button key={theme.id} onClick={() => loadIcebreakers(selectedChat, theme.mood)} className="flex flex-col items-center justify-center p-3.5 rounded-lg bg-muted/40 border border-border/50 transition-all group active:scale-95"><Icon size={22} className={cn("mb-1.5 group-hover:scale-110", theme.color)} /><span className="text-[9px] font-black uppercase tracking-tighter text-foreground/70">{language === 'RU' ? theme.label_ru : theme.label_en}</span></button>) })}</motion.div>)}</AnimatePresence>{!showThemeGrid && (<div className="flex gap-2.5 overflow-x-auto no-scrollbar mb-5 h-10 items-center px-1">{loadingIcebreakers ? (<div className="flex gap-2"><div className="h-8 w-32 bg-muted animate-pulse rounded-full"></div><div className="h-8 w-28 bg-muted animate-pulse rounded-full"></div></div>) : (icebreakers.map((text, i) => (<button key={i} onClick={() => setInputValue(text)} className="whitespace-nowrap px-4 py-2 bg-white hover:bg-muted transition-all text-[11px] font-bold rounded-full text-foreground/80 border border-border/60 shadow-sm active:scale-95">{text}</button>)))}</div>)}</>)}
+          {!selectedChat.isGroup && aiIcebreakersEnabled && (<><div className="flex items-center justify-between mb-3 px-1"><button onClick={() => setShowThemeGrid(!showThemeGrid)} className={cn("flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.1em] transition-all", showThemeGrid ? "gradient-bg text-white shadow-lg shadow-primary/20" : "bg-primary/5 text-primary border border-primary/10")}> <Sparkles size={14} className={cn(loadingIcebreakers && "animate-spin")} /> {showThemeGrid ? t('chats.close_themes') : t('chats.ai_themes')} </button>{!showThemeGrid && icebreakers.length > 0 && !loadingIcebreakers && (<p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest opacity-40 italic">{t('chats.swipe')}</p>)}</div><AnimatePresence>{showThemeGrid && (<motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="grid grid-cols-3 gap-2.5 mb-5 overflow-hidden">{CHAT_THEMES.map((theme) => { const Icon = theme.icon; return (<button key={theme.id} onClick={() => loadIcebreakers(selectedChat, theme.mood)} className="flex flex-col items-center justify-center p-3.5 rounded-lg bg-muted/40 border border-border/50 transition-all group active:scale-95"><Icon size={22} className={cn("mb-1.5 group-hover:scale-110", theme.color)} /><span className="text-[9px] font-black uppercase tracking-tighter text-foreground/70">{t(theme.labelKey)}</span></button>) })}</motion.div>)}</AnimatePresence>{!showThemeGrid && (<div className="flex gap-2.5 overflow-x-auto no-scrollbar mb-5 h-10 items-center px-1">{loadingIcebreakers ? (<div className="flex gap-2"><div className="h-8 w-32 bg-muted animate-pulse rounded-full"></div><div className="h-8 w-28 bg-muted animate-pulse rounded-full"></div></div>) : (icebreakers.map((text, i) => (<button key={i} onClick={() => setInputValue(text)} className="whitespace-nowrap px-4 py-2 bg-white hover:bg-muted transition-all text-[11px] font-bold rounded-full text-foreground/80 border border-border/60 shadow-sm active:scale-95">{text}</button>)))}</div>)}</>)}
           <div className="flex items-center gap-3"><div className="flex-1 relative group"><Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder={t('chats.placeholder')} className="pr-12 h-11 bg-muted/50 border-0 rounded-2xl font-medium px-6 text-sm" /><Popover><PopoverTrigger asChild><button className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"><Smile size={20} /></button></PopoverTrigger><PopoverContent className="w-full max-w-[280px] p-2 rounded-2xl border-0 shadow-2xl bg-white" side="top" align="end"><div className="grid grid-cols-5 gap-1">{QUICK_REACTIONS.map(reaction => { const ReactionIcon = reaction.icon; return (<button key={reaction.id} onClick={() => handleSendMessage(reaction.label)} className="w-10 h-10 flex items-center justify-center hover:bg-muted rounded-xl transition-all active:scale-90"><ReactionIcon size={24} className={reaction.color} /></button>); })}</div></PopoverContent></Popover></div><Button size="icon" onClick={() => handleSendMessage()} disabled={!inputValue.trim()} className="h-11 w-11 rounded-2xl gradient-bg text-white shadow-xl shadow-primary/30 active:scale-95 transition-all"><Send size={18} className="ml-0.5" /></Button></div>
         </div>
         {selectedChat && !selectedChat.isGroup && isVideoCall && <VideoCallDialog open={isVideoCall} onOpenChange={setIsVideoCall} user={selectedChat} />}
@@ -380,7 +383,7 @@ function ChatsContent() {
               activeTab === "direct" ? "gradient-bg text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-muted/50"
             )}
           >
-            <MessageSquare size={14} /> {language === 'RU' ? 'ЛС' : 'DMs'}
+            <MessageSquare size={14} /> {t('chats.tab.direct')}
           </button>
           <button 
             onClick={() => setActiveTab("groups")}
@@ -389,7 +392,7 @@ function ChatsContent() {
               activeTab === "groups" ? "gradient-bg text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-muted/50"
             )}
           >
-            <Users size={14} /> {language === 'RU' ? 'Группы' : 'Groups'}
+            <Users size={14} /> {t('chats.tab.groups')}
           </button>
         </div>
 
@@ -399,7 +402,7 @@ function ChatsContent() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-12 h-12 bg-white border-0 rounded-2xl app-shadow text-sm font-medium" 
-            placeholder={activeTab === 'direct' ? t('chats.search') : (language === 'RU' ? 'Поиск ваших групп...' : 'Search your groups...')}
+            placeholder={activeTab === 'direct' ? t('chats.search') : t('chats.search_groups_placeholder')}
           />
         </div>
 
@@ -426,7 +429,7 @@ function ChatsContent() {
                         <span className="font-black text-sm text-foreground tracking-tight group-hover:text-primary transition-colors truncate">
                           {item.name}
                         </span>
-                        {item.isGroup && <Badge variant="secondary" className="bg-muted text-[7px] font-black uppercase px-1 py-0 border-0 h-3.5">Group</Badge>}
+                        {item.isGroup && <Badge variant="secondary" className="bg-muted text-[7px] font-black uppercase px-1 py-0 border-0 h-3.5">{t('chats.group_badge')}</Badge>}
                       </div>
                       <span className="text-[10px] text-muted-foreground font-bold opacity-60 flex-shrink-0 ml-2">{item.time}</span>
                     </div>
@@ -462,7 +465,7 @@ function ChatsContent() {
               <p className="text-[10px] font-black uppercase tracking-widest">{t('activity.empty')}</p>
               {activeTab === 'groups' && joinedGroupNames.length === 0 && (
                 <p className="text-[9px] text-muted-foreground max-w-[200px] leading-relaxed">
-                  {language === 'RU' ? 'Вы еще не вступили ни в одну группу.' : 'You haven\'t joined any groups yet.'}
+                  {t('chats.no_groups')}
                 </p>
               )}
             </div>

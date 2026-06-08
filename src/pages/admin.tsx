@@ -25,7 +25,7 @@ const activityIcons: Record<ActivityItem['type'], React.ReactNode> = {
 
 export default function AdminDashboardPage() {
   const [trendPeriod, setTrendPeriod] = useState<'7' | '30' | '90'>('7');
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
 
   const users = useMemo(() => generateMockUsers(), []);
   const trendData = useMemo(() => generateRegistrationTrend(Number(trendPeriod)), [trendPeriod]);
@@ -34,8 +34,8 @@ export default function AdminDashboardPage() {
 
   const activeToday = users.filter(u => u.online).length;
   const totalMatches = users.reduce((s, u) => s + u.matchesCount, 0);
-  const dSuffix = language === 'RU' ? 'д' : 'd';
-  const currency = language === 'RU' ? '₽324,800' : '$3,248';
+  const dSuffix = t('units.d_short');
+  const currency = t('admin.dash.revenue_value');
 
   const kpis = [
     { title: t('admin.dash.total_users'), value: users.length.toLocaleString(), icon: Users, color: 'text-blue-500', change: '+24.1%' },

@@ -2,69 +2,69 @@
 export const THEME_OPTIONS: readonly string[] = ["light", "dark", "system"];
 
 export const DATING_GOALS: readonly string[] = [
-    "Серьезные отношения",
-    "Отношения на одну ночь",
-    "Дружба",
-    "Семья и дети",
-    "Путешествия",
-    "Совместная аренда",
-    "Просто общение",
-    "Переписка",
-    "Свидания",
-    "Без обязательств"
+    "goal.serious_relationship",
+    "goal.one_night",
+    "goal.friendship",
+    "goal.family_kids",
+    "goal.travel",
+    "goal.co_living",
+    "goal.just_talk",
+    "goal.penpal",
+    "goal.dating",
+    "goal.no_commitment"
 ];
 
 export const INTEREST_OPTIONS: readonly string[] = [
-    "Спорт", 
-    "Музыка", 
-    "Фильмы", 
-    "Книги", 
-    "Путешествия", 
-    "Кулинария", 
-    "Игры", 
-    "Искусство",
-    "Фотография",
-    "Технологии",
-    "Мода",
-    "Танцы",
-    "Животные",
-    "Волонтерство",
-    "Политика",
-    "Психология",
-    "Философия",
-    "Йога",
-    "Медитация",
-    "Садоводство",
-    "Автомобили",
-    "Наука",
-    "История",
-    "Архитектура",
+    "interest.sport",
+    "interest.music",
+    "interest.movies",
+    "interest.books",
+    "interest.travel",
+    "interest.cooking",
+    "interest.games",
+    "interest.art",
+    "interest.photography",
+    "interest.tech",
+    "interest.fashion",
+    "interest.dance",
+    "interest.animals",
+    "interest.volunteering",
+    "interest.politics",
+    "interest.psychology",
+    "interest.philosophy",
+    "interest.yoga",
+    "interest.meditation",
+    "interest.gardening",
+    "interest.cars",
+    "interest.science",
+    "interest.history",
+    "interest.architecture",
 ];
 
 export const ZODIAC_SIGNS: readonly string[] = [
-    "Овен",
-    "Телец",
-    "Близнецы",
-    "Рак",
-    "Лев",
-    "Дева",
-    "Весы",
-    "Скорпион",
-    "Стрелец",
-    "Козерог",
-    "Водолей",
-    "Рыбы"
+    "common.zodiac.aries",
+    "common.zodiac.taurus",
+    "common.zodiac.gemini",
+    "common.zodiac.cancer",
+    "common.zodiac.leo",
+    "common.zodiac.virgo",
+    "common.zodiac.libra",
+    "common.zodiac.scorpio",
+    "common.zodiac.sagittarius",
+    "common.zodiac.capricorn",
+    "common.zodiac.aquarius",
+    "common.zodiac.pisces"
 ];
 
 export const EDUCATION_OPTIONS: readonly string[] = [
-    "Среднее",
-    "Среднее специальное",
-    "Неоконченное высшее",
-    "Высшее",
-    "Бакалавр",
-    "Магистр",
-    "Кандидат наук",
-    "Доктор наук"
+    "education.secondary",
+    "education.vocational",
+    "education.incomplete_higher",
+    "education.higher",
+    "education.bachelor",
+    "education.master",
+    "education.candidate",
+    "education.doctor"
 ];
 
 export const CAPITALS: readonly string[] = [
@@ -209,15 +209,15 @@ export const POPULAR_CITIES: Record<string, string[]> = {
 };
 
 export const CIRCADIAN_RHYTHM_OPTIONS = [
-    { value: 'early-bird', label: 'Жаворонок (ранние подъемы)' },
-    { value: 'night-owl', label: 'Сова (поздние отбои)' },
-    { value: 'flexible', label: 'Гибкий (легко адаптируюсь)' },
+    { value: 'early-bird', label: 'circadian.early_bird' },
+    { value: 'night-owl', label: 'circadian.night_owl' },
+    { value: 'flexible', label: 'circadian.flexible' },
 ];
 
 export const ATTACHMENT_STYLE_OPTIONS = [
-    { value: 'secure', label: 'Надежный' },
-    { value: 'anxious', label: 'Тревожный' },
-    { value: 'avoidant', label: 'Избегающий' },
+    { value: 'secure', label: 'attachment.secure' },
+    { value: 'anxious', label: 'attachment.anxious' },
+    { value: 'avoidant', label: 'attachment.avoidant' },
 ];
 
 export interface TitleMetadata {

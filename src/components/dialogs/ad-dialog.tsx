@@ -11,7 +11,7 @@ import { Play } from "lucide-react";
 import { toast } from '@/hooks/use-toast';
 
 export function AdDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [isAdLoading, setIsAdLoading] = useState(false);
 
   const handleWatchAd = () => {
@@ -20,8 +20,8 @@ export function AdDialog({ open, onOpenChange }: { open: boolean, onOpenChange: 
       setIsAdLoading(false);
       onOpenChange(false);
       toast({
-        title: language === 'RU' ? "Профиль открыт!" : "Profile unlocked!",
-        description: language === 'RU' ? "Вы получили 1 бесплатный просмотр лайка за рекламу." : "You got 1 free like view for watching an ad.",
+        title: t('ad.profile_unlocked'),
+        description: t('ad.unlock_description'),
       });
     }, 3000);
   };
@@ -44,7 +44,7 @@ export function AdDialog({ open, onOpenChange }: { open: boolean, onOpenChange: 
             disabled={isAdLoading}
             className="w-full h-14 rounded-full gradient-bg text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20 text-[10px] border-0"
           >
-            {isAdLoading ? (language === 'RU' ? "Загрузка..." : "Loading...") : t('button.watch')}
+            {isAdLoading ? t('common.loading') : t('button.watch')}
           </Button>
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="rounded-full text-muted-foreground text-[9px] font-black uppercase tracking-widest h-10">
             {t('button.not_now')}

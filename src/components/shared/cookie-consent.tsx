@@ -7,7 +7,7 @@ import { useLanguage } from '@/context/language-context';
 
 export function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
-  const { language } = useLanguage();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const consent = localStorage.getItem('cookie-consent');
@@ -38,12 +38,10 @@ export function CookieConsent() {
               </div>
               <div className="flex-1">
                 <h5 className="text-xs font-black uppercase tracking-tight">
-                  {language === 'RU' ? 'Мы используем Cookie' : 'We use Cookies'}
+                  {t('cookie.title')}
                 </h5>
                 <p className="text-[10px] text-muted-foreground leading-relaxed mt-1 font-medium">
-                  {language === 'RU' 
-                    ? 'Для улучшения вашего опыта мы используем файлы cookie. Оставаясь на сайте, вы соглашаетесь с нашей политикой.' 
-                    : 'To improve your experience, we use cookies. By staying on the site, you agree to our policy.'}
+                  {t('cookie.description')}
                 </p>
               </div>
               <button onClick={() => setIsVisible(false)} className="text-muted-foreground/40 hover:text-foreground">
@@ -54,7 +52,7 @@ export function CookieConsent() {
               onClick={handleAccept}
               className="w-full h-9 rounded-xl gradient-bg text-white font-black uppercase text-[9px] tracking-widest border-0 shadow-lg shadow-primary/20"
             >
-              {language === 'RU' ? 'Принять всё' : 'Accept All'}
+              {t('cookie.accept_all')}
             </Button>
           </div>
         </motion.div>

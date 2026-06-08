@@ -144,7 +144,7 @@ export default function Home() {
               )}
             >
               <Star size={14} /> 
-              <span>{language === 'RU' ? 'Топ недели' : 'Top of the week'}</span>
+              <span>{t('home.top_week')}</span>
               {view === 'top-users' && <motion.div layoutId="active-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></motion.div>}
             </button>
             <button
@@ -157,7 +157,7 @@ export default function Home() {
               )}
             >
               <Users size={14} /> 
-              <span>{language === 'RU' ? 'Популярные группы' : 'Popular Groups'}</span>
+              <span>{t('home.popular_groups')}</span>
               {view === 'popular-groups' && <motion.div layoutId="active-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></motion.div>}
             </button>
           </div>
@@ -166,7 +166,7 @@ export default function Home() {
         {view === 'top-users' ? (
           <section>
             <Suspense fallback={<div className="px-5 pt-2 space-y-4"><Skeleton className="h-8 w-40" /><div className="grid grid-cols-2 gap-4"><Skeleton className="aspect-[4/3] rounded-xl" /></div></div>}>
-              <TopOfWeekSection topUsers={topUsers} onLike={(u) => toast({ title: "Лайк!", description: `Вы лайкнули ${u.name}` })} t={t} />
+              <TopOfWeekSection topUsers={topUsers} onLike={(u) => toast({ title: t('toast.liked'), description: t('toast.you_liked') + ' ' + u.name })} t={t} />
             </Suspense>
           </section>
         ) : (

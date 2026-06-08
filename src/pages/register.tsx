@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import Link from "@/shims/next-link";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/context/language-context";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useLanguage();
 
   const validateEmail = (email: string) => {
     return String(email)
@@ -35,17 +37,17 @@ export default function RegisterPage() {
     e.preventDefault();
     
     if (!name.trim()) {
-      toast({ title: "Ошибка", description: "Пожалуйста, введите имя.", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('register.name_required'), variant: "destructive" });
       return;
     }
 
     if (!validateEmail(email)) {
-      toast({ title: "Ошибка", description: "Некорректный формат email.", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('register.invalid_email'), variant: "destructive" });
       return;
     }
 
     if (password.length < 6) {
-      toast({ title: "Ошибка", description: "Пароль должен быть не менее 6 символов.", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('register.password_length'), variant: "destructive" });
       return;
     }
 
@@ -64,22 +66,22 @@ export default function RegisterPage() {
 
         if (response.ok) {
             toast({
-                title: "Успех!",
-                description: "Аккаунт создан! Теперь вы можете войти.",
+                title: t('common.success'),
+                description: t('register.account_created'),
             });
             router.push('/login'); // Перенаправляем на страницу входа
         } else {
             toast({
-                title: "Ошибка регистрации",
-                description: data.message || "Не удалось создать аккаунт.",
+                title: t('register.registration_error'),
+                description: data.message || t('register.create_account_failed'),
                 variant: "destructive",
             });
         }
     } catch (error) {
         console.error("Registration Error:", error);
         toast({
-            title: "Ошибка сети",
-            description: "Не удалось подключиться к серверу.",
+                title: t('auth.network_error'),
+                description: t('auth.network_error_desc'),
             variant: "destructive",
         });
     } finally {
@@ -107,7 +109,7 @@ export default function RegisterPage() {
           <h1 className="text-4xl font-black font-headline tracking-tighter mb-3">
             Swift<span className="gradient-text">Match</span>
           </h1>
-          <p className="text-muted-foreground text-sm font-medium">Создайте аккаунт и найдите свою пару</p>
+          <p className="text-muted-foreground text-sm font-medium">{t('register.tagline')}</p>
         </div>
 
         <div className="space-y-6 animate-in slide-in-from-bottom-8 duration-700">
@@ -116,7 +118,7 @@ export default function RegisterPage() {
               <User className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
               <Input 
                 type="text" 
-                placeholder="Ваше имя" 
+                placeholder={t('register.name_placeholder')} 
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="h-14 pl-12 rounded-2xl bg-muted/30 border-0 focus-visible:ring-primary/20 font-bold"
@@ -138,7 +140,7 @@ export default function RegisterPage() {
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
               <Input 
                 type="password" 
-                placeholder="Пароль (мин. 6 символов)" 
+                placeholder={t('register.password_placeholder')} 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-14 pl-12 rounded-2xl bg-muted/30 border-0 focus-visible:ring-primary/20 font-bold"
@@ -151,21 +153,21 @@ export default function RegisterPage() {
               disabled={isLoading}
               className="w-full h-14 rounded-2xl gradient-bg text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95 border-0"
             >
-              {isLoading ? "Создание..." : "Создать аккаунт"} <ArrowRight size={18} className="ml-2" />
+              {isLoading ? t('register.creating') : t('register.create_account')} <ArrowRight size={18} className="ml-2" />
             </Button>
           </form>
 
           <p className="text-center text-xs text-muted-foreground">
-            Уже есть аккаунт?{" "}
+            {t('register.has_account')}{" "}
             <Link href="/login" className="text-primary font-black uppercase tracking-tighter hover:underline">
-              Войти
+              {t('auth.login_link')}
             </Link>
           </p>
         </div>
 
         <div className="mt-auto pt-12 flex flex-col items-center gap-4">
           <Badge variant="secondary" className="bg-primary/5 text-primary border-0 px-4 py-2 rounded-xl flex gap-2 shadow-sm">
-            <Sparkles size={14} /> <span>100% Безопасно</span>
+            <Sparkles size={14} /> <span>{t('register.safe')}</span>
           </Badge>
         </div>
       </main>

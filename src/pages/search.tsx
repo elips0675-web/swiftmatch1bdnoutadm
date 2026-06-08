@@ -182,7 +182,7 @@ function SearchContent() {
       setCurrentIndex(0);
       setIsLoading(false);
       setIsFiltersOpen(false);
-      toast({ title: "Фильтры применены", description: `Найдено ${newUsers.length} анкет.` });
+      toast({ title: t('toast.filters_applied'), description: t('toast.filters_applied_desc', { count: newUsers.length }) });
   }
 
   const user = userList[currentIndex] || null;
@@ -205,7 +205,7 @@ function SearchContent() {
 
   const handleLike = async () => {
     if (!user) return;
-    toast({ title: "Лайк!", description: `${language === 'RU' ? 'Вы лайкнули' : 'You liked'} ${user.name}` });
+    toast({ title: t('toast.like'), description: t('toast.you_liked_desc', { name: user.name }) });
     if (Math.random() > 0.7) {
       setMatchUser(user);
     } else {
@@ -219,10 +219,10 @@ function SearchContent() {
       const updatedUser = { ...currentUser, superLikes: currentUser.superLikes - 1 };
       setCurrentUser(updatedUser);
       localStorage.setItem('userProfile', JSON.stringify(updatedUser));
-      toast({ title: "Супер-лайк! ✨", description: `Вы отправили супер-лайк ${user.name}!` });
+      toast({ title: t('toast.super_like'), description: t('toast.super_like_desc', { name: user.name }) });
       setMatchUser(user);
     } else {
-      toast({ variant: 'destructive', title: "Нет супер-лайков", description: "У вас закончились супер-лайки." });
+      toast({ variant: 'destructive', title: t('toast.no_super_likes'), description: t('toast.no_super_likes_desc') });
     }
   };
 
@@ -231,8 +231,8 @@ function SearchContent() {
     if (votedEntries.includes(userId)) return;
     setVotedEntries([...votedEntries, userId]);
     toast({
-      title: language === 'RU' ? "Голос принят! 🏆" : "Vote accepted! 🏆",
-      description: language === 'RU' ? "Вы проголосовали за это фото в конкурсе." : "You voted for this photo in the contest.",
+      title: t('toast.vote_accepted'),
+      description: t('toast.vote_accepted_desc'),
     });
   };
 
@@ -268,9 +268,9 @@ function SearchContent() {
         {noMoreUsers ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center h-full bg-[#f8f9fb]">
                 <Sparkles size={48} className="text-muted-foreground opacity-20 mb-4" />
-                <h4 className="text-xl font-black uppercase">{'Анкеты закончились'}</h4>
-                <p className="text-sm text-muted-foreground mt-2">Попробуйте изменить фильтры, чтобы найти больше людей.</p>
-                <Button variant="outline" onClick={() => setIsFiltersOpen(true)} className="mt-8 rounded-full px-8 uppercase text-[10px] font-black">Изменить фильтры</Button>
+                <h4 className="text-xl font-black uppercase">{t('search.no_profiles')}</h4>
+                <p className="text-sm text-muted-foreground mt-2">{t('search.no_profiles_desc')}</p>
+                <Button variant="outline" onClick={() => setIsFiltersOpen(true)} className="mt-8 rounded-full px-8 uppercase text-[10px] font-black">{t('button.change_filters')}</Button>
             </div>
         ) : (
           <>
@@ -312,14 +312,14 @@ function SearchContent() {
                         : "bg-black/40 text-white border-white/20 shadow-lg hover:bg-black/50"
                     )}
                   >
-                    {!votedEntries.includes(user.id) && <span className="font-bold text-sm">Голос</span>}
+                    {!votedEntries.includes(user.id) && <span className="font-bold text-sm">{t('button.vote')}</span>}
                     <Trophy size={20} fill={votedEntries.includes(user.id) ? "currentColor" : "none"} />
                   </button>
 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
                   <div className="absolute bottom-6 left-6 right-6 text-white text-left">
                     <h3 className="text-3xl font-black font-headline mb-1">{user.name}, {user.age}</h3>
-                    <p className="text-white/90 text-xs flex items-center gap-1 font-bold mb-3"><MapPin size={14} /> {user.distance} км</p>
+                    <p className="text-white/90 text-xs flex items-center gap-1 font-bold mb-3"><MapPin size={14} /> {user.distance} {t('units.km')}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {user.interests.slice(0, 3).map((interest: string) => {
                         const isCommon = selectedInterests.includes(interest);

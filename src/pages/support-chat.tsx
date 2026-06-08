@@ -21,7 +21,7 @@ export default function SupportChatPage() {
   const { t, language } = useLanguage();
   
   const initialMessages = [
-    { id: 1, text: t('support.greeting') || "Здравствуйте! Чем мы можем вам помочь?", sender: "other", time: "10:00" },
+    { id: 1, text: t('support.greeting'), sender: "other", time: "10:00" },
   ];
 
   const [messages, setMessages] = useState(initialMessages);
@@ -75,7 +75,7 @@ export default function SupportChatPage() {
         setIsTyping(false);
         const response = {
           id: Date.now() + 1,
-          text: t('support.response') || "Спасибо за ваше сообщение! Наш специалист скоро с вами свяжется.",
+          text: t('support.response'),
           sender: "other",
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
@@ -96,7 +96,7 @@ export default function SupportChatPage() {
           </div>
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-black text-sm leading-tight tracking-tight text-foreground">{t('support.title') || 'Служба поддержки'}</h3>
+          <h3 className="font-black text-sm leading-tight tracking-tight text-foreground">{t('support.title')}</h3>
           <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">
             • {t('chats.online')}
           </p>
@@ -168,7 +168,7 @@ export default function SupportChatPage() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder={t('support.placeholder') || 'Напишите ваше сообщение...'} 
+                placeholder={t('support.placeholder')} 
                 className="pr-4 h-11 bg-muted/50 border-0 rounded-2xl focus-visible:ring-primary/20 font-medium px-6 text-sm placeholder:text-muted-foreground/60 transition-all focus:bg-muted"
               />
             </div>

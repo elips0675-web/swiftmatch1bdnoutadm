@@ -13,13 +13,13 @@ import { Sparkles, Check, Zap, Eye, ShieldCheck, Star } from "lucide-react";
 import { motion } from 'framer-motion';
 
 const PREMIUM_PLANS = [
-  { id: '1m', name_ru: '1 месяц', name_en: '1 month', price: '499 ₽', oldPrice: '', discount: '', popular: false },
-  { id: '6m', name_ru: '6 месяцев', name_en: '6 months', price: '1 990 ₽', oldPrice: '2 994 ₽', discount: '-33%', popular: true },
-  { id: '12m', name_ru: '12 месяцев', name_en: '12 months', price: '2 990 ₽', oldPrice: '5 988 ₽', discount: '-50%', popular: false },
+  { id: '1m', price: '499 ₽', oldPrice: '', discount: '', popular: false },
+  { id: '6m', price: '1 990 ₽', oldPrice: '2 994 ₽', discount: '-33%', popular: true },
+  { id: '12m', price: '2 990 ₽', oldPrice: '5 988 ₽', discount: '-50%', popular: false },
 ];
 
 export function PremiumDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const [selectedPlan, setSelectedPlan] = useState('6m');
 
   return (
@@ -36,9 +36,9 @@ export function PremiumDialog({ open, onOpenChange }: { open: boolean, onOpenCha
            </motion.div>
            <Star className="text-yellow-300 mb-1 drop-shadow-lg relative z-10" size={32} fill="currentColor" />
            <DialogTitle className="text-xl font-black uppercase tracking-tighter relative z-10">Premium</DialogTitle>
-           <p className="text-[8px] text-white/80 font-bold uppercase tracking-[0.3em] relative z-10 mt-0.5">
-             {language === 'RU' ? 'Выберите план' : 'Select plan'}
-           </p>
+            <p className="text-[8px] text-white/80 font-bold uppercase tracking-[0.3em] relative z-10 mt-0.5">
+              {t('premium.select_plan')}
+            </p>
         </div>
 
         <div className="p-5 space-y-2.5">
@@ -62,7 +62,7 @@ export function PremiumDialog({ open, onOpenChange }: { open: boolean, onOpenCha
               
               <div>
                 <h6 className="font-bold text-[10px] text-foreground/80 group-hover:text-foreground">
-                  {language === 'RU' ? plan.name_ru : plan.name_en}
+                  {t(`premium.plan_${plan.id}`)}
                 </h6>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-lg font-black text-foreground">{plan.price}</span>
@@ -80,24 +80,24 @@ export function PremiumDialog({ open, onOpenChange }: { open: boolean, onOpenCha
           ))}
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-3 border-t border-muted mt-1">
-             <div className="flex items-center gap-1.5 text-[7px] text-muted-foreground font-black uppercase tracking-widest">
-               <Zap size={10} className="text-primary" /> {language === 'RU' ? 'Безлимит' : 'Unlimited'}
-             </div>
-             <div className="flex items-center gap-1.5 text-[7px] text-muted-foreground font-black uppercase tracking-widest">
-               <Eye size={10} className="text-primary" /> {language === 'RU' ? 'Просмотры' : 'Views'}
-             </div>
-             <div className="flex items-center gap-1.5 text-[7px] text-muted-foreground font-black uppercase tracking-widest">
-               <ShieldCheck size={10} className="text-primary" /> {language === 'RU' ? 'Инкогнито' : 'Incognito'}
-             </div>
-             <div className="flex items-center gap-1.5 text-[7px] text-muted-foreground font-black uppercase tracking-widest">
-               <Sparkles size={10} className="text-primary" /> {language === 'RU' ? 'Супер-лайки' : 'Super-likes'}
-             </div>
+              <div className="flex items-center gap-1.5 text-[7px] text-muted-foreground font-black uppercase tracking-widest">
+                <Zap size={10} className="text-primary" /> {t('premium.unlimited')}
+              </div>
+              <div className="flex items-center gap-1.5 text-[7px] text-muted-foreground font-black uppercase tracking-widest">
+                <Eye size={10} className="text-primary" /> {t('premium.views')}
+              </div>
+              <div className="flex items-center gap-1.5 text-[7px] text-muted-foreground font-black uppercase tracking-widest">
+                <ShieldCheck size={10} className="text-primary" /> {t('premium.incognito')}
+              </div>
+              <div className="flex items-center gap-1.5 text-[7px] text-muted-foreground font-black uppercase tracking-widest">
+                <Sparkles size={10} className="text-primary" /> {t('premium.super_likes')}
+              </div>
           </div>
         </div>
 
         <DialogFooter className="p-5 pt-0">
           <Button className="w-full h-12 rounded-full gradient-bg text-white font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/30 active:scale-95 transition-all text-[9px] border-0">
-            {language === 'RU' ? 'Начать сейчас' : 'Start now'}
+            {t('premium.start_now')}
           </Button>
         </DialogFooter>
       </DialogContent>

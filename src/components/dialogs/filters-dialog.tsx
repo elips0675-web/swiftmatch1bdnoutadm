@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { useUser } from "@/shims/firebase";
 import { PremiumDialog } from "./premium-dialog";
 import { Lock } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 interface FiltersDialogProps {
   open: boolean;
@@ -39,6 +40,7 @@ export function FiltersDialog({
   onApplyFilters,
 }: FiltersDialogProps) {
   const { user } = useUser();
+  const { t } = useLanguage();
   const isPro = user?.isPro;
 
   const [ageRange, setAgeRange] = useState(currentFilters.ageRange || [18, 40]);
@@ -107,8 +109,8 @@ export function FiltersDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-[420px] w-[95vw] h-[90vh] rounded-3xl border-0 p-0 bg-white app-shadow flex flex-col">
           <DialogHeader className="p-6 pb-4 border-b">
-            <DialogTitle className="text-xl font-black tracking-tight">Фильтры поиска</DialogTitle>
-            <DialogDescription>Настройте параметры, чтобы найти идеального партнера.</DialogDescription>
+            <DialogTitle className="text-xl font-black tracking-tight">{t('filters.title')}</DialogTitle>
+            <DialogDescription>{t('filters.description')}</DialogDescription>
           </DialogHeader>
           
           <div className="flex-1 overflow-y-auto">
@@ -119,8 +121,8 @@ export function FiltersDialog({
                       <div className="flex items-center gap-3">
                           <Lock className="w-5 h-5" />
                           <div className="flex-1">
-                              <h3 className="font-bold text-sm">Разблокируйте все фильтры</h3>
-                              <p className="text-xs">Перейдите на PRO, чтобы использовать расширенные фильтры и найти идеальную пару.</p>
+                              <h3 className="font-bold text-sm">{t('filters.unlock_all')}</h3>
+                              <p className="text-xs">{t('filters.unlock_description')}</p>
                           </div>
                           <Button 
                               size="sm" 
@@ -136,7 +138,7 @@ export function FiltersDialog({
               {/* Dating Goal */}
               <div className="space-y-3" onClick={handlePremiumFeatureClick}>
                 <Label className={cn("font-bold flex items-center gap-2", !isPro && "opacity-50")}>
-                    Цель знакомства {!isPro && <Lock size={12} />}
+                    {t('filters.dating_goal')} {!isPro && <Lock size={12} />}
                 </Label>
                 <Select 
                   value={isPro ? selectedDatingGoal : 'all'} 
@@ -145,31 +147,31 @@ export function FiltersDialog({
                 >
                   <SelectTrigger className="rounded-xl h-12 font-medium"><SelectValue /></SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    <SelectItem value="all">Все</SelectItem>
-                    {DATING_GOALS.map(goal => <SelectItem key={goal} value={goal}>{goal}</SelectItem>)}
+                    <SelectItem value="all">{t('filters.all')}</SelectItem>
+                    {DATING_GOALS.map(goal => <SelectItem key={goal} value={goal}>{t(goal)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Age Range */}
               <div className="space-y-3">
-                <Label className="font-bold">Возраст: <span className="text-primary font-black">{ageRange[0]} - {ageRange[1]}</span></Label>
+                <Label className="font-bold">{t('filters.age')}: <span className="text-primary font-black">{ageRange[0]} - {ageRange[1]}</span></Label>
                 <Slider min={18} max={60} step={1} value={ageRange} onValueChange={setAgeRange} className="[&>span:first-child]:h-1" />
               </div>
               
               {/* Distance */}
               <div className="space-y-3">
-                  <Label className="font-bold">Дистанция: <span className="text-primary font-black">до {distance[0]} км</span></Label>
+                  <Label className="font-bold">{t('filters.distance')}: <span className="text-primary font-black">{t('filters.up_to')} {distance[0]} {t('common.km')}</span></Label>
                   <Slider min={1} max={100} step={1} value={distance} onValueChange={setDistance} />
               </div>
 
               {/* City */}
               <div className="space-y-3">
-                <Label className="font-bold">Страна и город</Label>
+                <Label className="font-bold">{t('filters.country_city')}</Label>
                 <Select value={selectedCountryFilters} onValueChange={(v) => { setSelectedCountryFilters(v); setSelectedCity("Все"); }}>
-                  <SelectTrigger className="rounded-xl h-12 font-medium"><SelectValue placeholder="Выберите страну" /></SelectTrigger>
+                  <SelectTrigger className="rounded-xl h-12 font-medium"><SelectValue placeholder={t('filters.select_country')} /></SelectTrigger>
                   <SelectContent className="rounded-xl max-h-60">
-                    <SelectItem value="Все">Все страны</SelectItem>
+                    <SelectItem value="Все">{t('filters.all_countries')}</SelectItem>
                     {ALL_COUNTRIES.map(country => <SelectItem key={country} value={country}>{country}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -185,13 +187,13 @@ export function FiltersDialog({
               
               {/* Gender Preference */}
               <div className="space-y-3">
-                <Label className="font-bold">Ищу</Label>
+                <Label className="font-bold">{t('filters.looking_for')}</Label>
                  <Select value={genderPref} onValueChange={setGenderPref}>
                     <SelectTrigger className="rounded-xl h-12 font-medium"><SelectValue /></SelectTrigger>
                     <SelectContent className="rounded-xl">
-                      <SelectItem value="male">Мужчину</SelectItem>
-                      <SelectItem value="female">Женщину</SelectItem>
-                      <SelectItem value="all">Всех</SelectItem>
+                      <SelectItem value="male">{t('filters.male')}</SelectItem>
+                      <SelectItem value="female">{t('filters.female')}</SelectItem>
+                      <SelectItem value="all">{t('filters.all_genders')}</SelectItem>
                     </SelectContent>
                   </Select>
               </div>
@@ -199,7 +201,7 @@ export function FiltersDialog({
               {/* Circadian Rhythm */}
               <div className="space-y-3" onClick={handlePremiumFeatureClick}>
                 <Label className={cn("font-bold flex items-center gap-2", !isPro && "opacity-50")}>
-                    Режим сна {!isPro && <Lock size={12} />}
+                    {t('filters.sleep_mode')} {!isPro && <Lock size={12} />}
                 </Label>
                  <Select 
                     value={isPro ? selectedCircadian : 'all'} 
@@ -208,8 +210,8 @@ export function FiltersDialog({
                   >
                     <SelectTrigger className="rounded-xl h-12 font-medium"><SelectValue /></SelectTrigger>
                     <SelectContent className="rounded-xl">
-                      <SelectItem value="all">Любой</SelectItem>
-                      {CIRCADIAN_RHYTHM_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                      <SelectItem value="all">{t('filters.any')}</SelectItem>
+                      {CIRCADIAN_RHYTHM_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{t(opt.label)}</SelectItem>)}
                     </SelectContent>
                   </Select>
               </div>
@@ -217,7 +219,7 @@ export function FiltersDialog({
               {/* Attachment style */}
               <div className="space-y-3" onClick={handlePremiumFeatureClick}>
                   <Label className={cn("font-bold flex items-center gap-2", !isPro && "opacity-50")}>
-                      Тип привязанности {!isPro && <Lock size={12} />}
+                      {t('filters.attachment_type')} {!isPro && <Lock size={12} />}
                   </Label>
                   <Select 
                     value={isPro ? selectedAttachment : 'all'} 
@@ -226,8 +228,8 @@ export function FiltersDialog({
                   >
                       <SelectTrigger className="rounded-xl h-12 font-medium"><SelectValue /></SelectTrigger>
                       <SelectContent className="rounded-xl">
-                          <SelectItem value="all">Любой</SelectItem>
-                          {ATTACHMENT_STYLE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                          <SelectItem value="all">{t('filters.any')}</SelectItem>
+                          {ATTACHMENT_STYLE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{t(opt.label)}</SelectItem>)}
                       </SelectContent>
                   </Select>
               </div>
@@ -235,33 +237,33 @@ export function FiltersDialog({
               {/* Interests */}
               <div className="space-y-3">
                   <Label className={cn("font-bold flex items-center gap-2", !isPro && "opacity-50")} onClick={handlePremiumFeatureClick}>
-                      Интересы {!isPro && <Lock size={12} />}
+                      {t('filters.interests')} {!isPro && <Lock size={12} />}
                   </Label>
                   <div className="flex flex-wrap gap-2">
                       {INTEREST_OPTIONS.map(interest => (
-                          <Badge
-                              key={interest}
-                              onClick={() => toggleInterest(interest)}
-                              variant={selectedInterests.includes(interest) ? "default" : "secondary"}
-                              className={cn(
-                                  "cursor-pointer px-3 py-1.5 rounded-lg transition-all border-0 font-bold text-xs shadow-sm",
-                                  selectedInterests.includes(interest) 
-                                      ? "gradient-bg text-white hover:brightness-110" 
-                                      : "bg-muted text-muted-foreground hover:bg-border",
-                                  !isPro && "opacity-50 cursor-not-allowed"
-                              )}
-                          >
-                              {interest}
-                          </Badge>
-                      ))}
+                           <Badge
+                               key={interest}
+                               onClick={() => toggleInterest(interest)}
+                               variant={selectedInterests.includes(interest) ? "default" : "secondary"}
+                               className={cn(
+                                   "cursor-pointer px-3 py-1.5 rounded-lg transition-all border-0 font-bold text-xs shadow-sm",
+                                   selectedInterests.includes(interest) 
+                                       ? "gradient-bg text-white hover:brightness-110" 
+                                       : "bg-muted text-muted-foreground hover:bg-border",
+                                   !isPro && "opacity-50 cursor-not-allowed"
+                               )}
+                           >
+                               {t(interest)}
+                           </Badge>
+                       ))}
                   </div>
               </div>
             </div>
           </div>
           
           <DialogFooter className="p-6 flex-row gap-3 justify-end bg-muted/30 rounded-b-3xl mt-auto border-t">
-            <Button variant="ghost" className="rounded-xl" onClick={() => onOpenChange(false)}>Отмена</Button>
-            <Button onClick={handleApply} className="rounded-xl gradient-bg text-white shadow-lg shadow-primary/20">Применить</Button>
+            <Button variant="ghost" className="rounded-xl" onClick={() => onOpenChange(false)}>{t('filters.cancel')}</Button>
+            <Button onClick={handleApply} className="rounded-xl gradient-bg text-white shadow-lg shadow-primary/20">{t('filters.apply')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

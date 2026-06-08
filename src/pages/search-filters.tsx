@@ -91,7 +91,7 @@ export default function FiltersPage() {
       <main className="flex-1 p-6 space-y-8">
         <FilterSection title={t('filters.age')}>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-gray-600">От {ageRange[0]} до {ageRange[1]} лет</span>
+            <span className="text-gray-600">{t('filters.age_from_to', { from: ageRange[0], to: ageRange[1] })}</span>
           </div>
           <Slider
             value={ageRange}
@@ -104,7 +104,7 @@ export default function FiltersPage() {
 
         <FilterSection title={t('filters.distance')}>
             <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-600">До {distance[0]} км</span>
+                <span className="text-gray-600">{t('filters.distance_up_to', { distance: distance[0] })}</span>
             </div>
             <Slider 
                 value={distance}
@@ -118,10 +118,10 @@ export default function FiltersPage() {
           <div className="space-y-3">
             <Select value={selectedCountry} onValueChange={(v) => { setSelectedCountry(v); setSelectedCity("all"); }}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Выберите страну" />
+                <SelectValue placeholder={t('filters.select_country')} />
               </SelectTrigger>
               <SelectContent className="max-h-60">
-                <SelectItem value="">Все страны</SelectItem>
+                <SelectItem value="">{t('filters.all_countries')}</SelectItem>
                 {ALL_COUNTRIES.map(country => (
                   <SelectItem key={country} value={country}>{country}</SelectItem>
                 ))}
@@ -133,7 +133,7 @@ export default function FiltersPage() {
                   <SelectValue placeholder={t('filters.select_city')} />
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
-                  <SelectItem value="all">Все города</SelectItem>
+                  <SelectItem value="all">{t('filters.all_cities')}</SelectItem>
                   {POPULAR_CITIES[selectedCountry].map(city => (
                     <SelectItem key={city} value={city}>{city}</SelectItem>
                   ))}

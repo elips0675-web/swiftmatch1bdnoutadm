@@ -105,8 +105,8 @@ function SubGroupsContent() {
         return (
           <div className="flex-1 flex items-center justify-center text-center p-8 bg-[#f8f9fb]">
             <div>
-              <h2 className="text-xl font-bold">Категория не найдена</h2>
-              <Button onClick={() => router.push('/groups')} className="mt-4 rounded-xl">Назад к группам</Button>
+              <h2 className="text-xl font-bold">{t('groups.category_not_found')}</h2>
+              <Button onClick={() => router.push('/groups')} className="mt-4 rounded-xl">{t('groups.back_to_groups')}</Button>
             </div>
           </div>
         );
@@ -134,7 +134,7 @@ function SubGroupsContent() {
                             viewMode === 'feed' ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                         )}
                     >
-                        {language === 'RU' ? 'Лента' : 'Feed'}
+                        {t('groups.tab.feed')}
                     </button>
                     <button
                         onClick={() => setViewMode('list')}
@@ -143,7 +143,7 @@ function SubGroupsContent() {
                             viewMode === 'list' ? "bg-white shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                         )}
                     >
-                        {language === 'RU' ? 'Группы' : 'Groups'}
+                        {t('groups.tab.groups')}
                     </button>
                 </div>
             </header>
@@ -215,15 +215,15 @@ function SubGroupsContent() {
                     <div className="p-6 space-y-4">
                         <Button onClick={handleAdWatch} variant="outline" className="w-full h-16 rounded-xl border-2 border-primary/20 bg-primary/5 flex flex-col items-center justify-center gap-1 group hover:bg-primary/10 transition-all border-dashed">
                             <div className="flex items-center gap-2 text-primary"><Play size={14} fill="currentColor" /><span className="text-[11px] font-black uppercase tracking-widest">{t('autosearch.free')}</span></div>
-                            <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-tighter opacity-60">{language === 'RU' ? '1 доступ за видео' : '1 access for 1 Video'}</span>
+                            <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-tighter opacity-60">{t('groups.ad.access')}</span>
                         </Button>
-                        <div className="relative py-2"><div className="absolute inset-0 flex items-center"><span className="w-full border-t border-muted"></span></div><div className="relative flex justify-center text-[8px] uppercase font-black tracking-widest text-muted-foreground bg-white px-4">{language === 'RU' ? 'или' : 'or'}</div></div>
+                        <div className="relative py-2"><div className="absolute inset-0 flex items-center"><span className="w-full border-t border-muted"></span></div><div className="relative flex justify-center text-[8px] uppercase font-black tracking-widest text-muted-foreground bg-white px-4">{t('common.or')}</div></div>
                         <Button onClick={() => setShowPremiumDialog(false)} className="w-full h-16 rounded-xl gradient-bg text-white shadow-xl shadow-primary/20 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all border-0">
                             <div className="flex items-center gap-2">
                                 <CreditCard size={16} />
                                 <span className="text-xs font-black uppercase tracking-widest">{t('autosearch.paid')}</span>
                             </div>
-                            <span className="text-[10px] text-white/80 font-bold uppercase tracking-tighter">{language === 'RU' ? 'Всего за 49 ₽' : 'Just $0.99'}</span>
+                            <span className="text-[10px] text-white/80 font-bold uppercase tracking-tighter">{t('groups.ad.price')}</span>
                         </Button>
                     </div>
                     <DialogFooter className="p-6 pt-0"><Button variant="ghost" onClick={() => setShowPremiumDialog(false)} className="w-full text-muted-foreground text-[9px] font-black uppercase tracking-widest h-10">{t('button.not_now')}</Button></DialogFooter>

@@ -51,7 +51,7 @@ export function MatchDialog({
           <div className="px-8 pt-8 pb-8 text-center">
             <DialogTitle className="text-3xl font-black font-headline mb-3 gradient-text uppercase tracking-tight">{t('match.title')}</DialogTitle>
             <DialogDescription className="text-muted-foreground text-sm mb-8 px-6 leading-relaxed font-medium">
-              {language === 'RU' ? 'Вы с ' : 'You and '} <span className="font-bold text-foreground">{matchUser?.name}</span> {language === 'RU' ? 'понравились друг другу.' : 'liked each other.'}
+              {t('match.you_and')} <span className="font-bold text-foreground">{matchUser?.name}</span> {t('match.liked_each_other')}
             </DialogDescription>
             
             <div className="flex flex-col gap-4 w-full mt-8">

@@ -20,6 +20,7 @@ import Link from "@/shims/next-link";
 import { cn } from "@/lib/utils";
 import { useAuth, useFirestore } from "@/shims/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { useLanguage } from "@/context/language-context";
 import { doc, getDoc } from "firebase/firestore";
 
 export default function LoginPage() {
@@ -29,6 +30,7 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
+  const { t } = useLanguage();
 
   const auth = useAuth();
   const firestore = useFirestore();
@@ -39,8 +41,8 @@ export default function LoginPage() {
 
     if (loginMethod !== 'email') {
         toast({
-          title: "В разработке",
-          description: "Вход по телефону будет добавлен позже.",
+          title: t('auth.phone_coming_soon'),
+          description: t('auth.phone_coming_soon_desc'),
         });
         setIsLoading(false);
         return;
@@ -61,21 +63,21 @@ export default function LoginPage() {
         localStorage.setItem('authToken', data.token);
         router.push('/');
         toast({
-          title: "С возвращением!",
-          description: "Вы успешно вошли в аккаунт.",
+          title: t('auth.welcome_back'),
+          description: t('auth.welcome_back_desc'),
         });
       } else {
         toast({
-          title: "Ошибка входа",
-          description: data.message || "Неверный email или пароль.",
+          title: t('auth.login_error'),
+          description: data.message || t('auth.login_error_desc'),
           variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Login Error:", error);
       toast({
-        title: "Ошибка сети",
-        description: "Не удалось подключиться к серверу.",
+          title: t('auth.network_error'),
+          description: t('auth.network_error_desc'),
         variant: "destructive",
       });
     } finally {
@@ -98,8 +100,8 @@ export default function LoginPage() {
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
         router.push('/');
         toast({
-          title: "С возвращением!",
-          description: `Вы успешно вошли, ${firebaseUser.displayName}.`,
+          title: t('auth.welcome_back'),
+          description: t('auth.welcome_back_desc_name', { name: firebaseUser.displayName }),
         });
       } else {
         router.push('/onboarding');
@@ -107,8 +109,8 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       toast({
-        title: "Ошибка входа",
-        description: error.message || "Не удалось войти через Google.",
+          title: t('auth.login_error'),
+          description: error.message || t('auth.google_login_error'),
         variant: "destructive",
       });
     } finally {
@@ -136,7 +138,7 @@ export default function LoginPage() {
           <h1 className="text-4xl font-black font-headline tracking-tighter mb-3">
             Swift<span className="gradient-text">Match</span>
           </h1>
-          <p className="text-muted-foreground text-sm font-medium">Твоя идеальная пара в одном клике</p>
+          <p className="text-muted-foreground text-sm font-medium">{t('auth.tagline')}</p>
         </div>
 
         <div className="space-y-6 animate-in slide-in-from-bottom-8 duration-700">
@@ -148,7 +150,7 @@ export default function LoginPage() {
                 loginMethod === "phone" ? "bg-white shadow-sm text-primary" : "text-muted-foreground"
               )}
             >
-              Телефон
+              {t('auth.phone_tab')}
             </button>
             <button 
               onClick={() => setLoginMethod("email")}
@@ -196,7 +198,7 @@ export default function LoginPage() {
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                     <Input 
                       type="password" 
-                      placeholder="Пароль" 
+                      placeholder={t('auth.password_placeholder')} 
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="h-14 pl-12 rounded-2xl bg-muted/30 border-0 focus-visible:ring-primary/20 font-bold"
@@ -212,7 +214,7 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full h-14 rounded-full gradient-bg text-white font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all active:scale-95 border-0"
             >
-              {isLoading ? "Вход..." : "Продолжить"} <ArrowRight size={18} className="ml-2" />
+              {isLoading ? t('auth.logging_in') : t('auth.continue')} <ArrowRight size={18} className="ml-2" />
             </Button>
           </form>
 
@@ -221,7 +223,7 @@ export default function LoginPage() {
               <span className="w-full border-t border-border"></span>
             </div>
             <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest text-muted-foreground bg-white px-4">
-              или
+              {t('auth.or')}
             </div>
           </div>
 
@@ -232,14 +234,14 @@ export default function LoginPage() {
             className="w-full h-14 rounded-full border-2 border-muted hover:bg-muted/30 transition-all font-bold gap-3 shadow-sm"
           >
             <Chrome size={20} className="text-[#4285F4]" />
-            Войти через Google
+            {t('auth.google_login')}
           </Button>
 
           <div className="flex flex-col gap-4 pt-2">
             <p className="text-center text-xs text-muted-foreground">
-              Нет аккаунта?{" "}
+              {t('auth.no_account')}{" "}
               <Link href="/register" className="text-primary font-black uppercase tracking-tighter hover:underline">
-                Зарегистрироваться
+                {t('auth.register_link')}
               </Link>
             </p>
             <Button 
@@ -249,7 +251,7 @@ export default function LoginPage() {
             >
               <Link href="/onboarding">
                 <LayoutTemplate size={14} className="mr-2" />
-                Демо онбординг
+                {t('auth.demo_onboarding')}
               </Link>
             </Button>
           </div>
@@ -257,7 +259,7 @@ export default function LoginPage() {
 
         <div className="mt-auto pt-12 flex flex-col items-center gap-4">
           <Badge variant="secondary" className="bg-primary/5 text-primary border-0 px-4 py-2 rounded-xl flex gap-2 shadow-sm">
-            <Sparkles size={14} /> <span>100% Приватно</span>
+            <Sparkles size={14} /> <span>{t('auth.private')}</span>
           </Badge>
         </div>
       </main>

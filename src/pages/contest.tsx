@@ -47,29 +47,18 @@ export default function ContestPage() {
   const [activeGender, setActiveGender] = useState<string>("female");
 
   useEffect(() => {
-    const getRussianDays = (n: number) => {
-      const titles = ['день', 'дня', 'дней'];
-      const cases = [2, 0, 1, 1, 1, 2];
-      return titles[(n % 100 > 4 && n % 100 < 20) ? 2 : cases[(n % 10 < 5) ? n % 10 : 5]];
-    };
-
     const updateTimer = () => {
       const now = new Date();
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
       const diff = endOfMonth.getTime() - now.getTime();
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      
-      if (language === 'RU') {
-        setTimeLeft(`${days} ${getRussianDays(days)}`);
-      } else {
-        setTimeLeft(`${days} ${days === 1 ? 'day' : 'days'}`);
-      }
+      setTimeLeft(t('contest.days_left', { count: days }));
     };
 
     updateTimer();
     const interval = setInterval(updateTimer, 3600000);
     return () => clearInterval(interval);
-  }, [language]);
+  }, [language, t]);
 
   const currentEntries = useMemo(() => {
     return activeGender === "female" ? FEMALE_ENTRIES : MALE_ENTRIES;
@@ -200,7 +189,7 @@ export default function ContestPage() {
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4 px-1">
             <History className="text-blue-500" size={18} />
-            <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground">{language === 'RU' ? 'Победители прошлых месяцев' : 'Previous Winners'}</h4>
+            <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t('contest.previous_winners')}</h4>
           </div>
           <div className="grid grid-cols-3 gap-3 px-1">
             {pastWinners.slice(0, 3).map((winner) => (

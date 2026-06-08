@@ -21,45 +21,40 @@ const DropdownMenuTrigger = dynamic(() => import("@/components/ui/dropdown-menu"
 const PopoverContent = dynamic(() => import("@/components/ui/popover").then(mod => mod.PopoverContent), { ssr: false });
 const ScrollArea = dynamic(() => import("@/components/ui/scroll-area").then(mod => mod.ScrollArea), { ssr: false });
 
-const PAGE_TITLES: Record<string, { ru: string; en: string }> = {
-  "/": { ru: "", en: "" },
-  "/search": { ru: "Поиск", en: "Search" },
-  "/search/filters": { ru: "Фильтры", en: "Filters" },
-  "/chats": { ru: "Чаты", en: "Chats" },
-  "/profile": { ru: "Профиль", en: "Profile" },
-  "/profile/edit": { ru: "Редактировать", en: "Edit Profile" },
-  "/profile/attachment-test": { ru: "Тест привязанности", en: "Attachment Test" },
-  "/activity": { ru: "Активность", en: "Activity" },
-  "/groups": { ru: "Группы", en: "Groups" },
-  "/contest": { ru: "Конкурс", en: "Contest" },
-  "/settings": { ru: "Настройки", en: "Settings" },
-  "/onboarding": { ru: "Добро пожаловать", en: "Welcome" },
-  "/login": { ru: "Вход", en: "Login" },
-  "/register": { ru: "Регистрация", en: "Register" },
-  "/about": { ru: "О приложении", en: "About" },
-  "/faq": { ru: "Вопросы", en: "FAQ" },
-  "/support-chat": { ru: "Поддержка", en: "Support" },
-  "/legal/privacy": { ru: "Конфиденциальность", en: "Privacy" },
-  "/legal/terms": { ru: "Условия", en: "Terms" },
-  "/legal/data-processing": { ru: "Обработка данных", en: "Data Processing" },
-  "/admin": { ru: "Админ", en: "Admin" },
-  "/admin/analytics": { ru: "Аналитика", en: "Analytics" },
-  "/admin/users": { ru: "Пользователи", en: "Users" },
-  "/admin/content": { ru: "Контент", en: "Content" },
-  "/admin/features": { ru: "Функции", en: "Features" },
-  "/admin/messaging": { ru: "Рассылки", en: "Messaging" },
-  "/admin/monetization": { ru: "Монетизация", en: "Monetization" },
-  "/admin/reports": { ru: "Жалобы", en: "Reports" },
-};
-
-function getPageTitle(pathname: string, language: string): string {
-  const exact = PAGE_TITLES[pathname];
-  if (exact) return language === "RU" ? exact.ru : exact.en;
-
-  if (pathname.startsWith("/chats/")) return language === "RU" ? "Чат" : "Chat";
-  if (pathname.startsWith("/groups/")) return language === "RU" ? "Группа" : "Group";
-  if (pathname.startsWith("/admin")) return language === "RU" ? "Админ" : "Admin";
-
+function getPageTitle(pathname: string, t: (k: string) => string): string {
+  const titles: Record<string, string> = {
+    "/search": t('nav.search'),
+    "/search/filters": t('nav.filters'),
+    "/chats": t('nav.chats'),
+    "/profile": t('nav.profile'),
+    "/profile/edit": t('nav.edit_profile'),
+    "/profile/attachment-test": t('nav.attachment_test'),
+    "/activity": t('nav.activity'),
+    "/groups": t('nav.groups'),
+    "/contest": t('nav.contest'),
+    "/settings": t('nav.settings'),
+    "/onboarding": t('nav.onboarding'),
+    "/login": t('nav.login'),
+    "/register": t('nav.register'),
+    "/about": t('nav.about'),
+    "/faq": t('nav.faq'),
+    "/support-chat": t('nav.support'),
+    "/legal/privacy": t('nav.legal_privacy'),
+    "/legal/terms": t('nav.legal_terms'),
+    "/legal/data-processing": t('nav.legal_data_processing'),
+    "/admin": t('nav.admin'),
+    "/admin/analytics": t('nav.admin_analytics'),
+    "/admin/users": t('nav.admin_users'),
+    "/admin/content": t('nav.admin_content'),
+    "/admin/features": t('nav.admin_features'),
+    "/admin/messaging": t('nav.admin_messaging'),
+    "/admin/monetization": t('nav.admin_monetization'),
+    "/admin/reports": t('nav.admin_reports'),
+  };
+  if (titles[pathname]) return titles[pathname];
+  if (pathname.startsWith("/chats/")) return t('nav.chat');
+  if (pathname.startsWith("/groups/")) return t('nav.group_single');
+  if (pathname.startsWith("/admin")) return t('nav.admin');
   return "";
 }
 
@@ -72,14 +67,14 @@ export function AppHeader() {
 
   const isHomePage = pathname === "/";
   const isLoginPage = pathname === "/login";
-  const pageTitle = getPageTitle(pathname, language);
+  const pageTitle = getPageTitle(pathname, t);
 
   const NOTIFICATIONS = useMemo(() => [
     {
       id: 1,
       type: 'like',
-      text: language === 'RU' ? 'Анна поставила вам лайк!' : 'Anna liked you!',
-      time: language === 'RU' ? '2 мин назад' : '2 min ago',
+      text: t('notifications.liked_you'),
+      time: t('time.min_ago'),
       icon: Heart,
       color: 'text-[#fe3c72]',
       bgColor: 'bg-[#fe3c72]/10'
@@ -87,8 +82,8 @@ export function AppHeader() {
     {
       id: 2,
       type: 'match',
-      text: language === 'RU' ? 'У вас новое совпадение с Максимом!' : 'New match with Maxim!',
-      time: language === 'RU' ? '15 мин назад' : '15 min ago',
+      text: t('notifications.new_match'),
+      time: t('time.min_ago_2'),
       icon: Sparkles,
       color: 'text-amber-500',
       bgColor: 'bg-amber-500/10'
@@ -96,8 +91,8 @@ export function AppHeader() {
     {
       id: 3,
       type: 'message',
-      text: language === 'RU' ? 'Елена прислала вам сообщение' : 'Elena sent you a message',
-      time: language === 'RU' ? '1 час назад' : '1 hour ago',
+      text: t('notifications.sent_message'),
+      time: t('time.hour_ago'),
       icon: MessageCircle,
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10'
@@ -105,8 +100,8 @@ export function AppHeader() {
     {
       id: 4,
       type: 'system',
-      text: language === 'RU' ? 'Ваш профиль стал популярнее на 20%' : 'Your profile is 20% more popular',
-      time: language === 'RU' ? '3 часа назад' : '3 hours ago',
+      text: t('notifications.profile_popular'),
+      time: t('time.hours_ago'),
       icon: Zap,
       color: 'text-emerald-500',
       bgColor: 'bg-emerald-500/10'
@@ -116,8 +111,8 @@ export function AppHeader() {
   const handleLangChange = (newLang: 'RU' | 'EN') => {
     setLanguage(newLang);
     toast({
-      title: newLang === "RU" ? "Язык изменен" : "Language changed",
-      description: newLang === "RU" ? "Выбран русский язык" : "English language selected",
+      title: t('toast.language_changed'),
+      description: t('toast.language_selected'),
     });
   };
 
@@ -201,7 +196,7 @@ export function AppHeader() {
                     </h4>
                   </div>
                   <button className="text-[9px] font-black text-primary uppercase tracking-widest hover:opacity-70 transition-opacity">
-                    {language === 'RU' ? 'Прочитать все' : 'Mark as read'}
+                    {t('notifications.read_all')}
                   </button>
                 </div>
                 <ScrollArea className="h-[360px]">
@@ -242,7 +237,7 @@ export function AppHeader() {
                           <Bell size={24} />
                         </div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">
-                          {language === 'RU' ? 'Нет новых уведомлений' : 'No new notifications'}
+                          {t('notifications.empty')}
                         </p>
                       </div>
                     )}
@@ -257,7 +252,7 @@ export function AppHeader() {
                     }}
                     className="h-10 text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:bg-primary/5 w-full rounded-2xl border border-primary/10"
                   >
-                    {language === "RU" ? "Все события" : "All events"}
+                    {t('notifications.all_events')}
                   </Button>
                 </div>
               </>
@@ -273,7 +268,7 @@ export function AppHeader() {
         >
           <Link href="/login" prefetch={true}>
             <LogIn size={16} />
-            <span className="hidden xs:block">{language === "RU" ? "Вход" : "Login"}</span>
+            <span className="hidden xs:block">{t('nav.login')}</span>
           </Link>
         </Button>
       </div>

@@ -176,7 +176,7 @@ export default function ProfilePage() {
         if (boostEndDate > new Date()) {
             setIsBoosted(true);
             const timeLeft = Math.round((boostEndDate.getTime() - new Date().getTime()) / 60000);
-            toast({ title: 'Буст активен! 🚀', description: `Ваш профиль будет показываться первым еще ${timeLeft} минут.` });
+            toast({ title: t('toast.boost_active'), description: t('toast.boost_active_desc', { minutes: timeLeft }) });
         }
     }
   }, [profile]);
@@ -195,11 +195,8 @@ export default function ProfilePage() {
       setPhotos((prev) => [...prev, previewUrl]);
 
       toast({
-        title: language === 'RU' ? "Фото выбрано" : "Photo Selected",
-        description:
-          language === 'RU'
-            ? "Фото будет сохранено в галерею."
-            : "Photo will be saved to the gallery.",
+        title: t('toast.photo_selected'),
+        description: t('toast.photo_selected_desc'),
       });
 
       const fileToDataUrl = (f: File) =>
@@ -300,7 +297,7 @@ export default function ProfilePage() {
     const persistentPhotos = newPhotos.filter(p => !p.startsWith('blob:'));
     localStorage.setItem('userProfileGallery', JSON.stringify(persistentPhotos));
 
-    toast({ title: language === 'RU' ? "Фото удалено" : "Photo deleted" });
+    toast({ title: t('toast.photo_deleted') });
     setPhotoToDelete(null);
   };
 
@@ -312,21 +309,21 @@ export default function ProfilePage() {
   const handleSubmitToContest = () => {
     if (!selectedPhotoForContest) return;
     if (selectedPhotoForContest.startsWith('blob:')) {
-        toast({ variant: 'destructive', title: 'Ошибка', description: 'Нельзя отправить на конкурс временное изображение.' })
+        toast({ variant: 'destructive', title: t('toast.error'), description: t('toast.contest_temp_error') })
         return;
     }
     setHasParticipated(true);
     localStorage.setItem('contest_participation', 'true');
     setIsSelectionOpen(false);
     toast({
-      title: language === 'RU' ? "Заявка принята!" : "Application accepted!",
-      description: language === 'RU' ? "Ваше фото теперь участвует в конкурсе." : "Your photo is now participating in the contest.",
+      title: t('toast.contest_accepted'),
+      description: t('toast.contest_accepted_desc'),
     });
   };
   
   const activateBoost = () => {
     if (isBoosted) {
-      toast({ title: "Буст уже активен" });
+      toast({ title: t('toast.boost_already_active') });
       return;
     }
     const boostEndTime = new Date(new Date().getTime() + 30 * 60 * 1000);
@@ -335,8 +332,8 @@ export default function ProfilePage() {
     localStorage.setItem('userProfile', JSON.stringify(updatedUser));
     setIsBoosted(true);
     toast({
-      title: "Буст активирован! 🚀",
-      description: "Ваш профиль будет показываться первым в течение 30 минут.",
+      title: t('toast.boost_activated'),
+      description: t('toast.boost_activated_desc'),
     });
   };
 
@@ -346,8 +343,8 @@ export default function ProfilePage() {
       activateBoost();
     } else {
       toast({
-        title: "Оплата",
-        description: "Функция оплаты будет добавлена в ближайшее время!",
+        title: t('toast.payment'),
+        description: t('toast.payment_coming_soon'),
       });
     }
   };
@@ -403,24 +400,24 @@ export default function ProfilePage() {
                     className={cn("h-12 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg transition-all text-white active:scale-95 px-6", isBoosted ? "bg-purple-600 shadow-purple-600/40 animate-pulse" : "bg-orange-500 shadow-orange-500/40")}
                 >
                     <Rocket size={16} className="mr-2"/>
-                    {isBoosted ? 'Буст активен' : 'Поднять профиль'}
+                    {isBoosted ? t('profile.boost_active') : t('profile.boost')}
                 </Button>
             </div>
           </div>
 
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid w-full grid-cols-4 bg-muted p-1 rounded-xl mb-6">
-              <TabsTrigger value="profile" className="text-[11px]">{language === 'RU' ? 'Данные' : 'Profile'}</TabsTrigger>
-              <TabsTrigger value="gallery" className="text-[11px]">{language === 'RU' ? 'Галерея' : 'Gallery'}</TabsTrigger>
+              <TabsTrigger value="profile" className="text-[11px]">{t('profile.tab.data')}</TabsTrigger>
+              <TabsTrigger value="gallery" className="text-[11px]">{t('profile.tab.gallery')}</TabsTrigger>
               <TabsTrigger value="guests" className="text-[11px] relative">
-                {language === 'RU' ? 'Гости' : 'Guests'}
+                {t('profile.tab.guests')}
                 {visitors.some(v => v.isNew) && (
                   <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-white text-[9px] font-black flex items-center justify-center">
                     {visitors.filter(v => v.isNew).length}
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="stories" className="text-[11px]">{language === 'RU' ? 'Сторис' : 'Stories'}</TabsTrigger>
+              <TabsTrigger value="stories" className="text-[11px]">{t('profile.tab.stories')}</TabsTrigger>
             </TabsList>
             <TabsContent value="profile">
               <div className="bg-white rounded-2xl p-6 app-shadow border border-border/40 space-y-6">
@@ -461,14 +458,14 @@ export default function ProfilePage() {
                       <span className="text-[10px] font-black uppercase text-muted-foreground ml-1">{t('profile.label.gender')}</span>
                       <Badge variant="secondary" className="w-full justify-start py-2 px-3 rounded-lg bg-muted/40 border-0 font-bold text-[11px] gap-2">
                         <VenetianMask size={12} className="text-primary" />
-                        {profile.gender === 'female' ? (language === 'RU' ? 'Женщина' : 'Female') : (language === 'RU' ? 'Мужчина' : 'Male')}
+                        {profile.gender === 'female' ? t('gender.female') : t('gender.male')}
                       </Badge>
                     </div>
                     <div className="space-y-1">
                       <span className="text-[10px] font-black uppercase text-muted-foreground ml-1">{t('profile.label.looking_for')}</span>
                       <Badge variant="secondary" className="w-full justify-start py-2 px-3 rounded-lg bg-muted/40 border-0 font-bold text-[11px] gap-2">
                         <Search size={12} className="text-primary" />
-                        {profile.lookingFor === 'male' ? (language === 'RU' ? 'Мужчину' : 'Men') : profile.lookingFor === 'female' ? (language === 'RU' ? 'Женщину' : 'Women') : (language === 'RU' ? 'Всех' : 'All')}
+                        {profile.lookingFor === 'male' ? t('gender.men') : profile.lookingFor === 'female' ? t('gender.women') : t('gender.all')}
                       </Badge>
                     </div>
                     <div className="space-y-1">
@@ -489,7 +486,7 @@ export default function ProfilePage() {
                       <span className="text-[10px] font-black uppercase text-muted-foreground ml-1">{t('profile.label.height')}</span>
                       <Badge variant="secondary" className="w-full justify-start py-2 px-3 rounded-lg bg-muted/40 border-0 font-bold text-[11px] gap-2">
                         <Ruler size={12} className="text-primary" />
-                        {profile.height} {language === 'RU' ? 'см' : 'cm'}
+                        {profile.height} {t('units.cm')}
                       </Badge>
                     </div>
                   </div>
@@ -510,21 +507,21 @@ export default function ProfilePage() {
                 <div className="space-y-3">
                     <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600"><BrainCircuit size={14} /></div>
-                        <h4 className="font-black text-[11px] uppercase tracking-widest text-muted-foreground">Психологические тесты</h4>
+                        <h4 className="font-black text-[11px] uppercase tracking-widest text-muted-foreground">{t('profile.psych_tests')}</h4>
                     </div>
                     
                     {profile.attachmentStyle ? (
                         <div className="p-4 bg-purple-50/50 rounded-xl border border-purple-100 space-y-3">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-purple-800 ml-1 flex items-center gap-1.5"><Heart size={12} /> Тест на стиль привязанности</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-purple-800 ml-1 flex items-center gap-1.5"><Heart size={12} /> {t('profile.attachment_test')}</Label>
                             <div className="flex items-center gap-3 bg-white p-3 rounded-lg shadow-sm">
                                 <div className="text-2xl">{ATTACHMENT_STYLE_INFO[profile.attachmentStyle].emoji}</div>
                                 <div>
                                     <div className="font-bold">{ATTACHMENT_STYLE_INFO[profile.attachmentStyle].label}</div>
-                                    <p className="text-xs text-muted-foreground">Вы можете пройти тест заново, чтобы обновить результат.</p>
+                                    <p className="text-xs text-muted-foreground">{t('profile.retake_test_desc')}</p>
                                 </div>
                             </div>
                             <Button onClick={() => router.push('/profile/attachment-test')} className="w-full h-11 rounded-lg bg-white text-purple-800 font-bold shadow-sm border border-purple-100 hover:bg-purple-50">
-                                {'Пройти заново'}
+                                {t('profile.retake_test')}
                             </Button>
                         </div>
                     ) : (
@@ -534,16 +531,16 @@ export default function ProfilePage() {
                                     <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
                                         <BrainCircuit size={22} />
                                     </div>
-                                    <h3 className="text-lg font-black tracking-tight">Узнайте себя лучше</h3>
+                                    <h3 className="text-lg font-black tracking-tight">{t('profile.know_yourself')}</h3>
                                 </div>
                                 <p className="text-xs text-white/80 mb-6 font-medium leading-relaxed">
-                                    Пройдите тест на стиль привязанности, чтобы лучше понимать свои отношения и находить более совместимых партнеров.
+                                    {t('profile.attachment_test_desc')}
                                 </p>
                                 <Button 
                                     onClick={() => router.push('/profile/attachment-test')} 
                                     className="w-full h-12 rounded-xl bg-white text-purple-600 font-black uppercase tracking-widest text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5"
                                 >
-                                    Начать тест
+                                    {t('profile.start_test')}
                                 </Button>
                             </div>
                         </div>
@@ -629,11 +626,11 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-2">
                     <Eye size={18} className="text-primary" />
                     <h4 className="font-black text-[11px] uppercase tracking-widest text-muted-foreground">
-                      {language === 'RU' ? 'Гости профиля' : 'Profile visitors'}
+                      {t('profile.visitors')}
                     </h4>
                   </div>
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                    {visitors.length} {language === 'RU' ? 'визитов' : 'visits'}
+                    {visitors.length} {t('profile.visits')}
                   </span>
                 </div>
 
@@ -641,7 +638,7 @@ export default function ProfilePage() {
                   <div className="py-12 flex flex-col items-center justify-center text-center text-muted-foreground">
                     <Eye size={32} className="mb-3 opacity-50" />
                     <p className="text-xs font-bold uppercase tracking-widest">
-                      {language === 'RU' ? 'Пока никто не заходил' : 'No visitors yet'}
+                      {t('profile.no_visitors')}
                     </p>
                   </div>
                 ) : (
@@ -649,10 +646,10 @@ export default function ProfilePage() {
                     {visitors.map((v, idx) => {
                       const minutesAgo = Math.max(1, Math.round((Date.now() - v.visitedAt) / 60000));
                       const timeLabel = minutesAgo < 60
-                        ? `${minutesAgo} ${language === 'RU' ? 'мин' : 'min'}`
+                        ? `${minutesAgo} ${t('units.min')}`
                         : minutesAgo < 60 * 24
-                          ? `${Math.round(minutesAgo / 60)} ${language === 'RU' ? 'ч' : 'h'}`
-                          : `${Math.round(minutesAgo / 60 / 24)} ${language === 'RU' ? 'дн' : 'd'}`;
+                          ? `${Math.round(minutesAgo / 60)} ${t('units.h')}`
+                          : `${Math.round(minutesAgo / 60 / 24)} ${t('units.d')}`;
                       const blurred = !isPremium && idx >= 2;
                       return (
                         <div
@@ -660,10 +657,8 @@ export default function ProfilePage() {
                           onClick={() => {
                             if (blurred) {
                               toast({
-                                title: language === 'RU' ? 'Premium функция' : 'Premium feature',
-                                description: language === 'RU'
-                                  ? 'Откройте Premium, чтобы видеть всех гостей профиля.'
-                                  : 'Unlock Premium to see all profile visitors.',
+                                title: t('toast.premium_feature'),
+                                description: t('toast.premium_see_visitors'),
                               });
                               return;
                             }
@@ -724,21 +719,21 @@ export default function ProfilePage() {
                     </div>
                     <div className="flex-1">
                       <p className="font-black text-sm">
-                        {language === 'RU' ? 'Откройте всех гостей' : 'Unlock all visitors'}
+                        {t('profile.unlock_visitors')}
                       </p>
                       <p className="text-[10px] text-white/80 font-bold uppercase tracking-wider">
-                        {language === 'RU' ? 'Доступно с Premium' : 'Premium feature'}
+                        {t('profile.premium_available')}
                       </p>
                     </div>
                     <Button
                       onClick={() => {
                         localStorage.setItem('isPremium', 'true');
                         setIsPremium(true);
-                        toast({ title: language === 'RU' ? 'Premium активирован' : 'Premium activated' });
+                        toast({ title: t('toast.premium_activated') });
                       }}
                       className="h-10 px-4 rounded-xl bg-white text-primary font-black uppercase text-[10px] tracking-widest hover:bg-white/90"
                     >
-                      {language === 'RU' ? 'Открыть' : 'Unlock'}
+                      {t('profile.unlock_btn')}
                     </Button>
                   </div>
                 )}
@@ -749,9 +744,9 @@ export default function ProfilePage() {
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center gap-2">
                     <Video size={18} className="text-primary" />
-                    <h4 className="font-black text-[11px] uppercase tracking-widest text-muted-foreground">Сторис</h4>
+                    <h4 className="font-black text-[11px] uppercase tracking-widest text-muted-foreground">{t('profile.stories')}</h4>
                   </div>
-                  <button onClick={handleAddStoryClick} className="h-8 rounded-lg text-[9px] font-black uppercase tracking-widest text-primary px-3 bg-primary/5 hover:bg-primary/10 transition-colors">Добавить</button>
+                  <button onClick={handleAddStoryClick} className="h-8 rounded-lg text-[9px] font-black uppercase tracking-widest text-primary px-3 bg-primary/5 hover:bg-primary/10 transition-colors">{t('profile.add')}</button>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   {stories.map((story) => {
@@ -793,7 +788,7 @@ export default function ProfilePage() {
                                       {Math.round(progress)}%
                                   </span>
                               </div>
-                              <span className="text-white/80 text-[10px] mt-2 font-semibold uppercase tracking-wider">Загрузка...</span>
+                                  <span className="text-white/80 text-[10px] mt-2 font-semibold uppercase tracking-wider">{t('loading')}</span>
                           </div>
                         )}
                       </div>
@@ -804,7 +799,7 @@ export default function ProfilePage() {
                     className="aspect-[9/16] rounded-xl bg-muted/50 border-2 border-dashed border-border/30 flex flex-col items-center justify-center text-center text-muted-foreground hover:bg-muted/100 hover:border-primary/50 hover:text-primary transition-all cursor-pointer p-2"
                   >
                     <Video size={24} className="mb-2" />
-                    <span className="font-black text-[10px] uppercase tracking-widest leading-tight">Добавить<br/>сторис</span>
+                    <span className="font-black text-[10px] uppercase tracking-widest leading-tight">{t('profile.add_story')}</span>
                   </div>
                 </div>
               </div>
@@ -837,7 +832,7 @@ export default function ProfilePage() {
 
       <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
         <DialogContent className="max-w-[440px] w-[95vw] h-[85vh] p-0 border-0 bg-transparent shadow-none flex flex-col items-center justify-center [&>button]:hidden">
-          <DialogTitle className="sr-only">Галерея</DialogTitle>
+          <DialogTitle className="sr-only">{t('profile.gallery')}</DialogTitle>
           <Carousel className="w-full h-full" opts={{ startIndex: activePhotoIndex }}>
             <CarouselContent className="h-full ml-0">
               {photos.map((url, idx) => (
@@ -912,8 +907,8 @@ export default function ProfilePage() {
       <Dialog open={isBoostDialogOpen} onOpenChange={setIsBoostDialogOpen}>
         <DialogContent className="max-w-[400px] rounded-3xl border-0 p-0 bg-white app-shadow overflow-hidden">
           <div className="p-6 pb-4">
-            <DialogTitle className="text-xl font-black tracking-tight mb-1 flex items-center gap-2"><Rocket size={20} className="text-primary"/>Поднять профиль</DialogTitle>
-            <p className="text-xs text-muted-foreground font-medium">Ваш профиль будет показываться первым в поиске в течение 30 минут. Выберите способ активации.</p>
+            <DialogTitle className="text-xl font-black tracking-tight mb-1 flex items-center gap-2"><Rocket size={20} className="text-primary"/>{t('profile.boost')}</DialogTitle>
+            <p className="text-xs text-muted-foreground font-medium">{t('profile.boost_dialog_desc')}</p>
           </div>
           <div className="p-6 flex flex-col items-center gap-3">
             <Button 
@@ -921,14 +916,14 @@ export default function ProfilePage() {
               className="h-14 rounded-2xl bg-green-500 hover:bg-green-600 text-white font-bold shadow-xl shadow-green-500/20 border-0 active:scale-95 transition-all flex items-center gap-2 w-full justify-center"
             >
               <Video size={20} />
-              <span>Смотреть рекламу (бесплатно)</span>
+              <span>{t('profile.boost_watch_ad')}</span>
             </Button>
             <Button 
               onClick={() => handleBoost('payment')}
               className="h-14 rounded-2xl gradient-bg text-white font-bold shadow-xl shadow-primary/20 border-0 active:scale-95 transition-all flex items-center gap-2 w-full justify-center"
             >
               <CreditCard size={20} />
-              <span>Оплатить (49 ₽)</span>
+              <span>{t('profile.boost_pay')}</span>
             </Button>
           </div>
         </DialogContent>

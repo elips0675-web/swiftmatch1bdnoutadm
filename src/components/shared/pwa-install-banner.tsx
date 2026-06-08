@@ -19,7 +19,7 @@ export function PwaInstallBanner() {
   const [isIos, setIsIos] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Check if already installed
@@ -108,13 +108,13 @@ export function PwaInstallBanner() {
                   <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shadow-sm text-blue-500">
                     <Share size={14} />
                   </div>
-                  <span>1. {language === 'RU' ? 'Нажмите «Поделиться»' : 'Tap "Share"'}</span>
+                  <span>1. {t('pwa.install.ios_share')}</span>
                 </div>
                 <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-tight text-foreground/70">
                   <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shadow-sm text-foreground">
                     <PlusSquare size={14} />
                   </div>
-                  <span>2. {language === 'RU' ? '«На экран "Домой"»' : 'Select "Add to Home Screen"'}</span>
+                  <span>2. {t('pwa.install.ios_add')}</span>
                 </div>
               </div>
             ) : (

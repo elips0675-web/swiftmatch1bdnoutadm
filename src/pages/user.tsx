@@ -107,7 +107,7 @@ function UserProfileContent() {
   const earnedTitles = useMemo(() => getUserTitles(user, language), [user, language]);
 
   const handleLike = () => {
-    toast({ title: language === 'RU' ? `Вы лайкнули ${user.name}!` : `You liked ${user.name}!` });
+    toast({ title: t('toast.you_liked', { name: user.name }) });
     if (Math.random() > 0.7) {
       setMatchUser(user);
     }
@@ -171,14 +171,14 @@ function UserProfileContent() {
                 {user.name}, {user.age} <CheckCircle2 size={24} className="text-primary" fill="currentColor" />
               </h3>
               <p className="text-muted-foreground text-[10px] font-black flex items-center justify-center gap-1.5 uppercase tracking-[0.1em]">
-                  <MapPin size={12} className="text-primary" /> {user.city} • {user.distance} {language === 'RU' ? 'км' : 'km'} {t('user.from_you')}
+                  <MapPin size={12} className="text-primary" /> {user.city} • {user.distance} {t('units.km')} {t('user.from_you')}
               </p>
           </div>
 
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-muted p-1 rounded-xl mb-6">
-              <TabsTrigger value="profile">{language === 'RU' ? 'Данные' : 'Data'}</TabsTrigger>
-              <TabsTrigger value="gallery">{language === 'RU' ? 'Галерея' : 'Gallery'}</TabsTrigger>
+              <TabsTrigger value="profile">{t('profile.tab.data')}</TabsTrigger>
+              <TabsTrigger value="gallery">{t('profile.tab.gallery')}</TabsTrigger>
             </TabsList>
             <TabsContent value="profile">
               <div className="bg-white rounded-2xl p-6 app-shadow border border-border/40 text-left space-y-6 overflow-hidden">
@@ -231,7 +231,7 @@ function UserProfileContent() {
                       />
                       <DataBox 
                         label={t('profile.label.height')} 
-                        value={`${user.height} ${language === 'RU' ? 'см' : 'cm'}`} 
+                        value={`${user.height} ${t('units.cm')}`} 
                         icon={Ruler} 
                       />
                     </div>
@@ -248,7 +248,7 @@ function UserProfileContent() {
                       />
                       <DataBox 
                         label={t('profile.label.job')} 
-                        value={language === 'RU' ? 'Дизайнер' : 'Designer'} 
+                        value={t('profile.job_designer')} 
                         icon={Briefcase} 
                       />
                     </div>
@@ -322,7 +322,7 @@ function UserProfileContent() {
 
       <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
         <DialogContent className="max-w-[440px] w-[95vw] h-[85vh] p-0 border-0 bg-transparent shadow-none flex flex-col items-center justify-center [&>button]:hidden">
-          <DialogTitle className="sr-only">Gallery Viewer</DialogTitle>
+          <DialogTitle className="sr-only">{t('gallery.viewer')}</DialogTitle>
           <Carousel className="w-full h-full" opts={{ startIndex: activePhotoIndex }}>
             <CarouselContent className="h-full ml-0">
               {photos.map((url, idx) => (
@@ -368,7 +368,7 @@ function UserProfileContent() {
             <div className="px-8 pt-8 pb-8 text-center">
               <DialogTitle className="text-3xl font-black font-headline mb-3 gradient-text uppercase tracking-tight">{t('match.title')}</DialogTitle>
               <DialogDescription className="text-muted-foreground text-sm mb-8 px-6 leading-relaxed font-medium">
-                {language === 'RU' ? 'Вы с ' : 'You and '} <span className="font-bold text-foreground">{matchUser?.name}</span> {t('match.liked_each_other')}
+                {t('match.you_and')} <span className="font-bold text-foreground">{matchUser?.name}</span> {t('match.liked_each_other')}
               </DialogDescription>
 
               <div className="flex flex-col gap-4 w-full mt-8">

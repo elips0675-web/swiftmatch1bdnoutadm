@@ -33,7 +33,8 @@ const iconMap: Record<string, React.ElementType> = {
   Music, Dumbbell, Palette, Gamepad2, Film, Globe, ChefHat, Cpu, BookOpen, Sparkles, Shirt, HeartPulse, Dog, FlaskConical, Briefcase, Home: HomeIcon, Car, Laugh, Star, Scroll
 };
 
-const GroupCard = ({ group, language }: { group: any, language: string }) => {
+const GroupCard = ({ group }: { group: any }) => {
+  const { t, language } = useLanguage();
   const Icon = iconMap[group.icon] || Users;
   return (
     <Link
@@ -48,21 +49,21 @@ const GroupCard = ({ group, language }: { group: any, language: string }) => {
         <h4 className="font-black text-xs uppercase tracking-tight leading-tight truncate">{language === 'RU' ? group.name_ru : group.name_en}</h4>
         <p className="text-[10px] text-green-600 font-bold uppercase mt-2 flex items-center justify-center gap-1.5">
           <span className="w-1.5 h-1.5 bg-current rounded-full"></span>
-          {group.onlineCount || Math.floor(Math.random() * 50) + 10} {language === 'RU' ? 'в сети' : 'online'}
+          {group.onlineCount || Math.floor(Math.random() * 50) + 10} {t('chats.online')}
         </p>
       </div>
     </Link>
   );
 };
 
-const GroupList = ({ groups, emptyMessage, language }: { groups: any[], emptyMessage: string, language: string }) => {
+const GroupList = ({ groups, emptyMessage }: { groups: any[], emptyMessage: string }) => {
   if (groups.length === 0) {
     return <p className="text-center text-muted-foreground mt-8 text-sm">{emptyMessage}</p>;
   }
   return (
     <div className="grid grid-cols-2 gap-4">
       {groups.map((group) => (
-        <GroupCard key={group.id} group={group} language={language} />
+        <GroupCard key={group.id} group={group} />
       ))}
     </div>
   );
@@ -247,7 +248,7 @@ export default function GroupsPage() {
 
               return (
                 <>
-                  <GroupList groups={groups} emptyMessage={t('groups.not_found')} language={language} />
+                  <GroupList groups={groups} emptyMessage={t('groups.not_found')}  />
                   <Pagination current={currentPage} total={totalPages} onChange={setCurrentPage} />
                 </>
               );
@@ -261,7 +262,7 @@ export default function GroupsPage() {
               const groups = topGroups.slice(start, start + ITEMS_PER_PAGE);
               return (
                 <>
-                  <GroupList groups={groups} emptyMessage={t('groups.no_top_groups')} language={language} />
+                  <GroupList groups={groups} emptyMessage={t('groups.no_top_groups')}  />
                   <Pagination current={currentPage} total={totalPages} onChange={setCurrentPage} />
                 </>
               );
@@ -275,7 +276,7 @@ export default function GroupsPage() {
               const groups = myGroups.slice(start, start + ITEMS_PER_PAGE);
               return (
                 <>
-                  <GroupList groups={groups} emptyMessage={t('groups.not_joined')} language={language} />
+                  <GroupList groups={groups} emptyMessage={t('groups.not_joined')}  />
                   <Pagination current={currentPage} total={totalPages} onChange={setCurrentPage} />
                 </>
               );

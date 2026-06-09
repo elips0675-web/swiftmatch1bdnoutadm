@@ -20,6 +20,7 @@ export function CookieConsent() {
   const handleAccept = () => {
     localStorage.setItem('cookie-consent', 'true');
     setIsVisible(false);
+    window.dispatchEvent(new Event('cookie-consent-accepted'));
   };
 
   return (

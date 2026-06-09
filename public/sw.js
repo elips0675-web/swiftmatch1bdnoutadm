@@ -1,8 +1,12 @@
-const CACHE_NAME = 'swiftmatch-cache-v2';
+const CACHE_NAME = 'swiftmatch-cache-v3';
+const PRECACHE_URLS = ['/', '/index.html', '/manifest.json', '/icon-192x192.png', '/icon-512x512.png'];
 const STATIC_ASSETS = /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?)$/;
+const API_PATHS = /^\/api\//;
 
-self.addEventListener('install', () => {
-  self.skipWaiting();
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -26,6 +30,10 @@ self.addEventListener('fetch', (event) => {
 
   if (STATIC_ASSETS.test(url.pathname)) {
     event.respondWith(cacheFirst(request));
+    return;
+  }
+
+  if (API_PATHS.test(url.pathname)) {
     return;
   }
 
@@ -62,8 +70,8 @@ self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : { title: 'SwiftMatch', body: 'New message!' };
   const options = {
     body: data.body,
-    icon: '/icon-192x192.png.png',
-    badge: '/icon-192x192.png.png',
+    icon: '/icon-192x192.png',
+    badge: '/icon-192x192.png',
     vibrate: [100, 50, 100],
     data: { url: data.url || '/' }
   };

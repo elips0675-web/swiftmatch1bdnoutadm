@@ -7,11 +7,11 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { LanguageProvider } from "@/context/language-context"
 import { FeatureFlagsProvider } from "@/context/feature-flags-context"
 import { AuthProvider } from "@/context/auth-context"
-import { FirebaseClientProvider } from "@/shims/firebase"
 import { ErrorBoundary } from "@/components/shared/error-boundary"
 import { PageLoading } from "@/components/shared/loading-screen"
 import { AppContainer } from "@/components/layout/app-container"
 import { AdminLayout } from "@/components/layout/admin-layout"
+import { AdminGuard } from "@/components/shared/admin-guard"
 import { ClientOnly } from "@/components/shared/client-only"
 import { CookieConsent } from "@/components/shared/cookie-consent"
 import { PwaInstallBanner } from "@/components/shared/pwa-install-banner"
@@ -111,18 +111,17 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <LanguageProvider>
-              <FirebaseClientProvider>
                 <FeatureFlagsProvider>
                   <DocumentTitle />
                   <Routes>
-                    <Route path="/admin" element={<AdminLayout><SuspenseWrapper><Admin /></SuspenseWrapper></AdminLayout>} />
-                    <Route path="/admin/analytics" element={<AdminLayout><SuspenseWrapper><AdminAnalytics /></SuspenseWrapper></AdminLayout>} />
-                    <Route path="/admin/content" element={<AdminLayout><SuspenseWrapper><AdminContent /></SuspenseWrapper></AdminLayout>} />
-                    <Route path="/admin/features" element={<AdminLayout><SuspenseWrapper><AdminFeatures /></SuspenseWrapper></AdminLayout>} />
-                    <Route path="/admin/messaging" element={<AdminLayout><SuspenseWrapper><AdminMessaging /></SuspenseWrapper></AdminLayout>} />
-                    <Route path="/admin/monetization" element={<AdminLayout><SuspenseWrapper><AdminMonetization /></SuspenseWrapper></AdminLayout>} />
-                    <Route path="/admin/reports" element={<AdminLayout><SuspenseWrapper><AdminReports /></SuspenseWrapper></AdminLayout>} />
-                    <Route path="/admin/users" element={<AdminLayout><SuspenseWrapper><AdminUsers /></SuspenseWrapper></AdminLayout>} />
+                    <Route path="/admin" element={<AdminGuard><AdminLayout><SuspenseWrapper><Admin /></SuspenseWrapper></AdminLayout></AdminGuard>} />
+                    <Route path="/admin/analytics" element={<AdminGuard><AdminLayout><SuspenseWrapper><AdminAnalytics /></SuspenseWrapper></AdminLayout></AdminGuard>} />
+                    <Route path="/admin/content" element={<AdminGuard><AdminLayout><SuspenseWrapper><AdminContent /></SuspenseWrapper></AdminLayout></AdminGuard>} />
+                    <Route path="/admin/features" element={<AdminGuard><AdminLayout><SuspenseWrapper><AdminFeatures /></SuspenseWrapper></AdminLayout></AdminGuard>} />
+                    <Route path="/admin/messaging" element={<AdminGuard><AdminLayout><SuspenseWrapper><AdminMessaging /></SuspenseWrapper></AdminLayout></AdminGuard>} />
+                    <Route path="/admin/monetization" element={<AdminGuard><AdminLayout><SuspenseWrapper><AdminMonetization /></SuspenseWrapper></AdminLayout></AdminGuard>} />
+                    <Route path="/admin/reports" element={<AdminGuard><AdminLayout><SuspenseWrapper><AdminReports /></SuspenseWrapper></AdminLayout></AdminGuard>} />
+                    <Route path="/admin/users" element={<AdminGuard><AdminLayout><SuspenseWrapper><AdminUsers /></SuspenseWrapper></AdminLayout></AdminGuard>} />
                     <Route path="*" element={
                       <SuspenseWrapper>
                         <AppContainer>
@@ -161,7 +160,6 @@ const App = () => (
                     } />
                   </Routes>
                 </FeatureFlagsProvider>
-              </FirebaseClientProvider>
             </LanguageProvider>
           </AuthProvider>
         </BrowserRouter>

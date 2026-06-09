@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { getToken } from '@/lib/token';
 
 // Определяем общие типы для API-хука
 interface UseApiOptions {
@@ -40,7 +41,7 @@ export function useApi<T>(path: string, options: UseApiOptions = {}): UseApiStat
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('authToken');
+      const token = getToken();
       if (!token) {
         setError('No authentication token found.');
         setLoading(false);
@@ -92,7 +93,7 @@ export function useApiMutation<T, TBody = any>() {
     setError(null);
     setData(null);
 
-    const token = localStorage.getItem('authToken');
+    const token = getToken();
     if (!token) {
       setError('No authentication token found.');
       setLoading(false);

@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useMemo } from 'react';
-import { doc, DocumentData } from 'firebase/firestore';
-import { useFirestore, useDoc } from "@/shims/firebase";
+import React, { createContext, useContext, useMemo, useEffect, useState } from 'react';
+import { getSupabase } from '@/lib/supabase';
 
 export interface FeatureFlags {
   videoCallsEnabled: boolean;
@@ -19,23 +18,26 @@ const defaultFlags: FeatureFlags = {
 const FeatureFlagsContext = createContext<FeatureFlags>(defaultFlags);
 
 export const FeatureFlagsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const firestore = useFirestore();
-  const featureFlagsRef = useMemo(() => {
-      if (!firestore) return null;
-      return doc(firestore, 'config', 'features');
-  }, [firestore]);
-  
-  const { data: flags, loading } = useDoc<DocumentData>(featureFlagsRef);
+  const [flags, setFlags] = useState<FeatureFlags>(defaultFlags);
 
-  const featureFlags = useMemo(() => {
-    if (loading || !flags) {
-      return defaultFlags;
-    }
-    return { ...defaultFlags, ...flags };
-  }, [flags, loading]);
+  useEffect(() => {
+    const supabase = getSupabase()
+    if (!supabase) return
+
+    supabase
+      .from('feature_flags')
+      .select('*')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setFlags(prev => ({ ...prev, ...data }))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   return (
-    <FeatureFlagsContext.Provider value={featureFlags}>
+    <FeatureFlagsContext.Provider value={flags}>
       {children}
     </FeatureFlagsContext.Provider>
   );

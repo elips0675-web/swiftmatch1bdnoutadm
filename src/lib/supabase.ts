@@ -39,16 +39,5 @@ export function getSupabase(): SupabaseClient<Database> | null {
   }
 }
 
-export function getSupabaseAdmin() {
-  const serviceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
-  const url = import.meta.env.VITE_SUPABASE_URL
-
-  if (!url || !serviceKey) return null
-
-  return createClient<Database>(url, serviceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  })
-}
+// getSupabaseAdmin удалён — service role key НЕ ДОЛЖЕН быть на клиенте.
+// Для админских операций используйте серверный API с проверкой роли.

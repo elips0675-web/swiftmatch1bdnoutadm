@@ -1,22 +1,21 @@
+import { getToken } from './token'
+
 const ALGORITHM = 'AES-GCM';
 const KEY_LENGTH = 256;
 const ITERATIONS = 100000;
-const SALT_KEY = 'swiftchat_salt';
 
 function getKeyMaterial(): string {
-  return localStorage.getItem('authToken') || 'anonymous';
+  return getToken() || 'swiftchat_fallback';
 }
 
 function getSalt(): Uint8Array {
-  try {
-    const raw = localStorage.getItem(SALT_KEY);
-    if (raw) {
-      const parts = raw.split(',');
-      return new Uint8Array(parts.map(Number));
-    }
-  } catch {}
+  const existing = sessionStorage.getItem('swiftchat_salt');
+  if (existing) {
+    const parts = existing.split(',');
+    return new Uint8Array(parts.map(Number));
+  }
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  localStorage.setItem(SALT_KEY, Array.from(salt).join(','));
+  sessionStorage.setItem('swiftchat_salt', Array.from(salt).join(','));
   return salt;
 }
 
@@ -76,13 +75,13 @@ export async function encryptStorage<T>(key: string, value: T): Promise<void> {
   try {
     const json = JSON.stringify(value);
     const encrypted = await encrypt(json);
-    if (encrypted) localStorage.setItem(key, encrypted);
+    if (encrypted) sessionStorage.setItem(key, encrypted);
   } catch {}
 }
 
 export async function decryptStorage<T>(key: string): Promise<T | null> {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = sessionStorage.getItem(key);
     if (!raw) return null;
     const decrypted = await decrypt(raw);
     if (!decrypted) return null;
@@ -93,5 +92,5 @@ export async function decryptStorage<T>(key: string): Promise<T | null> {
 }
 
 export function clearEncryptionSalt(): void {
-  localStorage.removeItem(SALT_KEY);
+  sessionStorage.removeItem('swiftchat_salt');
 }

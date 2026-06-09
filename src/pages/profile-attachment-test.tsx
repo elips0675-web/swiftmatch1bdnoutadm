@@ -1,8 +1,7 @@
 
 import { useState } from 'react';
 import { useRouter } from "@/shims/next-navigation";
-import { useUser, useFirestore } from "@/shims/firebase";
-import { doc, setDoc } from 'firebase/firestore';
+import { getSupabase } from "@/lib/supabase";
 import { ChevronLeft, Check, Chrome as Home, Repeat } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,8 +19,7 @@ import { toast } from '@/hooks/use-toast';
 
 export default function AttachmentStyleTestPage() {
   const router = useRouter();
-  const { user } = useUser();
-  const firestore = useFirestore();
+  const supabase = getSupabase();
   const { t } = useLanguage();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -55,14 +53,19 @@ export default function AttachmentStyleTestPage() {
         } catch(e) {}
     }
 
-    if (!user || !firestore) {
+    if (!supabase) {
         setIsSaving(false);
         toast({ title: t('attach.toast.done'), description: `${t('attach.toast.your_style')} ${t(ATTACHMENT_STYLE_INFO[result].labelKey)}` });
         return;
     };
     try {
-        const userDocRef = doc(firestore, 'users', user.uid);
-        await setDoc(userDocRef, { attachmentStyle: result }, { merge: true });
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+        if (authUser) {
+          await supabase
+            .from('profiles')
+            .update({ attachment_style: result })
+            .eq('id', authUser.id)
+        }
         toast({ title: t('attach.toast.saved'), description: `${t('attach.toast.your_style')} ${t(ATTACHMENT_STYLE_INFO[result].labelKey)}` });
     } catch (error) {
         console.error("Error saving attachment style:", error);

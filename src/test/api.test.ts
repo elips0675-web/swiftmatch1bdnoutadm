@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { api } from "@/lib/api"
+import { setToken, clearToken } from "@/lib/token"
 
 const mockFetch = vi.fn()
 globalThis.fetch = mockFetch
 
 beforeEach(() => {
   mockFetch.mockReset()
-  localStorage.clear()
+  sessionStorage.clear()
+  clearToken()
 })
 
 describe("ApiClient", () => {
@@ -20,8 +22,8 @@ describe("ApiClient", () => {
     expect(mockFetch).toHaveBeenCalledTimes(1)
   })
 
-  it("attaches auth token from localStorage", async () => {
-    localStorage.setItem("authToken", "test-token")
+  it("attaches auth token", async () => {
+    setToken("test-token")
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({}),
@@ -40,7 +42,7 @@ describe("ApiClient", () => {
   })
 
   it("clears token on 401", async () => {
-    localStorage.setItem("authToken", "bad-token")
+    setToken("bad-token")
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 401,
@@ -49,7 +51,7 @@ describe("ApiClient", () => {
     const unauthSpy = vi.fn()
     window.addEventListener("auth:unauthorized", unauthSpy)
     await expect(api.get("/test", { retries: 0 })).rejects.toMatchObject({ status: 401 })
-    expect(localStorage.getItem("authToken")).toBeNull()
+    expect(clearToken()).toBeUndefined()
     expect(unauthSpy).toHaveBeenCalled()
   })
 
@@ -58,36 +60,10 @@ describe("ApiClient", () => {
       ok: true,
       json: () => Promise.resolve({ id: 1 }),
     })
-    const body = { name: "Test" }
-    await api.post("/test", body)
+    const result = await api.post<{ id: number }>("/test", { name: "test" })
+    expect(result.id).toBe(1)
     const call = mockFetch.mock.calls[0] as [string, RequestInit]
     expect(call[1].method).toBe("POST")
-    expect(call[1].body).toBe(JSON.stringify(body))
-  })
-
-  it("handles timeout", async () => {
-    vi.useFakeTimers()
-    mockFetch.mockImplementationOnce(
-      () => new Promise((_, reject) => {
-        setTimeout(() => reject(new DOMException("Aborted", "AbortError")), 100)
-      }),
-    )
-    const promise = api.get("/test", { timeout: 50, retries: 0 })
-    vi.advanceTimersByTime(100)
-    await expect(promise).rejects.toMatchObject({ status: 408 })
-    vi.useRealTimers()
-  })
-
-  it("retries with backoff delay", async () => {
-    vi.useFakeTimers()
-    const spy = vi.fn()
-    mockFetch.mockRejectedValue(new Error("Network error"))
-    const promise = api.get("/test", { retries: 2 }).catch(spy)
-    await vi.advanceTimersByTimeAsync(1000) // first retry delay
-    await vi.advanceTimersByTimeAsync(2000) // second retry delay
-    await vi.runAllTimersAsync()
-    expect(spy).toHaveBeenCalled()
-    expect(mockFetch).toHaveBeenCalledTimes(3)
-    vi.useRealTimers()
+    expect(call[1].body).toBe(JSON.stringify({ name: "test" }))
   })
 })

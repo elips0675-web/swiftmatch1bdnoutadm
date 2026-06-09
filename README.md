@@ -36,6 +36,17 @@
 
 ---
 
+## Безопасность
+
+- **Supabase RLS** — защита данных на уровне строк БД (Row Level Security)
+- **CSP (Content-Security-Policy)** — запрещены инлайн-скрипты, eval(), clickjacking, внешние формы; разрешены только доверенные источники (picsum.photos, *.supabase.co и др.)
+- **Шифрование чатов** — сообщения шифруются AES-GCM (256-bit, PBKDF2, 100k итераций) перед записью в localStorage; ключ привязан к authToken
+- **Auth token** — удаляется при logout (раньше оставался в localStorage); все зашифрованные данные чатов также очищаются
+- **Фильтр сообщений** — блокировка мата, спама, скама, политики, URL-ссылок, gibberish-детектор
+- **Аутентификация** — Supabase Auth (email/password, Google OAuth)
+
+---
+
 ## 🚀 Запуск в продакшен (Vercel + Supabase)
 
 ### 1. Создать проект Supabase

@@ -46,7 +46,7 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       toast({ title: t('common.error'), description: t('register.password_length'), variant: "destructive" });
       return;
     }

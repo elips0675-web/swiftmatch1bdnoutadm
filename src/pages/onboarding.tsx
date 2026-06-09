@@ -1,8 +1,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "@/shims/next-navigation";
-import { useUser, useFirestore } from "@/shims/firebase";
-import { doc, setDoc, onSnapshot } from "firebase/firestore";
+import { getSupabase } from "@/lib/supabase";
 import { ArrowRight, Sparkles, MapPin, Camera, ChevronLeft, Navigation, Target, Search, VenetianMask, Upload, Loader as Loader2, Moon, Sun } from "lucide-react";
 import Image from "@/shims/next-image";
 import { Button } from "@/components/ui/button";
@@ -36,41 +35,46 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const totalSteps = 5;
 
-  const { user } = useUser();
-  const firestore = useFirestore();
+  const supabase = getSupabase();
 
   const [dynamicInterests, setDynamicInterests] = useState<string[]>([...INTEREST_OPTIONS] as string[]);
   const [dynamicGoals, setDynamicGoals] = useState<string[]>([...DATING_GOALS] as string[]);
 
   useEffect(() => {
-    if (user) {
-      setFormData(prev => ({ 
-        ...prev, 
-        name: user.displayName || "",
-        photo: user.photoURL || prev.photo,
-      }));
+    const initProfile = async () => {
+      if (!supabase) return
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.user_metadata) {
+        setFormData(prev => ({ 
+          ...prev, 
+          name: user.user_metadata.name || "",
+          photo: user.user_metadata.avatar_url || prev.photo,
+        }));
+      }
     }
-  }, [user]);
+    initProfile()
+  }, [supabase]);
 
   useEffect(() => {
-    if (!firestore) return;
-    const configRef = doc(firestore, 'config', 'content');
-    const unsubscribe = onSnapshot(configRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
+    if (!supabase) return;
+    const loadContent = async () => {
+      const { data } = await supabase
+        .from('content_config')
+        .select('*')
+        .maybeSingle()
+      if (data) {
         if (data.interests) {
-            const globalInterests = data.interests as string[];
-            setDynamicInterests(globalInterests);
-            setFormData(prev => ({
-                ...prev,
-                interests: prev.interests.filter(i => globalInterests.includes(i))
-            }));
+          setDynamicInterests(data.interests)
+          setFormData(prev => ({
+            ...prev,
+            interests: prev.interests.filter(i => data.interests.includes(i))
+          }))
         }
-        if (data.datingGoals) setDynamicGoals(data.datingGoals);
+        if (data.datingGoals) setDynamicGoals(data.datingGoals)
       }
-    });
-    return () => unsubscribe();
-  }, [firestore]);
+    }
+    loadContent()
+  }, [supabase]);
 
   const [isGeneratingBio, setIsGeneratingBio] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
@@ -119,7 +123,7 @@ export default function OnboardingPage() {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=10`);
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=10`, { headers: { 'User-Agent': 'SwiftMatch/1.0' } });
           const data = await res.json();
           const city = data.address.city || data.address.town || data.address.village || "";
           if (city) {
@@ -171,31 +175,34 @@ export default function OnboardingPage() {
   };
 
   const handleFinish = async () => {
-    if (!user) {
+    if (!supabase) {
         router.push('/login');
         return;
     }
 
     try {
-        const userDocRef = doc(firestore, 'users', user.uid);
-        const profileForDb = {
-            displayName: formData.name,
-            photoURL: formData.photo,
-            bio: formData.bio,
-            interests: formData.interests,
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          router.push('/login');
+          return
+        }
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            name: formData.name,
             age: parseInt(formData.age) || null,
             city: formData.city,
             height: parseInt(formData.height) || null,
-            datingGoal: formData.datingGoal,
+            goal: formData.datingGoal,
             zodiac: formData.zodiac,
             gender: formData.gender,
-            lookingFor: formData.lookingFor,
+            looking_for: formData.lookingFor,
             circadian: formData.circadian,
-            joinedGroups: []
-        };
-        
-        await setDoc(userDocRef, profileForDb);
-        localStorage.setItem('userProfile', JSON.stringify({ uid: user.uid, ...profileForDb }));
+            bio: formData.bio,
+            avatar_url: formData.photo,
+          })
+        if (error) throw error
         
         toast({ title: t('onboarding.toast.finish_title'), description: t('onboarding.toast.finish_desc') });
         router.push("/"); 

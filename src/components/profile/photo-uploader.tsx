@@ -4,6 +4,7 @@ import Image from "@/shims/next-image";
 import { Camera, Trash2, Loader as Loader2, CloudUpload as UploadCloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { getToken } from '@/lib/token';
 
 interface PhotoUploaderProps {
   photos: string[];
@@ -36,7 +37,7 @@ export const PhotoUploader = ({ photos, onPhotosChange }: PhotoUploaderProps) =>
             const response = await fetch('/api/upload', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${getToken()}`
                 },
                 body: formData,
             });

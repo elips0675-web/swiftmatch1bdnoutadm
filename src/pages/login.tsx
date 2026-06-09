@@ -18,10 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import Link from "@/shims/next-link";
 import { cn } from "@/lib/utils";
-import { useAuth, useFirestore } from "@/shims/firebase";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useLanguage } from "@/context/language-context";
-import { doc, getDoc } from "firebase/firestore";
+import { setToken } from "@/lib/token";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,9 +29,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
   const { t } = useLanguage();
-
-  const auth = useAuth();
-  const firestore = useFirestore();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +55,7 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem('authToken', data.token);
+        setToken(data.token);
         router.push('/');
         toast({
           title: t('auth.welcome_back'),
@@ -87,25 +82,15 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
-    const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      const firebaseUser = result.user;
-
-      const userDocRef = doc(firestore, "users", firebaseUser.uid);
-      const userDoc = await getDoc(userDocRef);
-
-      if (userDoc.exists()) {
-        const userProfile = { uid: firebaseUser.uid, ...userDoc.data() };
-        localStorage.setItem('userProfile', JSON.stringify(userProfile));
-        router.push('/');
-        toast({
-          title: t('auth.welcome_back'),
-          description: t('auth.welcome_back_desc_name', { name: firebaseUser.displayName }),
-        });
-      } else {
-        router.push('/onboarding');
+      const { getSupabase } = await import('@/lib/supabase')
+      const supabase = getSupabase()
+      if (!supabase) {
+        toast({ title: 'Supabase not configured', variant: "destructive" })
+        return
       }
+      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' })
+      if (error) throw error
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       toast({

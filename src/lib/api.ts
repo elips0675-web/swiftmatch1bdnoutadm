@@ -1,4 +1,5 @@
 import { config } from './env'
+import { getToken } from './token'
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown
@@ -25,7 +26,7 @@ class ApiClient {
   }
 
   private getToken(): string | null {
-    return localStorage.getItem('authToken')
+    return getToken()
   }
 
   private buildUrl(path: string, params?: RequestOptions['params']): string {
@@ -86,7 +87,8 @@ class ApiClient {
           }
 
           if (response.status === 401) {
-            localStorage.removeItem('authToken')
+            const { clearToken } = await import('./token')
+            clearToken()
             window.dispatchEvent(new CustomEvent('auth:unauthorized'))
           }
 

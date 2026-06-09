@@ -1,0 +1,29 @@
+let memoryToken: string | null = null
+
+const AUTH_TOKEN_KEY = 'swiftmatch_auth_token'
+
+export function getToken(): string | null {
+  if (memoryToken) return memoryToken
+  const stored = sessionStorage.getItem(AUTH_TOKEN_KEY)
+  if (stored) {
+    memoryToken = stored
+    return stored
+  }
+  return null
+}
+
+export function setToken(token: string | null): void {
+  memoryToken = token
+  if (token) {
+    sessionStorage.setItem(AUTH_TOKEN_KEY, token)
+  } else {
+    sessionStorage.removeItem(AUTH_TOKEN_KEY)
+  }
+}
+
+export function clearToken(): void {
+  memoryToken = null
+  sessionStorage.removeItem(AUTH_TOKEN_KEY)
+  localStorage.removeItem('authToken')
+  localStorage.removeItem('userProfile')
+}

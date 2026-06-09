@@ -1,0 +1,26 @@
+Проверка безопасности: 0 уязвимостей
+npm audit — 0 vulnerabilities
+dangerouslySetInnerHTML/innerHTML — не используется (нет XSS)
+getSupabaseAdmin — удалён
+JWT токен — в sessionStorage (через token.ts), не в localStorage
+Firebase SDK — удалён
+Единственный остаток VITE_SUPABASE_SERVICE_ROLE_KEY в vite-env.d.ts — убрал.
+
+Что можно обновить
+Много пакетов с мажорными breaking-изменениями:
+
+Пакет	Текущая	Новая
+react / react-dom	^18.3.1	^19.2.7
+react-router-dom	^6.30.1	^7.17.0
+tailwindcss	^3.4.17	^4.3.0
+date-fns	^3.6.0	^4.4.0
+lucide-react	^0.462.0	^1.17.0
+sonner	^1.7.4	^2.0.7
+tailwind-merge	^2.6.0	^3.6.0
+vaul	^0.9.9	^1.1.2
+react-day-picker	^8.10.1	^10.0.1
+jsdom	^20.0.3	^29.1.1
+eslint	^9.32.0	^10.4.1
+typescript	^5.8.3	^6.0.3
+vitest	^3.2.4	^4.1.8
+Обновлял? Если да — могу выполнить все разом через npx npm-check-updates -u && npm install.

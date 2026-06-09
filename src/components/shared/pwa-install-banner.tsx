@@ -19,6 +19,7 @@ export function PwaInstallBanner() {
   const [isIos, setIsIos] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -57,16 +58,14 @@ export function PwaInstallBanner() {
         setIsVisible(false);
       }
     } else {
-      toast({
-        title: t('pwa.install.guide_title'),
-        description: t('pwa.install.guide_desc'),
-      });
+      setShowGuide(true);
     }
   };
 
   const handleDismiss = () => {
     sessionStorage.setItem('pwa-install-dismissed', 'true');
     setIsVisible(false);
+    setShowGuide(false);
   };
 
   if (isStandalone) return null;
@@ -112,7 +111,7 @@ export function PwaInstallBanner() {
               )}
 
               {isIos ? (
-                <div className="bg-muted/30 rounded-2xl p-3 flex flex-col gap-2 border border-border/40">
+                <div className={`rounded-2xl p-3 flex flex-col gap-2 transition-all duration-300 ${showGuide ? 'bg-primary/10 border-2 border-primary shadow-lg shadow-primary/20 scale-[1.02]' : 'bg-muted/30 border border-border/40'}`}>
                   <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-tight text-foreground/70">
                     <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shadow-sm text-blue-500">
                       <Share size={14} />
@@ -127,7 +126,7 @@ export function PwaInstallBanner() {
                   </div>
                 </div>
               ) : (
-                <div className="bg-muted/30 rounded-2xl p-3 flex flex-col gap-2 border border-border/40">
+                <div className={`rounded-2xl p-3 flex flex-col gap-2 transition-all duration-300 ${showGuide ? 'bg-primary/10 border-2 border-primary shadow-lg shadow-primary/20 scale-[1.02]' : 'bg-muted/30 border border-border/40'}`}>
                   <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-tight text-foreground/70">
                     <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shadow-sm text-foreground">
                       <Menu size={14} />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, X, Smartphone } from 'lucide-react';
+import { Download, X, Smartphone, ChevronDown, Globe, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/context/language-context';
 import { toast } from '@/hooks/use-toast';
@@ -19,6 +19,7 @@ export function PwaInstallBanner() {
   const [isIos, setIsIos] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -57,16 +58,14 @@ export function PwaInstallBanner() {
         setIsVisible(false);
       }
     } else {
-      toast({
-        title: t('pwa.install.guide_title'),
-        description: t('pwa.install.guide_desc'),
-      });
+      setShowGuide(!showGuide);
     }
   };
 
   const handleDismiss = () => {
     sessionStorage.setItem('pwa-install-dismissed', 'true');
     setIsVisible(false);
+    setShowGuide(false);
   };
 
   if (isStandalone) return null;
@@ -101,17 +100,61 @@ export function PwaInstallBanner() {
             </div>
 
             <>
-              {!isIos && (
+              {installPrompt && !isIos && (
                 <Button
                   onClick={handleInstall}
                   className="w-full h-12 rounded-xl gradient-bg text-white font-black uppercase text-[11px] tracking-widest border-0 shadow-xl shadow-primary/20 active:scale-95 transition-all flex items-center gap-2"
                 >
                   <Smartphone size={16} />
-                  {installPrompt ? t('pwa.install.button') : t('pwa.install.guide_button')}
+                  {t('pwa.install.button')}
                 </Button>
               )}
 
+              {!installPrompt && !isIos && (
+                <>
+                  <Button
+                    onClick={() => setShowGuide(!showGuide)}
+                    variant="outline"
+                    className="w-full h-12 rounded-xl font-black uppercase text-[11px] tracking-widest flex items-center gap-2"
+                  >
+                    <Smartphone size={16} />
+                    {t('pwa.install.guide_button')}
+                    <ChevronDown size={14} className={`transition-transform duration-200 ${showGuide ? 'rotate-180' : ''}`} />
+                  </Button>
 
+                  <AnimatePresence>
+                    {showGuide && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="bg-muted/30 rounded-2xl p-3 flex flex-col gap-2 border border-border/40">
+                          <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-tight text-foreground/70">
+                            <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shadow-sm text-foreground">
+                              <Menu size={14} />
+                            </div>
+                            <span>1. {t('pwa.install.menu_open')}</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-tight text-foreground/70">
+                            <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shadow-sm text-foreground">
+                              <Download size={14} />
+                            </div>
+                            <span>2. {t('pwa.install.menu_install')}</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-tight text-foreground/70">
+                            <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shadow-sm text-foreground">
+                              <Globe size={14} />
+                            </div>
+                            <span>3. {t('pwa.install.address_bar_install')}</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
+              )}
 
               <Button
                 onClick={handleDismiss}

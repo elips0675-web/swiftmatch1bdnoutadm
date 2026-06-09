@@ -24,6 +24,9 @@ export const FeatureFlagsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const supabase = getSupabase()
     if (!supabase) return
 
+    const url = import.meta.env.VITE_SUPABASE_URL
+    if (!url || url.includes('your-project.supabase.co')) return
+
     supabase
       .from('feature_flags')
       .select('*')

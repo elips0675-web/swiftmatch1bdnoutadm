@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, MoveHorizontal as MoreHorizontal, Send, Share2, ChevronLeft, ChevronRight, Search, CirclePlus as PlusCircle, X } from "lucide-react";
+import { Heart, MessageCircle, MoveHorizontal as MoreHorizontal, Send, Share2, ChevronLeft, ChevronRight, ChevronDown, Search, CirclePlus as PlusCircle, X, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import { useLanguage } from "@/context/language-context";
 import { containsForbiddenWords, isGibberish } from "@/lib/word-filter";
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Pagination, PaginationContent, PaginationItem } from "@/components/ui/pagination";
+
 
 // --- PostText with Spoiler ---
 const PostText = ({ text, charLimit = 280 }: { text: string, charLimit?: number }) => {
@@ -123,76 +125,28 @@ const Lightbox = ({
   );
 };
 
-// --- Post Image Gallery Component (New Layout) ---
+// --- Post Image Gallery Component ---
 const PostImageGallery = ({ images }: { images: string[] }) => {
   const [isLightboxOpen, setLightboxOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const openLightbox = (index: number) => {
-    setSelectedIndex(index);
-    setLightboxOpen(true);
-  };
-
-  const closeLightbox = () => setLightboxOpen(false);
-
   const count = images.length;
   if (count === 0) return null;
 
-  const renderImage = (index: number, className: string = "") => (
-    <div className={cn("bg-gray-200 overflow-hidden", className)} onClick={() => openLightbox(index)}>
-      {/* Template uses <img>; keep it for simplicity and low Next.js overhead */}
-      <img
-        src={images[index]}
-        alt={`Post image ${index + 1}`}
-        className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
-      />
-    </div>
-  );
-
   return (
     <div className="px-5 pt-1">
-      <div className="mt-2 rounded-xl overflow-hidden border border-gray-200/80">
-        {count === 1 && renderImage(0, "aspect-video")}
-        {count === 2 && <div className="grid grid-cols-2 gap-1">{renderImage(0, "aspect-square")}{renderImage(1, "aspect-square")}</div>}
-        {count === 3 && (
-          <div className="grid grid-cols-2 gap-1">
-            {renderImage(0, "aspect-[2/3] row-span-2")}
-            <div className="grid grid-rows-2 gap-1">
-              {renderImage(1, "aspect-square")}
-              {renderImage(2, "aspect-square")}
-            </div>
+      <div className={cn("mt-2 rounded-xl overflow-hidden border border-gray-200/80 grid gap-0.5", count === 1 ? "grid-cols-1" : "grid-cols-2")}>
+        {images.slice(0, count === 1 ? 1 : count === 2 ? 2 : 4).map((src, index) => (
+          <div
+            key={index}
+            className={cn("bg-gray-200 cursor-pointer overflow-hidden", count === 3 && index === 0 ? "col-span-2 row-span-2" : "aspect-square")}
+            onClick={() => { setSelectedIndex(index); setLightboxOpen(true); }}
+          >
+            <img src={src} alt={`Post image ${index + 1}`} className="w-full h-full object-cover" />
           </div>
-        )}
-        {count === 4 && (
-          <div className="grid grid-cols-2 grid-rows-2 gap-1">
-            {renderImage(0, "aspect-square")}
-            {renderImage(1, "aspect-square")}
-            {renderImage(2, "aspect-square")}
-            {renderImage(3, "aspect-square")}
-          </div>
-        )}
-        {count >= 5 && (
-          <div className="flex flex-col gap-1">
-            <div className="flex gap-1">
-              {renderImage(0, "w-1/2 aspect-video")}
-              {renderImage(1, "w-1/2 aspect-video")}
-            </div>
-            <div className="flex gap-1">
-              {renderImage(2, "w-1/3 aspect-square")}
-              {renderImage(3, "w-1/3 aspect-square")}
-              <div className="w-1/3 aspect-square relative bg-gray-200 cursor-pointer" onClick={() => openLightbox(4)}>
-                <img src={images[4]} alt="Post image 5" className="w-full h-full object-cover" />
-                {count > 5 && (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <span className="text-white font-bold text-4xl">+{count - 5}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        ))}
       </div>
-      {isLightboxOpen && <Lightbox images={images} selectedIndex={selectedIndex} onClose={closeLightbox} />}
+      {isLightboxOpen && <Lightbox images={images} selectedIndex={selectedIndex} onClose={() => setLightboxOpen(false)} />}
     </div>
   );
 };
@@ -420,19 +374,83 @@ const initialPosts = [
     isLiked: false,
     comments: [],
   },
+  {
+    id: 6, author: 'Transfer News', group: 'Трансферы', avatar: 'https://picsum.photos/seed/transfer/100/100', time: '8 часов назад', text: 'Горячие слухи: кто перейдёт этим летом?', images: ['https://picsum.photos/seed/transfer_1/800/600', 'https://picsum.photos/seed/transfer_2/800/600'], likes: 4300, commentsCount: 2, isLiked: false, comments: [],
+  },
+  {
+    id: 7, author: 'Фан-клуб', group: 'Болельщики', avatar: 'https://picsum.photos/seed/fanclub/100/100', time: '9 часов назад', text: 'Наш баннер на стадионе — лучший! Спасибо всем, кто помог!', images: ['https://picsum.photos/seed/banner_1/800/600', 'https://picsum.photos/seed/banner_2/800/600', 'https://picsum.photos/seed/banner_3/800/600', 'https://picsum.photos/seed/banner_4/800/600'], likes: 5100, commentsCount: 1, isLiked: false, comments: [],
+  },
+  {
+    id: 8, author: 'Детская секция', group: 'Юниоры', avatar: 'https://picsum.photos/seed/junior/100/100', time: '10 часов назад', text: 'Наши юные таланты на тренировке. Будущие звёзды!', images: ['https://picsum.photos/seed/kids_1/800/600', 'https://picsum.photos/seed/kids_2/800/600'], likes: 890, commentsCount: 0, isLiked: false, comments: [],
+  },
+  {
+    id: 9, author: 'Вратари мира', group: 'Эстетика', avatar: 'https://picsum.photos/seed/goalkeeper/100/100', time: '11 часов назад', text: 'Невероятные сейвы этой недели. Лучшие моменты.', images: ['https://picsum.photos/seed/save_1/800/600', 'https://picsum.photos/seed/save_2/800/600', 'https://picsum.photos/seed/save_3/800/600'], likes: 3200, commentsCount: 0, isLiked: false, comments: [],
+  },
+  {
+    id: 17, author: 'Футбольная аналитика', group: 'Стратегии и ставки', avatar: 'https://picsum.photos/seed/analysis/100/100', time: '12 часов назад', text: 'Разбор матча: почему команда проиграла несмотря на 70% владения.', images: ['https://picsum.photos/seed/analysis_1/800/600', 'https://picsum.photos/seed/analysis_2/800/600', 'https://picsum.photos/seed/analysis_3/800/600', 'https://picsum.photos/seed/analysis_4/800/600'], likes: 1500, commentsCount: 0, isLiked: false, comments: [],
+  },
+  {
+    id: 18, author: 'Женский футбол', group: 'PRO Лига', avatar: 'https://picsum.photos/seed/women/100/100', time: '13 часов назад', text: 'Женская сборная готовится к важному матчу. Поддержим наших!', images: ['https://picsum.photos/seed/women_1/800/600', 'https://picsum.photos/seed/women_2/800/600'], likes: 2100, commentsCount: 0, isLiked: false, comments: [],
+  },
+  {
+    id: 19, author: 'Футбольная экипировка', group: 'Обзоры', avatar: 'https://picsum.photos/seed/kit/100/100', time: '14 часов назад', text: 'Обзор новых бутс этого сезона. Какая пара лучше?', images: ['https://picsum.photos/seed/boots_1/800/600', 'https://picsum.photos/seed/boots_2/800/600', 'https://picsum.photos/seed/boots_3/800/600'], likes: 980, commentsCount: 0, isLiked: false, comments: [],
+  },
+  {
+    id: 20, author: 'Сборная мира', group: 'Легенды', avatar: 'https://picsum.photos/seed/world11/100/100', time: '15 часов назад', text: 'Ваш идеальный состав из действующих игроков. Делитесь в комментариях!', images: ['https://picsum.photos/seed/dream_team_1/800/600', 'https://picsum.photos/seed/dream_team_2/800/600', 'https://picsum.photos/seed/dream_team_3/800/600', 'https://picsum.photos/seed/dream_team_4/800/600', 'https://picsum.photos/seed/dream_team_5/800/600'], likes: 5400, commentsCount: 1, isLiked: false, comments: [],
+  },
+  {
+    id: 21, author: 'Турнирная таблица', group: 'Обсуждение', avatar: 'https://picsum.photos/seed/standings/100/100', time: '16 часов назад', text: 'Обновлённая таблица чемпионата. Кто удивил, а кто разочаровал?', images: ['https://picsum.photos/seed/table_1/800/600'], likes: 780, commentsCount: 0, isLiked: false, comments: [],
+  },
+  {
+    id: 22, author: 'Травмы и возвращения', group: 'Новости', avatar: 'https://picsum.photos/seed/injury/100/100', time: '17 часов назад', text: 'Ключевой игрок возвращается после травмы раньше срока.', images: ['https://picsum.photos/seed/return_1/800/600', 'https://picsum.photos/seed/return_2/800/600'], likes: 3400, commentsCount: 0, isLiked: false, comments: [],
+  },
+  {
+    id: 23, author: 'Судьи', group: 'Обсуждение', avatar: 'https://picsum.photos/seed/referee/100/100', time: '18 часов назад', text: 'Обсуждаем спорные решения арбитров в прошедшем туре.', images: ['https://picsum.photos/seed/ref_1/800/600', 'https://picsum.photos/seed/ref_2/800/600', 'https://picsum.photos/seed/ref_3/800/600'], likes: 1200, commentsCount: 0, isLiked: false, comments: [],
+  },
 ];
 
 // --- Main Feed Component ---
 export function FootballFeed() {
   const [posts, setPosts] = useState(initialPosts);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [commentInputs, setCommentInputs] = useState<{ [key: number]: string }>({});
+  const [commentsOpen, setCommentsOpen] = useState<Set<number>>(new Set());
+  const commentFileRefs = useRef<{ [key: number]: HTMLInputElement }>({});
   const { toast } = useToast();
   const { t, language } = useLanguage();
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [newPostText, setNewPostText] = useState("");
   const [newPostImages, setNewPostImages] = useState<string[]>([]);
   const [newPostImageUrls, setNewPostImageUrls] = useState("");
+
+  const toggleComments = (postId: number) => {
+    setCommentsOpen(prev => {
+      const next = new Set(prev);
+      if (next.has(postId)) next.delete(postId);
+      else next.add(postId);
+      return next;
+    });
+  };
+
+  const handleCommentImageSelect = (postId: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).slice(0, 14).forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (reader.result) {
+          setPosts(prev => prev.map(p =>
+            p.id === postId
+              ? { ...p, images: [reader.result as string, ...p.images] }
+              : p
+          ));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
 
   // Fallbacks to avoid broken images if upstream (picsum) is blocked.
   const fallbackPool = useMemo(
@@ -478,6 +496,15 @@ export function FootballFeed() {
         post.group.toLowerCase().includes(query)
     );
   }, [searchQuery, normalizedPosts]);
+
+  const POSTS_PER_PAGE = 15;
+  const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
+  const paginatedPosts = filteredPosts.slice(
+    (currentPage - 1) * POSTS_PER_PAGE,
+    currentPage * POSTS_PER_PAGE
+  );
+
+  useEffect(() => { setCurrentPage(1); }, [searchQuery]);
 
   const handleLike = useCallback((postId: number) => {
     setPosts((currentPosts) =>
@@ -532,7 +559,7 @@ export function FootballFeed() {
     }
 
     const tr = (ru: string, en: string) => (language === "RU" ? ru : en);
-    const newComment = {
+    const newComment: any = {
       id: Date.now(),
       author: tr("Вы", "You"),
       avatar: "/demo/people/me.png",
@@ -540,14 +567,10 @@ export function FootballFeed() {
       text: commentText,
     };
 
-    setPosts((currentPosts) =>
-      currentPosts.map((post) =>
+    setPosts((current) =>
+      current.map((post) =>
         post.id === postId
-          ? {
-              ...post,
-              comments: [...post.comments, newComment],
-              commentsCount: post.commentsCount + 1,
-            }
+          ? { ...post, comments: [...post.comments, newComment], commentsCount: post.commentsCount + 1 }
           : post
       )
     );
@@ -621,7 +644,7 @@ export function FootballFeed() {
           </Button>
         </div>
 
-        {filteredPosts.map((post) => (
+        {paginatedPosts.map((post) => (
           <div key={post.id} className="bg-white rounded-xl shadow-sm mb-5 border border-gray-200/80 overflow-hidden">
             <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -667,50 +690,120 @@ export function FootballFeed() {
               </button>
             </div>
 
-            <div className="px-5 py-4 border-t border-gray-100 bg-gray-50/50">
-              {post.comments.map((comment) => (
-                <div key={comment.id} className="flex items-start gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden mt-1 flex-shrink-0">
-                    <img src={comment.avatar} alt={comment.author} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 bg-gray-100 rounded-xl px-3 py-2">
-                    <div className="flex items-baseline gap-2">
-                      <p className="font-bold text-xs text-gray-800">{comment.author}</p>
-                      <p className="text-gray-400 text-[10px]">{comment.time}</p>
-                    </div>
-                    <p className="text-sm text-gray-700 mt-1">{comment.text}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="border-t border-gray-100 bg-gray-50/50">
+              <button
+                onClick={() => toggleComments(post.id)}
+                className="w-full flex items-center justify-between px-5 py-3 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <span className="flex items-center gap-2 font-semibold text-sm">
+                  <MessageCircle size={16} className="text-gray-400" />
+                  {language === "RU" ? "Комментарии" : "Comments"} ({post.commentsCount})
+                </span>
+                <ChevronDown
+                  size={16}
+                  className={cn(
+                    "transition-transform duration-200",
+                    commentsOpen.has(post.id) && "rotate-180"
+                  )}
+                />
+              </button>
 
-              <div className="flex items-center gap-3 mt-4">
-                <div className="w-8 h-8 rounded-full bg-gray-300 font-bold text-white flex items-center justify-center text-sm flex-shrink-0">
-                  ME
-                </div>
-                <div className="flex-1 relative">
-                  <input
-                    type="text"
-                    value={commentInputs[post.id] || ''}
-                    onChange={(e) => handleCommentChange(post.id, e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit(post.id)}
-                      placeholder={language === "RU" ? "Напишите комментарий..." : "Write a comment..."}
-                    className="w-full bg-gray-100 border-transparent rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-                  />
-                  <button
-                    onClick={() => handleCommentSubmit(post.id)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500"
+              <AnimatePresence initial={false}>
+                {commentsOpen.has(post.id) && (
+                  <motion.div
+                    key="comments"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
                   >
-                    <Send size={18} />
-                  </button>
-                </div>
-              </div>
+                    <div className="px-5 pb-4">
+                      {post.comments.map((comment: any) => (
+                        <div key={comment.id} className="flex items-start gap-3 mb-4">
+                          <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden mt-1 flex-shrink-0">
+                            <img src={comment.avatar} alt={comment.author} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 bg-gray-100 rounded-xl px-3 py-2">
+                            <div className="flex items-baseline gap-2">
+                              <p className="font-bold text-xs text-gray-800">{comment.author}</p>
+                              <p className="text-gray-400 text-[10px]">{comment.time}</p>
+                            </div>
+                            {comment.text && <p className="text-sm text-gray-700 mt-1">{comment.text}</p>}
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="flex items-center gap-3 mt-2">
+                        <div className="w-8 h-8 rounded-full bg-gray-300 font-bold text-white flex items-center justify-center text-sm flex-shrink-0">
+                          ME
+                        </div>
+                        <div className="flex-1 relative flex items-center gap-2 bg-gray-100 rounded-full px-3">
+                          <input
+                            type="text"
+                            value={commentInputs[post.id] || ''}
+                            onChange={(e) => handleCommentChange(post.id, e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit(post.id)}
+                            placeholder={language === "RU" ? "Напишите комментарий..." : "Write a comment..."}
+                            className="flex-1 bg-transparent py-2 text-sm focus:outline-none min-w-0"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => commentFileRefs.current[post.id]?.click()}
+                            className="text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0"
+                          >
+                            <Image size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleCommentSubmit(post.id)}
+                            className="text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0"
+                          >
+                            <Send size={18} />
+                          </button>
+                          <input
+                            type="file"
+                            ref={el => { commentFileRefs.current[post.id] = el!; }}
+                            onChange={(e) => handleCommentImageSelect(post.id, e)}
+                            className="hidden"
+                            accept="image/png, image/jpeg, image/gif, image/webp"
+                            multiple
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         ))}
+
+        {totalPages > 1 && (
+          <Pagination className="mb-4">
+            <PaginationContent>
+              <PaginationItem>
+                <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <PaginationItem key={i + 1}>
+                  <Button variant={currentPage === i + 1 ? "default" : "outline"} size="icon" className="h-9 w-9" onClick={() => setCurrentPage(i + 1)}>
+                    {i + 1}
+                  </Button>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
       </div>
 
       <Toaster />
-
       <Dialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
         <DialogContent className="max-w-lg rounded-3xl p-6 border-0 app-shadow">
           <DialogHeader>

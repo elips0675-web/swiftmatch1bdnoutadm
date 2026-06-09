@@ -121,7 +121,7 @@ function SubGroupsContent() {
                 <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-muted/50">
                     <ChevronLeft size={24} className="text-foreground" />
                 </Button>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 text-center">
                     <h3 className="font-black text-lg leading-tight tracking-tight text-foreground truncate">
                         {language === 'RU' ? categoryNameRu : categoryNameEn}
                     </h3>

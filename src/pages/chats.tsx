@@ -25,7 +25,7 @@ import { ALL_DEMO_USERS, GROUP_CATEGORIES } from "@/lib/demo-data";
 import { containsForbiddenWords, isGibberish } from "@/lib/word-filter";
 import { encryptStorage, decryptStorage } from "@/lib/crypto";
 import { useAntiScreenshot } from "@/hooks/useAntiScreenshot";
-import { FootballFeed } from "@/components/feeds/football-feed";
+import { CategoryFeed } from "@/components/feeds/category-feed";
 
 const VideoCallDialog = dynamic(() => import('@/components/video-call').then(mod => mod.VideoCallDialog), { ssr: false });
 const VoiceCallDialog = dynamic(() => import('@/components/voice-call').then(mod => mod.VoiceCallDialog), { ssr: false });
@@ -464,12 +464,21 @@ function ChatsContent() {
       }
     } else if (groupId) {
       const id = parseInt(groupId);
-      const allPossibleGroups: any[] = [];
-      GROUP_CATEGORIES.forEach(c => c.subgroups.forEach(s => allPossibleGroups.push({ ...s, isGroup: true, name: language === 'RU' ? s.name_ru : s.name_en })));
+      let foundGroup: any = null;
+      let foundCategory: any = null;
+      GROUP_CATEGORIES.forEach(c => {
+        c.subgroups.forEach(s => {
+          if (s.id === id) {
+            foundGroup = { ...s, isGroup: true, name: language === 'RU' ? s.name_ru : s.name_en };
+            foundCategory = c;
+          }
+        });
+      });
       
-      const group = allPossibleGroups.find(g => g.id === id);
-      if (group) {
-        setSelectedChat(group);
+      if (foundGroup) {
+        foundGroup.categoryNameRu = foundCategory?.name_ru || '';
+        foundGroup.categoryNameEn = foundCategory?.name_en || '';
+        setSelectedChat(foundGroup);
         setActiveTab("groups");
         loadMessages(id).then(saved => {
           if (saved && saved.length > 0) {
@@ -485,6 +494,30 @@ function ChatsContent() {
       }
     }
   }, [matchId, groupId, language, loadIcebreakers]);
+
+  const handleToggleJoin = useCallback(() => {
+    setJoinedGroupNames(prev => {
+      const name = selectedChat?.name;
+      if (!name) return prev;
+      if (prev.includes(name)) {
+        const next = prev.filter(n => n !== name);
+        try {
+          const saved = JSON.parse(localStorage.getItem('userProfile') || '{}');
+          saved.joinedGroups = next;
+          localStorage.setItem('userProfile', JSON.stringify(saved));
+        } catch {}
+        return next;
+      }
+      const next = [...prev, name];
+      try {
+        const saved = JSON.parse(localStorage.getItem('userProfile') || '{}');
+        saved.joinedGroups = next;
+        localStorage.setItem('userProfile', JSON.stringify(saved));
+      } catch {}
+      return next;
+    });
+  }, [selectedChat]);
+
 
   const handleSendMessage = (textOverride?: string) => {
     const textToSend = textOverride || inputValue;
@@ -542,9 +575,8 @@ function ChatsContent() {
   };
 
   if (selectedChat) {
-    const groupIdNum = groupId ? parseInt(groupId) : NaN;
-    // "Группы -> Спорт -> Футбол": вместо чата показываем ленту футбола.
-    if (selectedChat.isGroup && groupIdNum === 201) {
+    // Группы: вместо чата показываем ленту подгруппы
+    if (selectedChat.isGroup) {
       return (
         <div className="flex flex-col h-svh bg-[#f8f9fb]">
           <header className="flex items-center gap-2 px-3 py-2 border-b border-border sticky top-0 bg-white/90 backdrop-blur-lg z-50 h-16">
@@ -556,7 +588,7 @@ function ChatsContent() {
                 <Users size={20} className="text-muted-foreground" />
               </div>
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 text-center">
               <h3 className="font-black text-sm leading-tight tracking-tight text-foreground truncate">
                 {selectedChat.name}
               </h3>
@@ -564,9 +596,25 @@ function ChatsContent() {
                 {selectedChat.members} {t('chats.members')}
               </p>
             </div>
+            <Button
+              variant={joinedGroupNames.includes(selectedChat.name) ? "outline" : "default"}
+              size="sm"
+              className={cn(
+                "shrink-0 h-8 px-4 rounded-full font-black text-[9px] uppercase tracking-widest",
+                joinedGroupNames.includes(selectedChat.name)
+                  ? "border-primary/20 text-primary hover:bg-primary/5"
+                  : "gradient-bg text-white border-0 shadow-lg shadow-primary/20"
+              )}
+              onClick={handleToggleJoin}
+            >
+              {joinedGroupNames.includes(selectedChat.name) ? t('button.leave') : t('button.join')}
+            </Button>
           </header>
           <main className="flex-1 overflow-y-auto p-0">
-            <FootballFeed />
+            <CategoryFeed
+              categoryNameRu={selectedChat.categoryNameRu || ''}
+              categoryNameEn={selectedChat.categoryNameEn || ''}
+            />
           </main>
           <div />
         </div>
@@ -615,7 +663,23 @@ function ChatsContent() {
         </header>
         <main ref={msgContainerRef} className="flex-1 overflow-y-auto p-4 space-y-2 anti-screenshot"><div className="text-center my-2"><Badge variant="secondary" className="bg-white/50 text-[9px] text-muted-foreground border-0 font-black uppercase tracking-widest px-2.5 py-0.5">{t('chats.today')}</Badge></div><AnimatePresence>{messages.map((msg: any) => (<motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} key={msg.id} className={cn("flex flex-col max-w-[80%]", msg.sender === "me" ? "ml-auto items-end" : "items-start")}><div className={cn("px-3 py-2 rounded-lg text-sm shadow-sm font-medium leading-snug", msg.sender === "me" ? "gradient-bg text-white rounded-br-none shadow-primary/10" : "bg-white text-foreground rounded-bl-none border border-border/40")}>{msg.text}</div><span className="text-[9px] text-muted-foreground mt-1.5 px-1 font-bold uppercase tracking-tighter opacity-60">{msg.time}</span></motion.div>))}</AnimatePresence>{isTyping && (<motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-1.5 text-muted-foreground"><div className="flex gap-1 bg-white px-3 py-2.5 rounded-lg border border-border/40 shadow-sm rounded-bl-none"><span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce"></span><span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]"></span><span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]"></span></div><span className="text-[9px] font-bold uppercase tracking-widest">{t('chats.typing')}</span></motion.div>)}<div ref={messagesEndRef} /></main>
         <div className="p-4 bg-white border-t border-border shadow-[0_-10px_40px_-20px_rgba(0,0,0,0.1)] relative z-10">
-          {!selectedChat.isGroup && (<><div className="flex items-center justify-between mb-3 px-1"><button onClick={() => setShowThemeGrid(!showThemeGrid)} className={cn("flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.1em] transition-all", showThemeGrid ? "gradient-bg text-white shadow-lg shadow-primary/20" : "bg-primary/5 text-primary border border-primary/10")}> <Sparkles size={14} className={cn(loadingIcebreakers && "animate-spin")} /> {showThemeGrid ? t('chats.close_themes') : t('chats.ai_themes')} </button>{!showThemeGrid && icebreakers.length > 0 && !loadingIcebreakers && (<p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest opacity-40 italic">{t('chats.swipe')}</p>)}</div><AnimatePresence>{showThemeGrid && (<motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="grid grid-cols-3 gap-2.5 mb-5 overflow-hidden">{CHAT_THEMES.map((theme) => { const Icon = theme.icon; return (<button key={theme.id} onClick={() => loadIcebreakers(selectedChat, theme.mood)} className="flex flex-col items-center justify-center p-3.5 rounded-lg bg-muted/40 border border-border/50 transition-all group active:scale-95"><Icon size={22} className={cn("mb-1.5 group-hover:scale-110", theme.color)} /><span className="text-[9px] font-black uppercase tracking-tighter text-foreground/70">{t(theme.labelKey)}</span></button>) })}</motion.div>)}</AnimatePresence>{!showThemeGrid && (<div className="flex gap-2.5 overflow-x-auto no-scrollbar mb-5 h-10 items-center px-1">{loadingIcebreakers ? (<div className="flex gap-2"><div className="h-8 w-32 bg-muted animate-pulse rounded-full"></div><div className="h-8 w-28 bg-muted animate-pulse rounded-full"></div></div>) : (icebreakers.map((text, i) => (<button key={i} onClick={() => setInputValue(text)} className="whitespace-nowrap px-4 py-2 bg-white hover:bg-muted transition-all text-[11px] font-bold rounded-full text-foreground/80 border border-border/60 shadow-sm active:scale-95">{text}</button>)))}</div>)}</>)}
+          {!selectedChat.isGroup && (<><div className="flex items-center justify-between mb-3 px-1"><button onClick={() => setShowThemeGrid(!showThemeGrid)} className={cn("flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.1em] transition-all", showThemeGrid ? "gradient-bg text-white shadow-lg shadow-primary/20" : "bg-primary/5 text-primary border border-primary/10")}> <Sparkles size={14} className={cn(loadingIcebreakers && "animate-spin")} /> {showThemeGrid ? t('chats.close_themes') : t('chats.ai_themes')} </button></div><AnimatePresence>{showThemeGrid && (<motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="grid grid-cols-3 gap-2.5 mb-5 overflow-hidden">{CHAT_THEMES.map((theme) => { const Icon = theme.icon; return (<button key={theme.id} onClick={() => loadIcebreakers(selectedChat, theme.mood)} className="flex flex-col items-center justify-center p-3.5 rounded-lg bg-muted/40 border border-border/50 transition-all group active:scale-95"><Icon size={22} className={cn("mb-1.5 group-hover:scale-110", theme.color)} /><span className="text-[9px] font-black uppercase tracking-tighter text-foreground/70">{t(theme.labelKey)}</span></button>) })}</motion.div>)}</AnimatePresence>{!showThemeGrid && icebreakers.length > 0 && (
+  <div className="max-h-48 overflow-y-auto mb-5 px-1 no-scrollbar">
+    <div className="grid grid-cols-2 gap-2.5">
+      {loadingIcebreakers ? (
+        Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />
+        ))
+      ) : (
+        icebreakers.map((text, i) => (
+          <button key={i} onClick={() => setInputValue(text)} className="flex items-start text-left bg-white rounded-xl p-3 border border-border/30 shadow-sm hover:bg-muted/30 transition-all active:scale-[0.97]">
+            <p className="text-[11px] font-bold text-foreground leading-snug">{text}</p>
+          </button>
+        ))
+      )}
+    </div>
+  </div>
+)}</>)}
           <div className="flex items-center gap-3"><div className="flex-1 relative group"><Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder={t('chats.placeholder')} className="pr-12 h-11 bg-muted/50 border-0 rounded-2xl font-medium px-6 text-sm" /><Popover><PopoverTrigger asChild><button className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"><Smile size={20} /></button></PopoverTrigger><PopoverContent className="w-full max-w-[280px] p-2 rounded-2xl border-0 shadow-2xl bg-white" side="top" align="end"><div className="grid grid-cols-5 gap-1">{QUICK_REACTIONS.map(reaction => { const ReactionIcon = reaction.icon; return (<button key={reaction.id} onClick={() => handleSendMessage(reaction.label)} className="w-10 h-10 flex items-center justify-center hover:bg-muted rounded-xl transition-all active:scale-90"><ReactionIcon size={24} className={reaction.color} /></button>); })}</div></PopoverContent></Popover></div><Button size="icon" onClick={() => handleSendMessage()} disabled={!inputValue.trim()} className="h-11 w-11 rounded-2xl gradient-bg text-white shadow-xl shadow-primary/30 active:scale-95 transition-all"><Send size={18} className="ml-0.5" /></Button></div>
         </div>
         {selectedChat && !selectedChat.isGroup && isVideoCall && <VideoCallDialog open={isVideoCall} onOpenChange={setIsVideoCall} user={selectedChat} />}

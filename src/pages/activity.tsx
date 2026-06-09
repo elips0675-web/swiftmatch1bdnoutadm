@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "@/shims/next-navigation";
 import { 
   Heart, 
   Eye, 
@@ -8,7 +9,10 @@ import {
   Play, 
   EyeOff,
   Star,
-  Info
+  Info,
+  Coffee,
+  Film,
+  Mountain
 } from "lucide-react";
 import Image from "@/shims/next-image";
 import dynamic from "@/shims/next-dynamic";
@@ -26,26 +30,38 @@ const PremiumDialog = dynamic(() => import('@/components/dialogs/premium-dialog'
 const AdDialog = dynamic(() => import('@/components/dialogs/ad-dialog').then(mod => mod.AdDialog), { ssr: false });
 
 const ACTIVITY_DATA = [
-  { id: 1, user: 'Анна', age: 24, img: PlaceHolderImages[0].imageUrl, type: 'like', time: '5 мин назад', seen: false, blurred: true },
-  { id: 2, user: 'Елена', age: 26, img: PlaceHolderImages[2].imageUrl, type: 'visit', time: '15 мин назад', seen: false, blurred: false },
-  { id: 3, user: 'Мария', age: 29, img: PlaceHolderImages[6].imageUrl, type: 'match', time: '1 час назад', seen: true, blurred: false },
-  { id: 4, user: 'София', age: 22, img: PlaceHolderImages[4].imageUrl, type: 'like', time: '3 часа назад', seen: true, blurred: true },
-  { id: 5, user: 'Ксения', age: 23, img: PlaceHolderImages[8].imageUrl, type: 'visit', time: '5 часов назад', seen: true, blurred: false },
+  { id: 1, userId: 1, user: 'Анна', age: 24, img: PlaceHolderImages[0].imageUrl, type: 'like', time: '5 мин назад', seen: false, blurred: true },
+  { id: 2, userId: 3, user: 'Елена', age: 26, img: PlaceHolderImages[2].imageUrl, type: 'visit', time: '15 мин назад', seen: false, blurred: false },
+  { id: 3, userId: 7, user: 'Мария', age: 29, img: PlaceHolderImages[6].imageUrl, type: 'match', time: '1 час назад', seen: true, blurred: false },
+  { id: 4, userId: 5, user: 'София', age: 22, img: PlaceHolderImages[4].imageUrl, type: 'like', time: '3 часа назад', seen: true, blurred: true },
+  { id: 5, userId: 9, user: 'Ксения', age: 23, img: PlaceHolderImages[8].imageUrl, type: 'visit', time: '5 часов назад', seen: true, blurred: false },
+];
+
+const INVITE_DATA = [
+  { id: 101, userId: 1, user: 'Анна', age: 24, img: PlaceHolderImages[0].imageUrl, type: 'coffee', time: '10 мин назад', seen: false },
+  { id: 102, userId: 7, user: 'Мария', age: 29, img: PlaceHolderImages[6].imageUrl, type: 'cinema', time: '2 часа назад', seen: false },
+  { id: 103, userId: 3, user: 'Елена', age: 26, img: PlaceHolderImages[2].imageUrl, type: 'walk', time: '1 день назад', seen: true },
 ];
 
 export default function ActivityPage() {
+  const router = useRouter();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("all");
   const [showPremium, setShowPremium] = useState(false);
   const [showAd, setShowAd] = useState(false);
   const [isIncognito, setIsIncognito] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [invites, setInvites] = useState<any[]>(INVITE_DATA);
 
   useEffect(() => {
     setIsClient(true);
     const savedIncognito = localStorage.getItem('incognito-mode');
     if (savedIncognito) {
       setIsIncognito(JSON.parse(savedIncognito));
+    }
+    const savedInvites = localStorage.getItem('receivedInvites');
+    if (savedInvites) {
+      try { setInvites(JSON.parse(savedInvites)); } catch {}
     }
   }, []);
 
@@ -63,7 +79,7 @@ export default function ActivityPage() {
         <div className="flex justify-between items-end mb-6 px-1">
           <div>
             <h2 className="text-2xl font-black font-headline tracking-tighter text-foreground">
-              {activeTab === 'all' ? t('activity.title') : activeTab === 'likes' ? t('activity.likes') : t('activity.visits')}
+              {activeTab === 'all' ? t('activity.title') : activeTab === 'likes' ? t('activity.likes') : activeTab === 'visits' ? t('activity.visits') : t('activity.invites')}
             </h2>
             <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] mt-1 opacity-60">
               {t('activity.today_activity')}
@@ -75,10 +91,18 @@ export default function ActivityPage() {
         </div>
 
         <Tabs defaultValue="all" className="w-full mb-6" onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all">{t('activity.all')}</TabsTrigger>
             <TabsTrigger value="likes">{t('activity.likes')}</TabsTrigger>
             <TabsTrigger value="visits">{t('activity.visits')}</TabsTrigger>
+            <TabsTrigger value="invites" className="relative">
+              {t('activity.invites')}
+              {invites.some(i => !i.seen) && (
+                <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-1 rounded-full bg-primary text-white text-[8px] font-black flex items-center justify-center">
+                  {invites.filter(i => !i.seen).length}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value={activeTab} className="mt-6 space-y-4 outline-none">
@@ -110,28 +134,55 @@ export default function ActivityPage() {
             </motion.button>
 
             <div className="space-y-2">
-              <AnimatePresence mode="popLayout">
-                {filteredActivity.length > 0 ? (
-                  filteredActivity.map((item) => (
-                    <motion.div
-                      layout
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      key={item.id}
-                    >
-                      <ActivityItem item={item} onUnlock={() => setShowAd(true)} />
-                    </motion.div>
-                  ))
-                ) : (
-                  <div className="text-center py-20 opacity-30 flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                      <Info size={24} />
+              {activeTab === 'invites' ? (
+                <AnimatePresence mode="popLayout">
+                  {invites.length > 0 ? (
+                    invites.map((item) => (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        key={item.id}
+                        onClick={() => router.push(`/user?id=${item.userId}`)}
+                      >
+                        <InviteItem item={item} />
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="text-center py-20 opacity-30 flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                        <Info size={24} />
+                      </div>
+                      <p className="text-[10px] font-black uppercase tracking-widest">{t('activity.empty_invites')}</p>
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest">{t('activity.empty')}</p>
-                  </div>
-                )}
-              </AnimatePresence>
+                  )}
+                </AnimatePresence>
+              ) : (
+                <AnimatePresence mode="popLayout">
+                  {filteredActivity.length > 0 ? (
+                    filteredActivity.map((item) => (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        key={item.id}
+                        onClick={() => router.push(`/user?id=${item.userId}`)}
+                      >
+                        <ActivityItem item={item} onUnlock={() => setShowAd(true)} />
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="text-center py-20 opacity-30 flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                        <Info size={24} />
+                      </div>
+                      <p className="text-[10px] font-black uppercase tracking-widest">{t('activity.empty')}</p>
+                    </div>
+                  )}
+                </AnimatePresence>
+              )}
             </div>
           </TabsContent>
         </Tabs>
@@ -261,6 +312,70 @@ function ActivityItem({ item, onUnlock }: { item: any, onUnlock: () => void }) {
             <Sparkles size={8} className="animate-pulse" /> {t('button.reveal')}
           </button>
         )}
+      </div>
+
+      <ChevronRight size={12} className="text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" strokeWidth={3} />
+    </div>
+  );
+}
+
+function InviteItem({ item }: { item: any }) {
+  const { t } = useLanguage();
+
+  const inviteIcon = () => {
+    switch (item.type) {
+      case 'coffee': return <Coffee size={14} className="text-amber-600" />;
+      case 'cinema': return <Film size={14} className="text-blue-600" />;
+      case 'walk': return <Mountain size={14} className="text-green-600" />;
+      default: return <Star size={14} />;
+    }
+  };
+
+  const inviteBg = () => {
+    switch (item.type) {
+      case 'coffee': return 'bg-amber-500';
+      case 'cinema': return 'bg-blue-500';
+      case 'walk': return 'bg-green-500';
+      default: return 'bg-muted';
+    }
+  };
+
+  return (
+    <div className={cn(
+      "flex items-center gap-3 p-3 rounded-2xl transition-all cursor-pointer group relative overflow-hidden h-[72px] anti-screenshot",
+      item.seen ? "bg-white/40 opacity-70" : "bg-white app-shadow hover:translate-y-[-1px] border border-white"
+    )}>
+      {!item.seen && (
+        <div className="absolute top-0 left-0 w-1.5 h-full bg-primary opacity-40"></div>
+      )}
+      
+      <div className="relative flex-shrink-0">
+        <div className="w-12 h-12 rounded-xl overflow-hidden relative border-2 border-white shadow-sm">
+          <Image src={item.img} alt={item.user} fill sizes="48px" className="object-cover" />
+        </div>
+        <div className={cn(
+          "absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-lg z-20",
+          inviteBg()
+        )}>
+          {inviteIcon()}
+        </div>
+      </div>
+      
+      <div className="flex-1 min-w-0 pr-1 ml-1">
+        <div className="flex justify-between items-start">
+          <p className="text-sm leading-tight text-foreground/90 font-semibold">
+            <span className="font-black text-foreground">{item.user}, {item.age}</span> {t(`invite.msg_${item.type}`)}
+          </p>
+          {!item.seen && (
+            <div className="relative flex h-1.5 w-1.5 mt-0.5 ml-1 flex-shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
+            </div>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground font-black tracking-widest uppercase opacity-40 mt-1">
+          {item.time.replace('мин назад', t('time.min_ago')).replace('час назад', t('time.hour_ago')).replace('дня назад', t('time.days_ago'))}
+        </p>
       </div>
 
       <ChevronRight size={12} className="text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" strokeWidth={3} />

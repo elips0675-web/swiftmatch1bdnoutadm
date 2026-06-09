@@ -2,7 +2,26 @@ import { PlaceHolderImages } from "./placeholder-images";
 
 const futureDate = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString();
 
-export const ALL_DEMO_USERS: any[] = [
+export const POLL_QUESTIONS = [
+  { id: 'coffee_tea', options: 3 },
+  { id: 'cat_dog', options: 3 },
+  { id: 'morning_night', options: 2 },
+  { id: 'pizza_sushi', options: 3 },
+  { id: 'sea_mountains', options: 2 },
+  { id: 'movies_series', options: 2 },
+  { id: 'book_film', options: 3 },
+  { id: 'marvel_dc', options: 3 },
+];
+
+function generatePollAnswers(seed: number): Record<string, number> {
+  const answers: Record<string, number> = {};
+  POLL_QUESTIONS.forEach((q, i) => {
+    answers[q.id] = (seed + i * 7) % q.options;
+  });
+  return answers;
+}
+
+const BASE_USERS: any[] = [
   { id: 1, name: 'Анна', age: 24, img: '/demo/people/anna.png', hint: 'woman portrait', online: true, distance: 2, match: 87, city: 'Москва', zodiac: 'Лев', interests: ['Фотография', 'Путешествия', 'Кофе', 'Музыка', 'Спорт'], bio: 'Люблю закаты, хороший кофе и интересные разговоры.', height: 172, goal: 'Серьезные отношения', gender: 'female', lookingFor: 'male', superLikes: 5, boost: { boostedUntil: futureDate }, circadian: 'lark' },
   
   // 10 Men for Anna (Москва, совпадающие интересы и цели)
@@ -23,6 +42,8 @@ export const ALL_DEMO_USERS: any[] = [
   { id: 7, name: 'Мария', age: 29, img: '/demo/people/anna.png', hint: 'woman portrait', online: true, distance: 1, match: 94, city: 'Москва', zodiac: 'Скорпион', interests: ['Йога', 'Природа', 'Путешествия'], bio: 'Люблю готовить полезную еду и ходить в походы.', height: 170, goal: 'Серьезные отношения', gender: 'female', lookingFor: 'male', superLikes: 0, boost: { boostedUntil: null }, circadian: 'lark' },
   { id: 9, name: 'Ксения', age: 23, img: '/demo/people/sophia.png', hint: 'woman portrait', online: true, distance: 6, match: 83, city: 'Москва', zodiac: 'Козерог', interests: ['Рукоделие', 'Дизайн', 'Искусство'], bio: 'Жизнь слишком коротка, чтобы носить скучную одежду.', height: 174, goal: 'Серьезные отношения', gender: 'female', lookingFor: 'male', superLikes: 0, boost: { boostedUntil: null }, circadian: 'owl' }
 ];
+
+export const ALL_DEMO_USERS = BASE_USERS.map(u => ({ ...u, pollAnswers: generatePollAnswers(u.id) }));
 
 export const TOP_OF_THE_WEEK = [
   { id: 'top1', name_ru: 'Клуб любителей котиков', name_en: 'Cat Lovers Club', members: 12345, img: 'https://picsum.photos/seed/top_week_1/600/400' },

@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "@/shims/next-navigation";
 import Image from "@/shims/next-image";
 import Link from "@/shims/next-link";
 import dynamic from "@/shims/next-dynamic";
-import { MapPin, CircleCheck as CheckCircle2, Star, Camera, Coffee, Music, Globe, Dumbbell, Palette, Film, Flower2, Briefcase, Gamepad2, Maximize2, X, Dog, Ruler, Target, Sparkles, Heart, MessageCircle, ChevronLeft, Cpu, Anchor, Map, Sprout, BookOpen, Scissors, FlaskConical, Car, ChefHat, Brush, Mountain, Wine, Flag, Sun, User, Info, Trophy, VenetianMask, Search } from "lucide-react";
+import { MapPin, CircleCheck as CheckCircle2, Star, Camera, Coffee, Music, Globe, Dumbbell, Palette, Film, Flower2, Briefcase, Gamepad2, Maximize2, X, Dog, Ruler, Target, Sparkles, Heart, MessageCircle, ChevronLeft, ChevronRight, Cpu, Anchor, Map, Sprout, BookOpen, Scissors, FlaskConical, Car, ChefHat, Brush, Mountain, Wine, Flag, Sun, User, Info, Trophy, VenetianMask, Search, ThumbsUp, ThumbsDown, RefreshCw, BrainCircuit } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,7 @@ import { useLanguage } from "@/context/language-context";
 import { cn, getUserTitles } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { ALL_DEMO_USERS } from "@/lib/demo-data";
+import { ALL_DEMO_USERS, POLL_QUESTIONS } from "@/lib/demo-data";
 import { ZodiacIcon } from "@/components/shared/zodiac-icon";
 import {
   Carousel,
@@ -77,6 +77,19 @@ function UserProfileContent() {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportDescription, setReportDescription] = useState('');
+  const [pollIndex, setPollIndex] = useState(0);
+  const [pollSelected, setPollSelected] = useState<number | null>(null);
+  const [pollRevealed, setPollRevealed] = useState(false);
+  const [pollCanProceed, setPollCanProceed] = useState(false);
+  const [pollScore, setPollScore] = useState(0);
+  const [pollTotal, setPollTotal] = useState(0);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+
+  useEffect(() => {
+    if (!pollRevealed) { setPollCanProceed(false); return; }
+    const t = setTimeout(() => setPollCanProceed(true), 1500);
+    return () => clearTimeout(t);
+  }, [pollRevealed]);
 
   useEffect(() => {
     const saved = localStorage.getItem('userProfile');
@@ -177,9 +190,10 @@ function UserProfileContent() {
           </div>
 
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-muted p-1 rounded-xl mb-6">
+            <TabsList className="grid w-full grid-cols-3 bg-muted p-1 rounded-xl mb-6">
               <TabsTrigger value="profile">{t('profile.tab.data')}</TabsTrigger>
               <TabsTrigger value="gallery">{t('profile.tab.gallery')}</TabsTrigger>
+              <TabsTrigger value="polls">{t('profile.tab.polls')}</TabsTrigger>
             </TabsList>
             <TabsContent value="profile">
               <div className="bg-white rounded-2xl p-6 app-shadow border border-border/40 text-left space-y-6 overflow-hidden">
@@ -303,23 +317,139 @@ function UserProfileContent() {
                   </div>
                 </div>
             </TabsContent>
+            <TabsContent value="polls">
+              <div className="bg-white rounded-2xl p-6 app-shadow border border-border/40">
+                <div className="flex items-center gap-2 mb-3">
+                  <MessageCircle size={18} className="text-primary" />
+                  <h4 className="font-black text-[10px] uppercase tracking-widest text-muted-foreground/60">{t('profile.tab.polls')}</h4>
+                  <span className="ml-auto text-[10px] font-bold text-muted-foreground">{t('polls.score', { score: pollScore, total: pollTotal })}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground font-medium mb-4">{t('polls.tap_to_answer')}</p>
+
+                {user.pollAnswers ? (
+                  pollIndex >= POLL_QUESTIONS.length ? (
+                    <div className="py-6 flex flex-col items-center text-center gap-3">
+                      {pollScore >= Math.ceil(POLL_QUESTIONS.length / 2) ? (
+                        <><Sparkles size={48} className="text-yellow-500" /><h3 className="text-lg font-black">{t('polls.result_title_good')}</h3><p className="text-sm text-muted-foreground">{t('polls.result_desc_good')}</p></>
+                      ) : (
+                        <><BrainCircuit size={48} className="text-muted-foreground/50" /><h3 className="text-lg font-black">{t('polls.result_title_bad')}</h3><p className="text-sm text-muted-foreground">{t('polls.result_desc_bad')}</p></>
+                      )}
+                      <p className="text-2xl font-black text-primary">{pollScore}/{pollTotal}</p>
+                      <Button onClick={() => { setPollIndex(0); setPollSelected(null); setPollRevealed(false); setPollScore(0); setPollTotal(0); }} variant="outline" className="mt-2">{t('polls.play_again')} <RefreshCw size={14} /></Button>
+                    </div>
+                  ) : (() => {
+                  const q = POLL_QUESTIONS[pollIndex];
+                  const qid = q.id;
+                  const correctAnswer = user.pollAnswers[qid];
+                  return (
+                    <div className="space-y-4">
+                      <div className="p-4 bg-muted/30 rounded-xl border border-border/40">
+                        <p className="text-sm font-bold mb-3">{t(`polls.${qid}`)}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {Array.from({ length: q.options }, (_, i) => (
+                            <button
+                              key={i}
+                              disabled={pollRevealed}
+                              onClick={() => {
+                                setPollSelected(i);
+                                setPollRevealed(true);
+                                if (i === correctAnswer) setPollScore(s => s + 1);
+                                setPollTotal(t => t + 1);
+                              }}
+                              className={cn(
+                                "px-3 py-2 rounded-lg text-xs font-bold transition-all border",
+                                pollRevealed && i === correctAnswer && "ring-2 ring-green-500",
+                                pollRevealed && pollSelected === i && i === correctAnswer
+                                  ? "bg-green-500 text-white border-green-500"
+                                  : pollRevealed && pollSelected === i && i !== correctAnswer
+                                    ? "bg-red-500 text-white border-red-500"
+                                    : pollSelected === i
+                                      ? "gradient-bg text-white border-0 shadow-md"
+                                      : "bg-white text-foreground border-border/40 hover:bg-muted active:scale-95"
+                              )}
+                            >
+                              {t(`polls.${qid}.${i}`)}
+                            </button>
+                          ))}
+                        </div>
+                        {pollRevealed && (
+                          <div className="mt-3 flex items-center gap-2 text-sm font-bold">
+                            {pollSelected === correctAnswer
+                              ? <><ThumbsUp size={16} className="text-green-500" /> <span className="text-green-500">{t('polls.match')}</span></>
+                              : <><ThumbsDown size={16} className="text-red-500" /> <span className="text-red-500">{t('polls.no_match')} — {t(`polls.${qid}.${correctAnswer}`)}</span></>
+                            }
+                          </div>
+                        )}
+                      </div>
+                      {pollCanProceed && (
+                        <Button
+                          onClick={() => {
+                            setPollIndex(i => i + 1);
+                            setPollSelected(null);
+                            setPollRevealed(false);
+                          }}
+                          className="w-full"
+                          size="sm"
+                        >
+                          {t('polls.next')} <ChevronRight size={14} />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })()
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center py-8">{t('polls.not_answered')}</p>
+                )}
+              </div>
+            </TabsContent>
           </Tabs>
         </div>
       </main>
 
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] p-4 flex justify-center items-center gap-4 bg-white/80 backdrop-blur-md z-40 safe-pb border-t border-border/40">
-          <Button onClick={() => router.back()} variant="outline" className="w-16 h-16 rounded-full border-2 border-muted hover:bg-muted text-muted-foreground flex items-center justify-center transition-all active:scale-90 shadow-lg bg-white">
-            <X size={28} />
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] p-4 flex justify-center items-center gap-3 bg-white/80 backdrop-blur-md z-40 safe-pb border-t border-border/40">
+          <Button onClick={() => router.back()} variant="outline" className="w-12 h-12 rounded-full border-2 border-muted hover:bg-muted text-muted-foreground flex items-center justify-center transition-all active:scale-90 shadow-lg bg-white shrink-0">
+            <X size={22} />
           </Button>
-          <Button onClick={handleLike} className="h-16 px-10 rounded-full gradient-bg text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-xl shadow-primary/30 flex items-center justify-center gap-2 active:scale-95 transition-all border-0 flex-1">
-            {t('button.like')} <Heart size={20} fill="currentColor" />
+          <Button onClick={() => setShowInviteDialog(true)} variant="outline" className="w-12 h-12 rounded-full border-2 border-primary/20 bg-white hover:bg-primary/5 text-primary flex items-center justify-center transition-all active:scale-90 shadow-lg shrink-0">
+            <Coffee size={20} />
           </Button>
-          <Button asChild variant="outline" className="w-16 h-16 rounded-full border-2 border-primary/20 bg-white hover:bg-primary/5 flex items-center justify-center transition-all active:scale-90 shadow-lg">
+          <Button onClick={handleLike} className="h-14 flex-1 rounded-full gradient-bg text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-xl shadow-primary/30 flex items-center justify-center gap-2 active:scale-95 transition-all border-0">
+            {t('button.like')} <Heart size={18} fill="currentColor" />
+          </Button>
+          <Button asChild variant="outline" className="w-12 h-12 rounded-full border-2 border-primary/20 bg-white hover:bg-primary/5 flex items-center justify-center transition-all active:scale-90 shadow-lg shrink-0">
             <Link href={`/chats?matchId=${user.id}`} prefetch={true}>
-              <MessageCircle size={28} className="text-primary" />
+              <MessageCircle size={22} className="text-primary" />
             </Link>
           </Button>
         </div>
+
+        <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+          <DialogContent className="max-w-xs">
+            <DialogHeader>
+              <DialogTitle className="text-center">{t('invite.title', { name: user.name })}</DialogTitle>
+              <DialogDescription className="text-center">{t('invite.desc')}</DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-3 py-2">
+              {(['coffee', 'cinema', 'walk'] as const).map((type) => (
+                <Button
+                  key={type}
+                  variant="outline"
+                  className="justify-start gap-3 h-12 rounded-xl border-2 hover:border-primary/40 hover:bg-primary/5 transition-all"
+                  onClick={() => {
+                    const sent = JSON.parse(localStorage.getItem('sentInvites') || '[]');
+                    sent.push({ toUserId: user.id, type, userName: user.name, sentAt: Date.now() });
+                    localStorage.setItem('sentInvites', JSON.stringify(sent));
+                    setShowInviteDialog(false);
+                    toast({ title: t('invite.sent_title'), description: t('invite.sent_desc', { type: t(`invite.option.${type}`) }) });
+                  }}
+                >
+                  {type === 'coffee' ? <Coffee size={18} className="text-amber-600" /> : type === 'cinema' ? <Film size={18} className="text-blue-600" /> : <Mountain size={18} className="text-green-600" />}
+                  <span className="font-bold text-sm">{t(`invite.option.${type}`)}</span>
+                </Button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
 
       <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
         <DialogContent className="max-w-[440px] w-[95vw] h-[85vh] p-0 border-0 bg-transparent shadow-none flex flex-col items-center justify-center [&>button]:hidden">

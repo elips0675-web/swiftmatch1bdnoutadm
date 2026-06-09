@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "@/shims/next-navigation";
-import { Settings, CircleCheck as CheckCircle2, Camera, Coffee, Music, Globe, Dumbbell, CreditCard as Edit2, Palette, Film, Flower2, Briefcase, Gamepad2, Dog, Ruler, Target, User, Info, Trophy, Heart, VenetianMask, Search, Maximize2, Trash2, X, Star, Check, CircleHelp as HelpCircle, Rocket, CreditCard, Video, BrainCircuit, Eye, Clock, MessageCircle, Lock } from "lucide-react";
+import { Settings, CircleCheck as CheckCircle2, Camera, Coffee, Music, Globe, Dumbbell, CreditCard as Edit2, Palette, Film, Flower2, Briefcase, Gamepad2, Dog, Ruler, Target, User, Info, Trophy, Heart, VenetianMask, Search, Maximize2, Trash2, X, Star, Check, CircleHelp as HelpCircle, Rocket, CreditCard, Video, BrainCircuit, Users, Plus, ChevronRight } from "lucide-react";
 import Image from "@/shims/next-image";
 import Link from "@/shims/next-link";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { AppHeader } from "@/components/layout/app-header";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { GROUP_CATEGORIES } from "@/lib/demo-data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -74,10 +75,6 @@ export default function ProfilePage() {
   // Boost Dialog
   const [isBoostDialogOpen, setIsBoostDialogOpen] = useState(false);
 
-  // Guests / Visitors
-  const [visitors, setVisitors] = useState<any[]>([]);
-  const [isPremium, setIsPremium] = useState(false);
-
   useEffect(() => {
     setIsMounted(true);
     const savedProfile = localStorage.getItem('userProfile');
@@ -129,31 +126,6 @@ export default function ProfilePage() {
     const participationStatus = localStorage.getItem('contest_participation');
     if (participationStatus) setHasParticipated(true);
 
-    setIsPremium(localStorage.getItem('isPremium') === 'true');
-
-    const savedVisitors = localStorage.getItem('userProfileVisitors');
-    if (savedVisitors) {
-      try { setVisitors(JSON.parse(savedVisitors)); } catch {}
-    } else {
-      const names = language === 'RU'
-        ? ['Мария','Алексей','Дарья','Иван','Ольга','Кирилл','Полина','Артём']
-        : ['Maria','Alex','Daria','Ivan','Olga','Kirill','Polina','Artem'];
-      const cities = language === 'RU'
-        ? ['Москва','Санкт-Петербург','Казань','Сочи','Новосибирск']
-        : ['Moscow','Saint Petersburg','Kazan','Sochi','Novosibirsk'];
-      const now = Date.now();
-      const generated = Array.from({ length: 8 }).map((_, i) => ({
-        id: `v_${i}`,
-        name: names[i % names.length],
-        age: 21 + ((i * 3) % 15),
-        city: cities[i % cities.length],
-        photo: PlaceHolderImages[(i + 1) % PlaceHolderImages.length].imageUrl,
-        visitedAt: now - (i + 1) * 1000 * 60 * (15 + i * 30),
-        isNew: i < 3,
-      }));
-      setVisitors(generated);
-      localStorage.setItem('userProfileVisitors', JSON.stringify(generated));
-    }
 
     // Cleanup blob URLs on unmount
     return () => {
@@ -358,6 +330,7 @@ export default function ProfilePage() {
   );
 
   const earnedTitles = getUserTitles(profile, language);
+  const joinedGroupNames: string[] = profile?.joinedGroups || [];
 
   return (
     <div className="flex flex-col min-h-svh bg-[#f8f9fb]">
@@ -409,15 +382,8 @@ export default function ProfilePage() {
             <TabsList className="grid w-full grid-cols-4 bg-muted p-1 rounded-xl mb-6">
               <TabsTrigger value="profile" className="text-[11px]">{t('profile.tab.data')}</TabsTrigger>
               <TabsTrigger value="gallery" className="text-[11px]">{t('profile.tab.gallery')}</TabsTrigger>
-              <TabsTrigger value="guests" className="text-[11px] relative">
-                {t('profile.tab.guests')}
-                {visitors.some(v => v.isNew) && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-white text-[9px] font-black flex items-center justify-center">
-                    {visitors.filter(v => v.isNew).length}
-                  </span>
-                )}
-              </TabsTrigger>
               <TabsTrigger value="stories" className="text-[11px]">{t('profile.tab.stories')}</TabsTrigger>
+              <TabsTrigger value="groups" className="text-[11px]">{t('profile.tab.groups')}</TabsTrigger>
             </TabsList>
             <TabsContent value="profile">
               <div className="bg-white rounded-2xl p-6 app-shadow border border-border/40 space-y-6">
@@ -620,125 +586,6 @@ export default function ProfilePage() {
                 </div>
               </section>
             </TabsContent>
-            <TabsContent value="guests">
-              <div className="bg-white rounded-2xl p-6 app-shadow border border-border/40">
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center gap-2">
-                    <Eye size={18} className="text-primary" />
-                    <h4 className="font-black text-[11px] uppercase tracking-widest text-muted-foreground">
-                      {t('profile.visitors')}
-                    </h4>
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                    {visitors.length} {t('profile.visits')}
-                  </span>
-                </div>
-
-                {visitors.length === 0 ? (
-                  <div className="py-12 flex flex-col items-center justify-center text-center text-muted-foreground">
-                    <Eye size={32} className="mb-3 opacity-50" />
-                    <p className="text-xs font-bold uppercase tracking-widest">
-                      {t('profile.no_visitors')}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {visitors.map((v, idx) => {
-                      const minutesAgo = Math.max(1, Math.round((Date.now() - v.visitedAt) / 60000));
-                      const timeLabel = minutesAgo < 60
-                        ? `${minutesAgo} ${t('units.min')}`
-                        : minutesAgo < 60 * 24
-                          ? `${Math.round(minutesAgo / 60)} ${t('units.h')}`
-                          : `${Math.round(minutesAgo / 60 / 24)} ${t('units.d')}`;
-                      const blurred = !isPremium && idx >= 2;
-                      return (
-                        <div
-                          key={v.id}
-                          onClick={() => {
-                            if (blurred) {
-                              toast({
-                                title: t('toast.premium_feature'),
-                                description: t('toast.premium_see_visitors'),
-                              });
-                              return;
-                            }
-                            // mark visited as not new
-                            const updated = visitors.map(x => x.id === v.id ? { ...x, isNew: false } : x);
-                            setVisitors(updated);
-                            localStorage.setItem('userProfileVisitors', JSON.stringify(updated));
-                            router.push(`/user?id=${v.id}`);
-                          }}
-                          className="flex items-center gap-3 p-2 rounded-2xl hover:bg-muted/60 active:scale-[0.99] transition-all cursor-pointer relative"
-                        >
-                          <div className={cn("relative w-14 h-14 rounded-2xl overflow-hidden bg-muted shrink-0 anti-screenshot", blurred && "blur-md")}>
-                            <Image src={v.photo} alt={v.name} fill className="object-cover" />
-                          </div>
-                          {blurred && (
-                            <div className="absolute left-2 top-1/2 -translate-y-1/2 w-14 h-14 rounded-2xl bg-black/20 flex items-center justify-center pointer-events-none">
-                              <Lock size={18} className="text-white" />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className={cn("font-black text-sm tracking-tight truncate", blurred && "blur-sm select-none")}>
-                                {v.name}, {v.age}
-                              </p>
-                              {v.isNew && !blurred && (
-                                <span className="px-1.5 h-4 rounded-full bg-primary text-white text-[9px] font-black uppercase tracking-wider flex items-center">
-                                  new
-                                </span>
-                              )}
-                            </div>
-                            <p className={cn("text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5 flex items-center gap-2", blurred && "blur-sm select-none")}>
-                              <span>{v.city}</span>
-                              <span className="opacity-50">•</span>
-                              <span className="flex items-center gap-1"><Clock size={10} /> {timeLabel}</span>
-                            </p>
-                          </div>
-                          {!blurred && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(`/chats/${v.id}`);
-                              }}
-                              className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center active:scale-95 transition-all shrink-0"
-                            >
-                              <MessageCircle size={16} />
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {!isPremium && visitors.length > 2 && (
-                  <div className="mt-5 p-4 rounded-2xl gradient-bg text-white flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md">
-                      <Lock size={18} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-black text-sm">
-                        {t('profile.unlock_visitors')}
-                      </p>
-                      <p className="text-[10px] text-white/80 font-bold uppercase tracking-wider">
-                        {t('profile.premium_available')}
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => {
-                        localStorage.setItem('isPremium', 'true');
-                        setIsPremium(true);
-                        toast({ title: t('toast.premium_activated') });
-                      }}
-                      className="h-10 px-4 rounded-xl bg-white text-primary font-black uppercase text-[10px] tracking-widest hover:bg-white/90"
-                    >
-                      {t('profile.unlock_btn')}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
             <TabsContent value="stories">
               <div className="bg-white rounded-2xl p-6 app-shadow border border-border/40">
                 <div className="flex justify-between items-center mb-4">
@@ -802,6 +649,45 @@ export default function ProfilePage() {
                     <span className="font-black text-[10px] uppercase tracking-widest leading-tight">{t('profile.add_story')}</span>
                   </div>
                 </div>
+              </div>
+            </TabsContent>
+            <TabsContent value="groups">
+              <div className="bg-white rounded-2xl p-6 app-shadow border border-border/40">
+                <div className="flex items-center gap-2 mb-5">
+                  <Users size={18} className="text-primary" />
+                  <h4 className="font-black text-[11px] uppercase tracking-widest text-muted-foreground">{t('profile.groups')}</h4>
+                </div>
+                {joinedGroupNames.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8 font-medium">{t('chats.no_groups')}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {GROUP_CATEGORIES.flatMap(cat =>
+                      cat.subgroups
+                        .filter(sub => joinedGroupNames.includes(sub.name_ru) || joinedGroupNames.includes(sub.name_en))
+                        .map(sub => (
+                          <Link href={`/chats?groupId=${sub.id}`} key={sub.id} className="flex items-center justify-between p-3.5 bg-muted/30 rounded-xl hover:bg-muted/60 transition-all cursor-pointer group border border-border/20">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-bold text-sm text-foreground truncate">
+                                {language === 'RU' ? sub.name_ru : sub.name_en}
+                              </h4>
+                              <div className="flex items-center text-muted-foreground text-[10px] mt-1 gap-3">
+                                <span className="flex items-center gap-1 font-bold uppercase tracking-wider">
+                                  <Users size={11} className="text-muted-foreground/60" /> {sub.members}
+                                </span>
+                                <span className="flex items-center gap-1 font-bold uppercase tracking-wider text-green-600">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                                  {sub.online} {t('chats.online')}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="ml-3 shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-all">
+                              <ChevronRight size={14} className="text-primary" />
+                            </div>
+                          </Link>
+                        ))
+                    )}
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>

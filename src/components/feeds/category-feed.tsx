@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
-import { Heart, MessageCircle, MoveHorizontal as MoreHorizontal, Send, Share2, ChevronLeft, ChevronRight, Search, CirclePlus as PlusCircle, X } from "lucide-react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { Heart, MessageCircle, MoveHorizontal as MoreHorizontal, Send, Share2, ChevronLeft, ChevronRight, ChevronDown, Search, CirclePlus as PlusCircle, X, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import { useLanguage } from "@/context/language-context";
 import { containsForbiddenWords, isGibberish } from "@/lib/word-filter";
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Pagination, PaginationContent, PaginationItem } from "@/components/ui/pagination";
+
 
 const PostText = ({ text, charLimit = 280 }: { text: string, charLimit?: number }) => {
   const { language } = useLanguage();
@@ -101,44 +103,18 @@ const PostImageGallery = ({ images }: { images: string[] }) => {
   const count = images.length;
   if (count === 0) return null;
 
-  const renderImage = (index: number, className: string = "") => (
-    <div className={cn("bg-gray-200 overflow-hidden", className)} onClick={() => { setSelectedIndex(index); setLightboxOpen(true); }}>
-      <img src={images[index]} alt={`Post image ${index + 1}`} className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-300" />
-    </div>
-  );
-
   return (
     <div className="px-5 pt-1">
-      <div className="mt-2 rounded-xl overflow-hidden border border-gray-200/80">
-        {count === 1 && renderImage(0, "aspect-video")}
-        {count === 2 && <div className="grid grid-cols-2 gap-1">{renderImage(0, "aspect-square")}{renderImage(1, "aspect-square")}</div>}
-        {count === 3 && (
-          <div className="grid grid-cols-2 gap-1">
-            {renderImage(0, "aspect-[2/3] row-span-2")}
-            <div className="grid grid-rows-2 gap-1">{renderImage(1, "aspect-square")}{renderImage(2, "aspect-square")}</div>
+      <div className={cn("mt-2 rounded-xl overflow-hidden border border-gray-200/80 grid gap-0.5", count === 1 ? "grid-cols-1" : "grid-cols-2")}>
+        {images.slice(0, count === 1 ? 1 : count === 2 ? 2 : 4).map((src, index) => (
+          <div
+            key={index}
+            className={cn("bg-gray-200 cursor-pointer overflow-hidden", count === 3 && index === 0 ? "col-span-2 row-span-2" : "aspect-square")}
+            onClick={() => { setSelectedIndex(index); setLightboxOpen(true); }}
+          >
+            <img src={src} alt={`Post image ${index + 1}`} className="w-full h-full object-cover" />
           </div>
-        )}
-        {count === 4 && (
-          <div className="grid grid-cols-2 grid-rows-2 gap-1">
-            {renderImage(0, "aspect-square")}{renderImage(1, "aspect-square")}{renderImage(2, "aspect-square")}{renderImage(3, "aspect-square")}
-          </div>
-        )}
-        {count >= 5 && (
-          <div className="flex flex-col gap-1">
-            <div className="flex gap-1">{renderImage(0, "w-1/2 aspect-video")}{renderImage(1, "w-1/2 aspect-video")}</div>
-            <div className="flex gap-1">
-              {renderImage(2, "w-1/3 aspect-square")}{renderImage(3, "w-1/3 aspect-square")}
-              <div className="w-1/3 aspect-square relative bg-gray-200 cursor-pointer" onClick={() => { setSelectedIndex(4); setLightboxOpen(true); }}>
-                <img src={images[4]} alt="Post image 5" className="w-full h-full object-cover" />
-                {count > 5 && (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <span className="text-white font-bold text-4xl">+{count - 5}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        ))}
       </div>
       {isLightboxOpen && <Lightbox images={images} selectedIndex={selectedIndex} onClose={() => setLightboxOpen(false)} />}
     </div>
@@ -224,6 +200,17 @@ function generatePosts(categoryName: string, categoryEn: string) {
     { authorRu: "Организатор", authorEn: "Organizer", groupRu: "События", groupEn: "Events", textRu: "На следующей неделе проводим встречу для всех желающих. Присоединяйтесь, будет интересно!", textEn: "Next week we're hosting a meetup for everyone. Join us, it'll be fun!", imgCount: 2 },
     { authorRu: "Коллекционер", authorEn: "Collector", groupRu: "Лучшее", groupEn: "Best Of", textRu: "Подборка самого интересного за месяц. 14 фото, листайте до конца!", textEn: "The most interesting picks of the month. 14 photos, scroll to the end!", imgCount: 14 },
     { authorRu: "Практик", authorEn: "Practitioner", groupRu: "Практика", groupEn: "Practice", textRu: "Теория — это хорошо, но практика важнее. Покажите свои результаты!", textEn: "Theory is good, but practice is more important. Show your results!", imgCount: 3 },
+    { authorRu: "Путешественник", authorEn: "Traveler", groupRu: "География", groupEn: "Geography", textRu: "Лучшие места, которые стоит посетить этим летом. Фото внутри!", textEn: "Best places to visit this summer. Photos inside!", imgCount: 4 },
+    { authorRu: "Историк", authorEn: "Historian", groupRu: "Факты", groupEn: "Facts", textRu: "Интересный факт: знаете ли вы, что...", textEn: "Interesting fact: did you know that...", imgCount: 1 },
+    { authorRu: "Техно-гик", authorEn: "Tech Geek", groupRu: "Технологии", groupEn: "Tech", textRu: "Обзор нового гаджета, который вышел на этой неделе.", textEn: "Review of the new gadget that came out this week.", imgCount: 3 },
+    { authorRu: "Кулинар", authorEn: "Chef", groupRu: "Рецепты", groupEn: "Recipes", textRu: "Рецепт идеального ужина за 30 минут. Проверено!", textEn: "Recipe for a perfect dinner in 30 minutes. Tested!", imgCount: 2 },
+    { authorRu: "Спортсмен", authorEn: "Athlete", groupRu: "Тренировки", groupEn: "Workouts", textRu: "Моя программа тренировок на месяц. Результаты впечатляют!", textEn: "My month-long workout plan. Results are impressive!", imgCount: 5 },
+    { authorRu: "Музыкант", authorEn: "Musician", groupRu: "Музыка", groupEn: "Music", textRu: "Треки, которые вдохновляют меня этой весной.", textEn: "Tracks that inspire me this spring.", imgCount: 1 },
+    { authorRu: "Художник", authorEn: "Artist", groupRu: "Творчество", groupEn: "Art", textRu: "Мои новые работы в стиле цифровой живописи. Критика приветствуется!", textEn: "My new digital paintings. Feedback welcome!", imgCount: 4 },
+    { authorRu: "Садовод", authorEn: "Gardener", groupRu: "Дача", groupEn: "Garden", textRu: "Как вырастить розы на собственном участке. Советы для начинающих.", textEn: "How to grow roses in your garden. Tips for beginners.", imgCount: 3 },
+    { authorRu: "Киноман", authorEn: "Movie Buff", groupRu: "Кино", groupEn: "Movies", textRu: "Топ-10 фильмов, которые стоит посмотреть на выходных.", textEn: "Top 10 movies to watch this weekend.", imgCount: 2 },
+    { authorRu: "Читатель", authorEn: "Reader", groupRu: "Книги", groupEn: "Books", textRu: "Закончил чтение отличной книги. Краткий обзор и впечатления.", textEn: "Finished a great book. Quick review and impressions.", imgCount: 1 },
+    { authorRu: "Исследователь", authorEn: "Explorer", groupRu: "Наука", groupEn: "Science", textRu: "Новое открытие в мире науки, которое меняет всё.", textEn: "A new discovery in science that changes everything.", imgCount: 3 },
   ];
 
   const timesRu = ["45 минут назад", "1 час назад", "2 часа назад", "3 часа назад", "5 часов назад", "6 часов назад", "8 часов назад", "12 часов назад"];
@@ -267,13 +254,44 @@ export function CategoryFeed({ categoryNameRu, categoryNameEn }: CategoryFeedPro
 
   const [posts, setPosts] = useState(initialPosts);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [commentInputs, setCommentInputs] = useState<{ [key: number]: string }>({});
+  const [commentsOpen, setCommentsOpen] = useState<Set<number>>(new Set());
+  const commentFileRefs = useRef<{ [key: number]: HTMLInputElement }>({});
   const { toast } = useToast();
   const { t, language } = useLanguage();
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [newPostText, setNewPostText] = useState("");
   const [newPostImages, setNewPostImages] = useState<string[]>([]);
   const [newPostImageUrls, setNewPostImageUrls] = useState("");
+
+  const toggleComments = (postId: number) => {
+    setCommentsOpen(prev => {
+      const next = new Set(prev);
+      if (next.has(postId)) next.delete(postId);
+      else next.add(postId);
+      return next;
+    });
+  };
+
+  const handleCommentImageSelect = (postId: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).slice(0, 14).forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (reader.result) {
+          setPosts(prev => prev.map(p =>
+            p.id === postId
+              ? { ...p, images: [reader.result as string, ...p.images] }
+              : p
+          ));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
 
   const tr = useCallback((ru: string, en: string) => (language === "RU" ? ru : en), [language]);
 
@@ -315,6 +333,15 @@ export function CategoryFeed({ categoryNameRu, categoryNameEn }: CategoryFeedPro
     );
   }, [searchQuery, normalizedPosts]);
 
+  const POSTS_PER_PAGE = 15;
+  const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
+  const paginatedPosts = filteredPosts.slice(
+    (currentPage - 1) * POSTS_PER_PAGE,
+    currentPage * POSTS_PER_PAGE
+  );
+
+  useEffect(() => { setCurrentPage(1); }, [searchQuery]);
+
   const handleLike = useCallback((postId: number) => {
     setPosts((current) =>
       current.map((post) =>
@@ -350,7 +377,7 @@ export function CategoryFeed({ categoryNameRu, categoryNameEn }: CategoryFeedPro
       return;
     }
 
-    const newComment = {
+    const newComment: any = {
       id: Date.now(),
       author: tr("Вы", "You"),
       avatar: "/demo/people/me.png",
@@ -424,7 +451,7 @@ export function CategoryFeed({ categoryNameRu, categoryNameEn }: CategoryFeedPro
           </Button>
         </div>
 
-        {filteredPosts.map((post) => (
+        {paginatedPosts.map((post) => (
           <div key={post.id} className="bg-white rounded-xl shadow-sm mb-5 border border-gray-200/80 overflow-hidden">
             <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -466,45 +493,118 @@ export function CategoryFeed({ categoryNameRu, categoryNameEn }: CategoryFeedPro
               </button>
             </div>
 
-            <div className="px-5 py-4 border-t border-gray-100 bg-gray-50/50">
-              {post.comments.map((comment: any) => (
-                <div key={comment.id} className="flex items-start gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden mt-1 flex-shrink-0">
-                    <img src={comment.avatar} alt={comment.author} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 bg-gray-100 rounded-xl px-3 py-2">
-                    <div className="flex items-baseline gap-2">
-                      <p className="font-bold text-xs text-gray-800">{comment.author}</p>
-                      <p className="text-gray-400 text-[10px]">{comment.time}</p>
-                    </div>
-                    <p className="text-sm text-gray-700 mt-1">{comment.text}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="border-t border-gray-100 bg-gray-50/50">
+              <button
+                onClick={() => toggleComments(post.id)}
+                className="w-full flex items-center justify-between px-5 py-3 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <span className="flex items-center gap-2 font-semibold text-sm">
+                  <MessageCircle size={16} className="text-gray-400" />
+                  {tr("Комментарии", "Comments")} ({post.commentsCount})
+                </span>
+                <ChevronDown
+                  size={16}
+                  className={cn(
+                    "transition-transform duration-200",
+                    commentsOpen.has(post.id) && "rotate-180"
+                  )}
+                />
+              </button>
 
-              <div className="flex items-center gap-3 mt-4">
-                <div className="w-8 h-8 rounded-full bg-gray-300 font-bold text-white flex items-center justify-center text-sm flex-shrink-0">ME</div>
-                <div className="flex-1 relative">
-                  <input
-                    type="text"
-                    value={commentInputs[post.id] || ''}
-                    onChange={(e) => handleCommentChange(post.id, e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit(post.id)}
-                    placeholder={tr("Напишите комментарий...", "Write a comment...")}
-                    className="w-full bg-gray-100 border-transparent rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-                  />
-                  <button onClick={() => handleCommentSubmit(post.id)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500">
-                    <Send size={18} />
-                  </button>
-                </div>
-              </div>
+              <AnimatePresence initial={false}>
+                {commentsOpen.has(post.id) && (
+                  <motion.div
+                    key="comments"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-5 pb-4">
+                      {post.comments.map((comment: any) => (
+                        <div key={comment.id} className="flex items-start gap-3 mb-4">
+                          <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden mt-1 flex-shrink-0">
+                            <img src={comment.avatar} alt={comment.author} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 bg-gray-100 rounded-xl px-3 py-2">
+                            <div className="flex items-baseline gap-2">
+                              <p className="font-bold text-xs text-gray-800">{comment.author}</p>
+                              <p className="text-gray-400 text-[10px]">{comment.time}</p>
+                            </div>
+                            {comment.text && <p className="text-sm text-gray-700 mt-1">{comment.text}</p>}
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="flex items-center gap-3 mt-2">
+                        <div className="w-8 h-8 rounded-full bg-gray-300 font-bold text-white flex items-center justify-center text-sm flex-shrink-0">ME</div>
+                        <div className="flex-1 relative flex items-center gap-2 bg-gray-100 rounded-full px-3">
+                          <input
+                            type="text"
+                            value={commentInputs[post.id] || ''}
+                            onChange={(e) => handleCommentChange(post.id, e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit(post.id)}
+                            placeholder={tr("Напишите комментарий...", "Write a comment...")}
+                            className="flex-1 bg-transparent py-2 text-sm focus:outline-none min-w-0"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => commentFileRefs.current[post.id]?.click()}
+                            className="text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0"
+                          >
+                            <Image size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleCommentSubmit(post.id)}
+                            className="text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0"
+                          >
+                            <Send size={18} />
+                          </button>
+                          <input
+                            type="file"
+                            ref={el => { commentFileRefs.current[post.id] = el!; }}
+                            onChange={(e) => handleCommentImageSelect(post.id, e)}
+                            className="hidden"
+                            accept="image/png, image/jpeg, image/gif, image/webp"
+                            multiple
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         ))}
+
+        {totalPages > 1 && (
+          <Pagination className="mb-4">
+            <PaginationContent>
+              <PaginationItem>
+                <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <PaginationItem key={i + 1}>
+                  <Button variant={currentPage === i + 1 ? "default" : "outline"} size="icon" className="h-9 w-9" onClick={() => setCurrentPage(i + 1)}>
+                    {i + 1}
+                  </Button>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
       </div>
 
       <Toaster />
-
       <Dialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
         <DialogContent className="max-w-lg rounded-3xl p-6 border-0 app-shadow">
           <DialogHeader>

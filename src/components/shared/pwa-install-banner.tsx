@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, X, Smartphone, Share, SquarePlus as PlusSquare, Globe, Menu } from 'lucide-react';
+import { Download, X, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/context/language-context';
 import { toast } from '@/hooks/use-toast';
@@ -19,7 +19,6 @@ export function PwaInstallBanner() {
   const [isIos, setIsIos] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [showGuide, setShowGuide] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -58,14 +57,16 @@ export function PwaInstallBanner() {
         setIsVisible(false);
       }
     } else {
-      setShowGuide(true);
+      toast({
+        title: t('pwa.install.guide_title'),
+        description: t('pwa.install.guide_desc'),
+      });
     }
   };
 
   const handleDismiss = () => {
     sessionStorage.setItem('pwa-install-dismissed', 'true');
     setIsVisible(false);
-    setShowGuide(false);
   };
 
   if (isStandalone) return null;
@@ -83,9 +84,9 @@ export function PwaInstallBanner() {
             <div className="absolute top-0 left-0 w-full h-1 gradient-bg opacity-20"></div>
             
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl gradient-bg flex items-center justify-center text-white shrink-0 shadow-lg shadow-primary/20">
+              <button onClick={handleInstall} className="w-12 h-12 rounded-2xl gradient-bg flex items-center justify-center text-white shrink-0 shadow-lg shadow-primary/20 cursor-pointer active:scale-90 transition-transform">
                 <Download size={24} />
-              </div>
+              </button>
               <div className="flex-1 pt-1">
                 <h5 className="text-sm font-black tracking-tight leading-tight">
                   {t('pwa.install.title')}
@@ -110,43 +111,7 @@ export function PwaInstallBanner() {
                 </Button>
               )}
 
-              {isIos ? (
-                <div className={`rounded-2xl p-3 flex flex-col gap-2 transition-all duration-300 ${showGuide ? 'bg-primary/10 border-2 border-primary shadow-lg shadow-primary/20 scale-[1.02]' : 'bg-muted/30 border border-border/40'}`}>
-                  <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-tight text-foreground/70">
-                    <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shadow-sm text-blue-500">
-                      <Share size={14} />
-                    </div>
-                    <span>1. {t('pwa.install.ios_share')}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-tight text-foreground/70">
-                    <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shadow-sm text-foreground">
-                      <PlusSquare size={14} />
-                    </div>
-                    <span>2. {t('pwa.install.ios_add')}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className={`rounded-2xl p-3 flex flex-col gap-2 transition-all duration-300 ${showGuide ? 'bg-primary/10 border-2 border-primary shadow-lg shadow-primary/20 scale-[1.02]' : 'bg-muted/30 border border-border/40'}`}>
-                  <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-tight text-foreground/70">
-                    <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shadow-sm text-foreground">
-                      <Menu size={14} />
-                    </div>
-                    <span>1. {t('pwa.install.menu_open')}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-tight text-foreground/70">
-                    <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shadow-sm text-foreground">
-                      <Download size={14} />
-                    </div>
-                    <span>2. {t('pwa.install.menu_install')}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-tight text-foreground/70">
-                    <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shadow-sm text-foreground">
-                      <Globe size={14} />
-                    </div>
-                    <span>3. {t('pwa.install.address_bar_install')}</span>
-                  </div>
-                </div>
-              )}
+
 
               <Button
                 onClick={handleDismiss}

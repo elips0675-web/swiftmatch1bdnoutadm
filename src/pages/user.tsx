@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "@/shims/next-navigation";
 import Image from "@/shims/next-image";
 import Link from "@/shims/next-link";
 import dynamic from "@/shims/next-dynamic";
-import { MapPin, CircleCheck as CheckCircle2, Star, Camera, Coffee, Music, Globe, Dumbbell, Palette, Film, Flower2, Briefcase, Gamepad2, Maximize2, X, Dog, Ruler, Target, Sparkles, Heart, MessageCircle, ChevronLeft, ChevronRight, Cpu, Anchor, Map, Sprout, BookOpen, Scissors, FlaskConical, Car, ChefHat, Brush, Mountain, Wine, Flag, Sun, User, Info, Trophy, VenetianMask, Search, ThumbsUp, ThumbsDown, RefreshCw, BrainCircuit } from "lucide-react";
+import { MapPin, CircleCheck as CheckCircle2, Star, Camera, Coffee, Music, Globe, Dumbbell, Palette, Film, Flower2, Briefcase, Gamepad2, Maximize2, X, Dog, Ruler, Target, Sparkles, Heart, MessageCircle, ChevronLeft, ChevronRight, Cpu, Anchor, Map, Sprout, BookOpen, Scissors, FlaskConical, Car, ChefHat, Brush, Mountain, Wine, Flag, Sun, User, Info, Trophy, VenetianMask, Search, ThumbsUp, ThumbsDown, RefreshCw, BrainCircuit, Trees, UtensilsCrossed, Send } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -84,6 +84,8 @@ function UserProfileContent() {
   const [pollScore, setPollScore] = useState(0);
   const [pollTotal, setPollTotal] = useState(0);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showCustomInvite, setShowCustomInvite] = useState(false);
+  const [customInviteText, setCustomInviteText] = useState('');
 
   useEffect(() => {
     if (!pollRevealed) { setPollCanProceed(false); return; }
@@ -424,29 +426,94 @@ function UserProfileContent() {
         </div>
 
         <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-          <DialogContent className="max-w-xs">
-            <DialogHeader>
-              <DialogTitle className="text-center">{t('invite.title', { name: user.name })}</DialogTitle>
-              <DialogDescription className="text-center">{t('invite.desc')}</DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col gap-3 py-2">
-              {(['coffee', 'cinema', 'walk'] as const).map((type) => (
+          <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden rounded-2xl">
+            <div className="gradient-bg px-6 pt-8 pb-6 text-center">
+              <div className="w-14 h-14 rounded-full bg-white/20 mx-auto mb-3 flex items-center justify-center shadow-lg">
+                <Heart size={24} className="text-white" fill="currentColor" />
+              </div>
+              <DialogTitle className="text-white text-lg font-black text-center">{t('invite.title', { name: user.name })}</DialogTitle>
+              <DialogDescription className="text-white/80 text-xs font-semibold text-center mt-1">{t('invite.desc')}</DialogDescription>
+            </div>
+            <div className="flex flex-col gap-2 p-4 bg-white">
+              {(['coffee', 'cinema', 'walk', 'dinner', 'picnic', 'museum'] as const).map((type) => {
+                const iconMap: Record<string, { icon: any, bg: string, color: string }> = {
+                  coffee: { icon: Coffee, bg: 'bg-amber-50 border-amber-200', color: 'text-amber-600' },
+                  cinema: { icon: Film, bg: 'bg-blue-50 border-blue-200', color: 'text-blue-600' },
+                  walk: { icon: Mountain, bg: 'bg-green-50 border-green-200', color: 'text-green-600' },
+                  dinner: { icon: UtensilsCrossed, bg: 'bg-red-50 border-red-200', color: 'text-red-500' },
+                  picnic: { icon: Trees, bg: 'bg-emerald-50 border-emerald-200', color: 'text-emerald-600' },
+                  museum: { icon: Palette, bg: 'bg-purple-50 border-purple-200', color: 'text-purple-500' },
+                };
+                const { icon: Icon, bg, color } = iconMap[type];
+                return (
+                  <button
+                    key={type}
+                    onClick={() => {
+                      const sent = JSON.parse(localStorage.getItem('sentInvites') || '[]');
+                      sent.push({ toUserId: user.id, type, userName: user.name, sentAt: Date.now() });
+                      localStorage.setItem('sentInvites', JSON.stringify(sent));
+                      setShowInviteDialog(false);
+                      toast({ title: t('invite.sent_title'), description: t('invite.sent_desc', { type: t(`invite.option.${type}`) }) });
+                    }}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 ${bg} ${color} hover:shadow-md active:scale-[0.98] transition-all font-bold text-sm`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                      <Icon size={16} />
+                    </div>
+                    <span>{t(`invite.option.${type}`)}</span>
+                  </button>
+                );
+              })}
+              <div className="border-t border-border/30 my-1" />
+              <button
+                onClick={() => setShowCustomInvite(true)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-border/60 text-muted-foreground hover:border-pink-300 hover:text-pink-500 hover:bg-pink-50 active:scale-[0.98] transition-all font-bold text-sm"
+              >
+                <div className="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center shadow-sm">
+                  <Sparkles size={16} className="text-pink-500" />
+                </div>
+                <span>{t('invite.option.custom')}</span>
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showCustomInvite} onOpenChange={setShowCustomInvite}>
+          <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden rounded-2xl">
+            <div className="gradient-bg px-6 pt-8 pb-6 text-center">
+              <div className="w-14 h-14 rounded-full bg-white/20 mx-auto mb-3 flex items-center justify-center shadow-lg">
+                <Sparkles size={24} className="text-white" />
+              </div>
+              <DialogTitle className="text-white text-lg font-black text-center">{t('invite.custom_title', { name: user.name })}</DialogTitle>
+              <DialogDescription className="text-white/80 text-xs font-semibold text-center mt-1">{t('invite.custom_desc')}</DialogDescription>
+            </div>
+            <div className="p-4 bg-white">
+              <Textarea
+                value={customInviteText}
+                onChange={(e) => setCustomInviteText(e.target.value)}
+                placeholder={t('invite.custom_placeholder')}
+                className="min-h-[110px] resize-none rounded-xl border-2 border-border/40 focus:border-primary/50 text-sm"
+              />
+              <div className="flex gap-2 mt-4">
+                <Button variant="outline" onClick={() => setShowCustomInvite(false)} className="flex-1 rounded-xl h-11 border-2">
+                  {t('button.cancel')}
+                </Button>
                 <Button
-                  key={type}
-                  variant="outline"
-                  className="justify-start gap-3 h-12 rounded-xl border-2 hover:border-primary/40 hover:bg-primary/5 transition-all"
+                  disabled={!customInviteText.trim()}
+                  className="flex-1 rounded-xl h-11 gradient-bg text-white border-0 gap-2 shadow-lg shadow-primary/20"
                   onClick={() => {
                     const sent = JSON.parse(localStorage.getItem('sentInvites') || '[]');
-                    sent.push({ toUserId: user.id, type, userName: user.name, sentAt: Date.now() });
+                    sent.push({ toUserId: user.id, type: 'custom', userName: user.name, message: customInviteText, sentAt: Date.now() });
                     localStorage.setItem('sentInvites', JSON.stringify(sent));
-                    setShowInviteDialog(false);
-                    toast({ title: t('invite.sent_title'), description: t('invite.sent_desc', { type: t(`invite.option.${type}`) }) });
+                    setShowCustomInvite(false);
+                    setCustomInviteText('');
+                    toast({ title: t('invite.sent_title'), description: t('invite.sent_desc', { type: customInviteText }) });
                   }}
                 >
-                  {type === 'coffee' ? <Coffee size={18} className="text-amber-600" /> : type === 'cinema' ? <Film size={18} className="text-blue-600" /> : <Mountain size={18} className="text-green-600" />}
-                  <span className="font-bold text-sm">{t(`invite.option.${type}`)}</span>
+                  <Send size={16} />
+                  {t('button.send')}
                 </Button>
-              ))}
+              </div>
             </div>
           </DialogContent>
         </Dialog>

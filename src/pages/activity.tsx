@@ -12,7 +12,10 @@ import {
   Info,
   Coffee,
   Film,
-  Mountain
+  Mountain,
+  UtensilsCrossed,
+  Trees,
+  Palette
 } from "lucide-react";
 import Image from "@/shims/next-image";
 import dynamic from "@/shims/next-dynamic";
@@ -327,7 +330,10 @@ function InviteItem({ item }: { item: any }) {
       case 'coffee': return <Coffee size={14} className="text-amber-600" />;
       case 'cinema': return <Film size={14} className="text-blue-600" />;
       case 'walk': return <Mountain size={14} className="text-green-600" />;
-      default: return <Star size={14} />;
+      case 'dinner': return <UtensilsCrossed size={14} className="text-red-500" />;
+      case 'picnic': return <Trees size={14} className="text-emerald-600" />;
+      case 'museum': return <Palette size={14} className="text-purple-500" />;
+      default: return <Sparkles size={14} className="text-pink-500" />;
     }
   };
 
@@ -336,7 +342,10 @@ function InviteItem({ item }: { item: any }) {
       case 'coffee': return 'bg-amber-500';
       case 'cinema': return 'bg-blue-500';
       case 'walk': return 'bg-green-500';
-      default: return 'bg-muted';
+      case 'dinner': return 'bg-red-500';
+      case 'picnic': return 'bg-emerald-500';
+      case 'museum': return 'bg-purple-500';
+      default: return 'bg-pink-500';
     }
   };
 

@@ -119,35 +119,35 @@ export function AppHeader() {
   if (isLoginPage) return null;
 
   return (
-    <header className="sticky top-0 w-full bg-white/95 backdrop-blur-xl border-b border-border/50 px-4 py-3 flex items-center justify-between z-50 h-16">
-      <div className="flex items-center min-w-[40px]">
+    <header className="sticky top-0 w-full bg-white/95 backdrop-blur-xl border-b border-border/50 px-4 py-3 flex items-center z-50 h-16">
+      <div className="flex-1 flex items-center justify-start min-w-0">
         {!isHomePage && (
           <Button
             variant="ghost"
             size="icon"
             onClick={() => router.back()}
-            className="rounded-full h-10 w-10 hover:bg-muted transition-colors"
+            className="rounded-full h-10 w-10 hover:bg-muted transition-colors flex-shrink-0"
           >
             <ChevronLeft size={24} />
           </Button>
         )}
       </div>
 
-      <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center min-w-0 px-2">
         {isHomePage || !pageTitle ? (
           <Link href="/" prefetch={true}>
-            <h1 className="text-xl font-black font-headline gradient-text cursor-pointer tracking-tighter select-none active:scale-95 transition-transform">
+            <h1 className="text-xl font-black font-headline gradient-text cursor-pointer tracking-tighter select-none active:scale-95 transition-transform text-center">
               SwiftMatch
             </h1>
           </Link>
         ) : (
-          <h1 className="text-base font-black tracking-tight text-foreground select-none">
+          <h1 className="text-base font-black tracking-tight text-foreground select-none text-center truncate">
             {pageTitle}
           </h1>
         )}
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex-1 flex items-center justify-end gap-1.5 min-w-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="h-9 px-3 rounded-full bg-muted/50 flex items-center justify-center text-foreground hover:bg-muted transition-all active:scale-95 gap-2 border border-transparent">

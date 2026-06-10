@@ -61,7 +61,7 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
   useEffect(() => {
     const handleResize = () => {
       setViewportHeight(window.innerHeight);
-      requestAnimationFrame(() => messagesEndRef.current?.scrollIntoView({ behavior: "auto" }));
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "auto" }), 100);
     };
     window.addEventListener('resize', handleResize);
     if (window.visualViewport) {
@@ -176,7 +176,7 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
       <div className="p-4 bg-white border-t">
          <div className="flex items-center gap-3">
           <div className="flex-1 relative">
-            <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onFocus={() => requestAnimationFrame(() => messagesEndRef.current?.scrollIntoView({ behavior: "auto" }))} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder={t('chats.placeholder')} className="pr-12 h-11 bg-muted/50 border-0 rounded-xl" />
+            <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onFocus={() => setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "auto" }), 300)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder={t('chats.placeholder')} className="pr-12 h-11 bg-muted/50 border-0 rounded-xl" />
             <Popover>
               <PopoverTrigger asChild><button className="absolute right-4 top-1/2 -translate-y-1/2"><Smile size={20} /></button></PopoverTrigger>
               <PopoverContent side="top" align="end" className="p-2 w-auto">

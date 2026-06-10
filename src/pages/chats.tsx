@@ -504,14 +504,14 @@ function ChatsContent() {
       <TrendingUp size={14} className="text-primary" />
       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t('chats.popular_topics')}</span>
     </div>
-    <div className="flex flex-wrap gap-2">
+    <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
       {CHAT_THEMES.map((theme) => {
         const Icon = theme.icon;
         return (
           <button
             key={theme.id}
             onClick={() => handleThemeClick(theme.id)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 border border-border/40 text-[10px] font-bold text-foreground/70 transition-all hover:bg-primary/10 hover:border-primary/20 hover:text-primary active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 border border-border/40 text-[10px] font-bold text-foreground/70 transition-all hover:bg-primary/10 hover:border-primary/20 hover:text-primary active:scale-95 flex-shrink-0"
           >
             <Icon size={14} className={theme.color} />
             {t(theme.labelKey)}

@@ -44,7 +44,7 @@ function ChatRoomSkeleton() {
           <Skeleton className="h-8 w-2/3 rounded-lg self-start" />
           <Skeleton className="h-10 w-3/4 rounded-lg self-end" />
         </main>
-      <div className="px-4 py-2 bg-white border-t">
+      <div className="px-4 pt-2 pb-4 bg-white border-t">
             <Skeleton className="h-11 w-full rounded-2xl" />
         </div>
       </div>

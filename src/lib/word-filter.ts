@@ -86,6 +86,14 @@ export const isGibberish = (text: string): boolean => {
     for (const pattern of mashPatterns) {
       if (letters.includes(pattern)) return true;
     }
+
+    // 5. Check for repeating trigrams (e.g., "аыв" appears 3+ times in "выаываываыв")
+    const seen: Record<string, number> = {};
+    for (let i = 0; i <= letters.length - 3; i++) {
+      const tri = letters.slice(i, i + 3);
+      seen[tri] = (seen[tri] || 0) + 1;
+      if (seen[tri] >= 3) return true;
+    }
   }
 
   return false;

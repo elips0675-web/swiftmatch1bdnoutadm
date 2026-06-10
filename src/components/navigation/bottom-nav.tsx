@@ -34,6 +34,7 @@ export function BottomNav() {
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
+              <span className="text-[10px] font-semibold text-center leading-tight">{item.label}</span>
               <div className="relative">
                 <Icon size={isActive ? 24 : 22} />
                 {item.badge && (
@@ -42,7 +43,6 @@ export function BottomNav() {
                   </span>
                 )}
               </div>
-              <span className="text-[10px] font-semibold">{item.label}</span>
             </Link>
           );
         })}

@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useApi, useApiMutation } from "@/hooks/useApi";
 import { useAntiScreenshot } from "@/hooks/useAntiScreenshot";
+import { BottomNav } from "@/components/navigation/bottom-nav";
 import { format } from 'date-fns';
 
 const QUICK_REACTIONS = [
@@ -176,7 +177,7 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
           </div>
         </main>
 
-      <div className="p-4 bg-white border-t">
+      <div className="p-4 pb-[calc(4rem+env(safe-area-inset-bottom))] bg-white border-t">
          <div className="flex items-center gap-3">
           <div className="flex-1 relative">
             <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onFocus={() => setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "auto" }), 300)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder={t('chats.placeholder')} className="pr-12 h-11 bg-muted/50 border-0 rounded-xl" />
@@ -192,6 +193,7 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
           </Button>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }

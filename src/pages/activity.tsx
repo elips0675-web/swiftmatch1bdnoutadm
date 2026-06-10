@@ -15,7 +15,8 @@ import {
   Mountain,
   UtensilsCrossed,
   Trees,
-  Palette
+  Palette,
+  ImageIcon
 } from "lucide-react";
 import Image from "@/shims/next-image";
 import dynamic from "@/shims/next-dynamic";
@@ -332,6 +333,7 @@ function InviteItem({ item }: { item: any }) {
       case 'walk': return <Mountain size={14} className="text-green-600" />;
       case 'dinner': return <UtensilsCrossed size={14} className="text-red-500" />;
       case 'picnic': return <Trees size={14} className="text-emerald-600" />;
+      case 'exhibition': return <ImageIcon size={14} className="text-rose-500" />;
       case 'museum': return <Palette size={14} className="text-purple-500" />;
       default: return <Sparkles size={14} className="text-pink-500" />;
     }
@@ -344,6 +346,7 @@ function InviteItem({ item }: { item: any }) {
       case 'walk': return 'bg-green-500';
       case 'dinner': return 'bg-red-500';
       case 'picnic': return 'bg-emerald-500';
+      case 'exhibition': return 'bg-rose-500';
       case 'museum': return 'bg-purple-500';
       default: return 'bg-pink-500';
     }

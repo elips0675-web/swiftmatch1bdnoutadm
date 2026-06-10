@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "@/shims/next-navigation";
 import Image from "@/shims/next-image";
 import Link from "@/shims/next-link";
 import dynamic from "@/shims/next-dynamic";
-import { MapPin, CircleCheck as CheckCircle2, Star, Camera, Coffee, Music, Globe, Dumbbell, Palette, Film, Flower2, Briefcase, Gamepad2, Maximize2, X, Dog, Ruler, Target, Sparkles, Heart, MessageCircle, ChevronLeft, ChevronRight, Cpu, Anchor, Map, Sprout, BookOpen, Scissors, FlaskConical, Car, ChefHat, Brush, Mountain, Wine, Flag, Sun, User, Info, Trophy, VenetianMask, Search, ThumbsUp, ThumbsDown, RefreshCw, BrainCircuit, Trees, UtensilsCrossed, Send } from "lucide-react";
+import { MapPin, CircleCheck as CheckCircle2, Star, Camera, Coffee, Music, Globe, Dumbbell, Palette, Film, Flower2, Briefcase, Gamepad2, Maximize2, X, Dog, Ruler, Target, Sparkles, Heart, MessageCircle, ChevronLeft, ChevronRight, Cpu, Anchor, Map, Sprout, BookOpen, Scissors, FlaskConical, Car, ChefHat, Brush, Mountain, Wine, Flag, Sun, User, Info, Trophy, VenetianMask, Search, ThumbsUp, ThumbsDown, RefreshCw, BrainCircuit, Trees, UtensilsCrossed, Send, ImageIcon } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -435,13 +435,14 @@ function UserProfileContent() {
               <DialogDescription className="text-white/80 text-xs font-semibold text-center mt-1">{t('invite.desc')}</DialogDescription>
             </div>
             <div className="flex flex-col gap-2 p-4 bg-white">
-              {(['coffee', 'cinema', 'walk', 'dinner', 'picnic', 'museum'] as const).map((type) => {
+              {(['coffee', 'cinema', 'walk', 'dinner', 'picnic', 'exhibition', 'museum'] as const).map((type) => {
                 const iconMap: Record<string, { icon: any, bg: string, color: string }> = {
                   coffee: { icon: Coffee, bg: 'bg-amber-50 border-amber-200', color: 'text-amber-600' },
                   cinema: { icon: Film, bg: 'bg-blue-50 border-blue-200', color: 'text-blue-600' },
                   walk: { icon: Mountain, bg: 'bg-green-50 border-green-200', color: 'text-green-600' },
                   dinner: { icon: UtensilsCrossed, bg: 'bg-red-50 border-red-200', color: 'text-red-500' },
                   picnic: { icon: Trees, bg: 'bg-emerald-50 border-emerald-200', color: 'text-emerald-600' },
+                  exhibition: { icon: ImageIcon, bg: 'bg-rose-50 border-rose-200', color: 'text-rose-500' },
                   museum: { icon: Palette, bg: 'bg-purple-50 border-purple-200', color: 'text-purple-500' },
                 };
                 const { icon: Icon, bg, color } = iconMap[type];

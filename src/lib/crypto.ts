@@ -4,8 +4,8 @@ const ALGORITHM = 'AES-GCM';
 const KEY_LENGTH = 256;
 const ITERATIONS = 100000;
 
-function getKeyMaterial(): string {
-  return getToken() || 'swiftchat_fallback';
+function getKeyMaterial(): string | null {
+  return getToken();
 }
 
 function getSalt(): Uint8Array {
@@ -33,10 +33,14 @@ async function deriveKey(material: string, salt: Uint8Array): Promise<CryptoKey>
   );
 }
 
+
+
 export async function encrypt(plaintext: string): Promise<string> {
   try {
+    const material = getKeyMaterial();
+    if (!material) return '';
     const salt = getSalt();
-    const key = await deriveKey(getKeyMaterial(), salt);
+    const key = await deriveKey(material, salt);
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const enc = new TextEncoder();
     const encrypted = await crypto.subtle.encrypt(
@@ -55,8 +59,10 @@ export async function encrypt(plaintext: string): Promise<string> {
 
 export async function decrypt(ciphertext: string): Promise<string> {
   try {
+    const material = getKeyMaterial();
+    if (!material) return '';
     const salt = getSalt();
-    const key = await deriveKey(getKeyMaterial(), salt);
+    const key = await deriveKey(material, salt);
     const combined = Uint8Array.from(atob(ciphertext), c => c.charCodeAt(0));
     const iv = combined.slice(0, 12);
     const data = combined.slice(12);

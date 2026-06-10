@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 type Language = 'RU' | 'EN';
 
@@ -2116,7 +2116,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (savedLang) setLanguageState(savedLang);
   }, []);
 
-  const t = (key: string, options?: Record<string, any>) => {
+  const t = useCallback((key: string, options?: Record<string, any>) => {
     let value = translations[language][key as keyof typeof translations['RU']];
     if (value === undefined) value = translations.EN[key as keyof typeof translations['RU']];
     if (value === undefined) value = key;
@@ -2126,7 +2126,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
     }
     return value;
-  };
+  }, [language]);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>

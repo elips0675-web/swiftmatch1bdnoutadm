@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback, Suspense } from "react";
 import { Search, ChevronLeft, Send, MoveVertical as MoreVertical, Smile, Heart, Laugh, Compass, Coffee, Zap, MessageSquareQuote, Flame, Star, Ghost, Rocket, Crown, Music, Phone, Video, Flag, Check, CheckCheck, Info, Users, MessageSquare, ChevronRight, Trash2, ThumbsUp, PartyPopper, Eye, Frown, Award, TrendingUp, PawPrint, Globe, Film, BookOpen, Baby, Sun } from "lucide-react";
 import Image from "@/shims/next-image";
 import { useSearchParams, useRouter } from "@/shims/next-navigation";
@@ -25,7 +25,7 @@ import { ALL_DEMO_USERS, GROUP_CATEGORIES } from "@/lib/demo-data";
 import { containsForbiddenWords, isGibberish } from "@/lib/word-filter";
 import { encryptStorage, decryptStorage } from "@/lib/crypto";
 import { useAntiScreenshot } from "@/hooks/useAntiScreenshot";
-import { CategoryFeed } from "@/components/feeds/category-feed";
+const CategoryFeed = React.lazy(() => import("@/components/feeds/category-feed").then(m => ({ default: m.CategoryFeed })));
 
 const VideoCallDialog = dynamic(() => import('@/components/video-call').then(mod => mod.VideoCallDialog), { ssr: false });
 const VoiceCallDialog = dynamic(() => import('@/components/voice-call').then(mod => mod.VoiceCallDialog), { ssr: false });
@@ -444,10 +444,12 @@ function ChatsContent() {
             </Button>
           </header>
           <main className="flex-1 overflow-y-auto p-0">
-            <CategoryFeed
-              categoryNameRu={selectedChat.categoryNameRu || ''}
-              categoryNameEn={selectedChat.categoryNameEn || ''}
-            />
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center p-8"><div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>}>
+              <CategoryFeed
+                categoryNameRu={selectedChat.categoryNameRu || ''}
+                categoryNameEn={selectedChat.categoryNameEn || ''}
+              />
+            </Suspense>
           </main>
           <div />
         </div>

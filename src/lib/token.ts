@@ -24,6 +24,7 @@ export function setToken(token: string | null): void {
 export function clearToken(): void {
   memoryToken = null
   sessionStorage.removeItem(AUTH_TOKEN_KEY)
+  sessionStorage.removeItem('swiftchat_salt')
   localStorage.removeItem('authToken')
   localStorage.removeItem('userProfile')
 }

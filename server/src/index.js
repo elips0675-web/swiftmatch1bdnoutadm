@@ -73,6 +73,27 @@ app.post('/api/auth/login', async (req, res) => {
   }
 })
 
+// Public content endpoint (no auth)
+app.get('/api/content', async (req, res) => {
+  try {
+    const [[row]] = await pool.query('SELECT * FROM content_config WHERE id = 1')
+    if (!row) return res.json({ interests: [], dating_goals: [], education: [], banned_words: [], cities: [] })
+    const [cities] = await pool.query(
+      'SELECT DISTINCT city FROM user_profiles WHERE city IS NOT NULL AND city != "" ORDER BY city',
+    )
+    res.json({
+      interests: JSON.parse(row.interests || '[]'),
+      dating_goals: JSON.parse(row.dating_goals || '[]'),
+      education: JSON.parse(row.education || '[]'),
+      banned_words: JSON.parse(row.banned_words || '[]'),
+      cities: cities.map(c => c.city),
+    })
+  } catch (err) {
+    console.error('Public content error:', err)
+    res.status(500).json({ message: 'Failed to fetch content' })
+  }
+})
+
 app.use('/api/admin', adminAuth)
 
 app.get('/api/admin/me', async (req, res) => {

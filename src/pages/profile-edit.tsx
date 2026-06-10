@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { INTEREST_OPTIONS, DATING_GOALS, ZODIAC_SIGNS, CAPITALS } from "@/lib/constants";
+import { ZODIAC_SIGNS } from "@/lib/constants";
+import { useContentConfig } from "@/lib/useContentConfig";
 import { useLanguage } from "@/context/language-context";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
@@ -46,6 +47,7 @@ const DEFAULT_PROFILE = {
 export default function EditProfilePage() {
   const router = useRouter();
   const { t } = useLanguage();
+  const { interests: dynamicInterests, dating_goals: dynamicGoals } = useContentConfig();
 
   const [profile, setProfile] = useState<any>(null);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -309,7 +311,7 @@ export default function EditProfilePage() {
                   <SelectValue placeholder={t('onboarding.step3.goal_placeholder')} />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-0 shadow-2xl">
-                  {DATING_GOALS.map(goal => <SelectItem key={goal} value={goal} className="font-bold text-[11px]">{t(goal)}</SelectItem>)}
+                  {dynamicGoals.map(goal => <SelectItem key={goal} value={goal} className="font-bold text-[11px]">{t(goal)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -319,7 +321,7 @@ export default function EditProfilePage() {
           <div className="space-y-4">
             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">{t('profile.interests')}</Label>
             <div className="flex flex-wrap gap-2">
-              {INTEREST_OPTIONS.map(interest => (
+              {dynamicInterests.map(interest => (
                 <Badge
                   key={interest}
                   onClick={() => toggleInterest(interest)}

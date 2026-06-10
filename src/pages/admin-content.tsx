@@ -1,23 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Trash2, Package, ShieldAlert, Download } from 'lucide-react';
+import { Plus, Trash2, Package, ShieldAlert, Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { INTEREST_OPTIONS, DATING_GOALS, EDUCATION_OPTIONS, CAPITALS } from '@/lib/constants';
-import { FORBIDDEN_WORDS_DEFAULT, exportToCsv } from '@/lib/admin-mock-data';
 import { useLanguage } from '@/context/language-context';
+import { getToken } from '@/lib/token';
+import { invalidateContentCache, useContentConfig } from '@/lib/useContentConfig';
+import { exportToCsv } from '@/lib/admin-mock-data';
 
 interface EditableListProps {
   items: string[];
   onAdd: (item: string) => void;
   onDelete: (item: string) => void;
   nounKey: string;
+  section: string;
+  saving: boolean;
 }
 
-function EditableList({ items, onAdd, onDelete, nounKey }: EditableListProps) {
+function EditableList({ items, onAdd, onDelete, nounKey, section, saving }: EditableListProps) {
   const { t } = useLanguage();
   const [newItem, setNewItem] = useState('');
   const handleAdd = () => {
@@ -25,7 +28,6 @@ function EditableList({ items, onAdd, onDelete, nounKey }: EditableListProps) {
     if (trimmed && !items.includes(trimmed)) {
       onAdd(trimmed);
       setNewItem('');
-      toast.success(t('admin.content.added'));
     }
   };
   return (
@@ -41,7 +43,7 @@ function EditableList({ items, onAdd, onDelete, nounKey }: EditableListProps) {
         {items.map((item) => (
           <Badge key={item} variant="secondary" className="text-sm py-1.5 px-3 flex items-center gap-2 border bg-background shadow-sm">
             {t(item)}
-            <button onClick={() => { onDelete(item); toast.success(t('admin.content.deleted')); }} className="text-muted-foreground hover:text-destructive transition-colors">
+            <button onClick={() => onDelete(item)} className="text-muted-foreground hover:text-destructive transition-colors">
               <Trash2 size={13} />
             </button>
           </Badge>
@@ -49,18 +51,68 @@ function EditableList({ items, onAdd, onDelete, nounKey }: EditableListProps) {
       </div>
       <div className="flex items-center gap-3">
         <Input placeholder={t('admin.content.new_placeholder')} value={newItem} onChange={e => setNewItem(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAdd()} className="h-10 rounded-xl" />
-        <Button onClick={handleAdd} disabled={!newItem.trim()} className="rounded-xl h-10 px-6"><Plus size={16} className="mr-1" /> {t('admin.content.add')}</Button>
+        <Button onClick={handleAdd} disabled={!newItem.trim() || saving} className="rounded-xl h-10 px-6">
+          {saving ? <Loader2 size={16} className="animate-spin mr-1" /> : <Plus size={16} className="mr-1" />}
+          {t('admin.content.add')}
+        </Button>
       </div>
     </div>
   );
 }
 
+async function saveSection(section: string, items: string[]) {
+  const token = getToken()
+  const res = await fetch(`/api/admin/content/${section}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ items }),
+  })
+  if (!res.ok) throw new Error('Failed to save')
+  invalidateContentCache()
+}
+
 export default function ContentManagementPage() {
-  const [interests, setInterests] = useState<string[]>([...INTEREST_OPTIONS]);
-  const [goals, setGoals] = useState<string[]>([...DATING_GOALS]);
-  const [education, setEducation] = useState<string[]>([...EDUCATION_OPTIONS]);
-  const [cities, setCities] = useState<string[]>([...CAPITALS]);
-  const [forbiddenWords, setForbiddenWords] = useState<string[]>([...FORBIDDEN_WORDS_DEFAULT]);
+  const { t } = useLanguage();
+  const config = useContentConfig();
+  const [interests, setInterests] = useState<string[]>([]);
+  const [goals, setGoals] = useState<string[]>([]);
+  const [education, setEducation] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [forbiddenWords, setForbiddenWords] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<string | null>(null);
+
+  useEffect(() => {
+    setInterests(config.interests);
+    setGoals(config.dating_goals);
+    setEducation(config.education);
+    setCities(config.cities);
+    setForbiddenWords(config.banned_words);
+    setLoading(false);
+  }, [config]);
+
+  const handleSave = async (section: string, items: string[], setter: (v: string[]) => void) => {
+    setSaving(section)
+    try {
+      await saveSection(section, items)
+      toast.success(t('admin.content.saved'))
+    } catch {
+      toast.error(t('admin.content.save_error'))
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -80,16 +132,25 @@ export default function ContentManagementPage() {
               <TabsTrigger value="cities" className="rounded-lg py-2 font-bold text-xs">{t('admin.content.tab_cities')} ({cities.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="interests">
-              <EditableList items={interests} nounKey="interests" onAdd={i => setInterests(p => [...p, i])} onDelete={i => setInterests(p => p.filter(x => x !== i))} />
+              <EditableList items={interests} nounKey="interests" section="interests" saving={saving === 'interests'} onAdd={i => setInterests(p => [...p, i])} onDelete={i => setInterests(p => { const next = p.filter(x => x !== i); handleSave('interests', next, setInterests); return next })} />
+              <div className="mt-2 flex justify-end">
+                <Button size="sm" onClick={() => handleSave('interests', interests, setInterests)} disabled={saving === 'interests'}>{saving === 'interests' ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Сохранить</Button>
+              </div>
             </TabsContent>
             <TabsContent value="goals">
-              <EditableList items={goals} nounKey="goals" onAdd={i => setGoals(p => [...p, i])} onDelete={i => setGoals(p => p.filter(x => x !== i))} />
+              <EditableList items={goals} nounKey="goals" section="goals" saving={saving === 'dating_goals'} onAdd={i => setGoals(p => [...p, i])} onDelete={i => setGoals(p => { const next = p.filter(x => x !== i); handleSave('dating_goals', next, setGoals); return next })} />
+              <div className="mt-2 flex justify-end">
+                <Button size="sm" onClick={() => handleSave('dating_goals', goals, setGoals)} disabled={saving === 'dating_goals'}>{saving === 'dating_goals' ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Сохранить</Button>
+              </div>
             </TabsContent>
             <TabsContent value="education">
-              <EditableList items={education} nounKey="education" onAdd={i => setEducation(p => [...p, i])} onDelete={i => setEducation(p => p.filter(x => x !== i))} />
+              <EditableList items={education} nounKey="education" section="education" saving={saving === 'education'} onAdd={i => setEducation(p => [...p, i])} onDelete={i => setEducation(p => { const next = p.filter(x => x !== i); handleSave('education', next, setEducation); return next })} />
+              <div className="mt-2 flex justify-end">
+                <Button size="sm" onClick={() => handleSave('education', education, setEducation)} disabled={saving === 'education'}>{saving === 'education' ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Сохранить</Button>
+              </div>
             </TabsContent>
             <TabsContent value="cities">
-              <EditableList items={cities} nounKey="cities" onAdd={i => setCities(p => [...p, i])} onDelete={i => setCities(p => p.filter(x => x !== i))} />
+              <EditableList items={cities} nounKey="cities" section="cities" saving={false} onAdd={i => setCities(p => [...p, i])} onDelete={i => setCities(p => p.filter(x => x !== i))} />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -103,7 +164,10 @@ export default function ContentManagementPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <EditableList items={forbiddenWords} nounKey="words" onAdd={w => setForbiddenWords(p => [...p, w])} onDelete={w => setForbiddenWords(p => p.filter(x => x !== w))} />
+          <EditableList items={forbiddenWords} nounKey="words" section="banned_words" saving={saving === 'banned_words'} onAdd={w => setForbiddenWords(p => [...p, w])} onDelete={w => setForbiddenWords(p => { const next = p.filter(x => x !== w); handleSave('banned_words', next, setForbiddenWords); return next })} />
+          <div className="mt-2 flex justify-end">
+            <Button size="sm" onClick={() => handleSave('banned_words', forbiddenWords, setForbiddenWords)} disabled={saving === 'banned_words'}>{saving === 'banned_words' ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Сохранить</Button>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { POPULAR_CITIES, DATING_GOALS, INTEREST_OPTIONS, CIRCADIAN_RHYTHM_OPTIONS, ATTACHMENT_STYLE_OPTIONS } from "@/lib/constants";
+import { POPULAR_CITIES, CIRCADIAN_RHYTHM_OPTIONS, ATTACHMENT_STYLE_OPTIONS } from "@/lib/constants";
+import { useContentConfig } from "@/lib/useContentConfig";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/shims/firebase";
 import { PremiumDialog } from "./premium-dialog";
@@ -41,6 +42,7 @@ export function FiltersDialog({
 }: FiltersDialogProps) {
   const { user } = useUser();
   const { t } = useLanguage();
+  const { interests: dynamicInterests, dating_goals: dynamicGoals } = useContentConfig();
   const isPro = user?.isPro;
 
   const [ageRange, setAgeRange] = useState(currentFilters.ageRange || [18, 40]);
@@ -148,7 +150,7 @@ export function FiltersDialog({
                   <SelectTrigger className="rounded-xl h-12 font-medium"><SelectValue /></SelectTrigger>
                   <SelectContent className="rounded-xl">
                     <SelectItem value="all">{t('filters.all')}</SelectItem>
-                    {DATING_GOALS.map(goal => <SelectItem key={goal} value={goal}>{t(goal)}</SelectItem>)}
+                    {dynamicGoals.map(goal => <SelectItem key={goal} value={goal}>{t(goal)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -240,7 +242,7 @@ export function FiltersDialog({
                       {t('filters.interests')} {!isPro && <Lock size={12} />}
                   </Label>
                   <div className="flex flex-wrap gap-2">
-                      {INTEREST_OPTIONS.map(interest => (
+                      {dynamicInterests.map(interest => (
                            <Badge
                                key={interest}
                                onClick={() => toggleInterest(interest)}

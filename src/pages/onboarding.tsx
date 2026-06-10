@@ -21,7 +21,8 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { generateProfileBio } from "@/shims/ai-flows";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
-import { INTEREST_OPTIONS, DATING_GOALS, CIRCADIAN_RHYTHM_OPTIONS } from "@/lib/constants";
+import { CIRCADIAN_RHYTHM_OPTIONS } from "@/lib/constants";
+import { useContentConfig } from "@/lib/useContentConfig";
 
 const GENDER_OPTIONS = [
   { id: 'male', labelKey: 'onboarding.step1.male' },
@@ -36,9 +37,7 @@ export default function OnboardingPage() {
   const totalSteps = 5;
 
   const supabase = getSupabase();
-
-  const [dynamicInterests, setDynamicInterests] = useState<string[]>([...INTEREST_OPTIONS] as string[]);
-  const [dynamicGoals, setDynamicGoals] = useState<string[]>([...DATING_GOALS] as string[]);
+  const { interests: dynamicInterests, dating_goals: dynamicGoals } = useContentConfig();
 
   useEffect(() => {
     const initProfile = async () => {
@@ -56,25 +55,13 @@ export default function OnboardingPage() {
   }, [supabase]);
 
   useEffect(() => {
-    if (!supabase) return;
-    const loadContent = async () => {
-      const { data } = await supabase
-        .from('content_config')
-        .select('*')
-        .maybeSingle()
-      if (data) {
-        if (data.interests) {
-          setDynamicInterests(data.interests)
-          setFormData(prev => ({
-            ...prev,
-            interests: prev.interests.filter(i => data.interests.includes(i))
-          }))
-        }
-        if (data.datingGoals) setDynamicGoals(data.datingGoals)
-      }
+    if (dynamicInterests.length) {
+      setFormData(prev => ({
+        ...prev,
+        interests: prev.interests.filter(i => dynamicInterests.includes(i))
+      }))
     }
-    loadContent()
-  }, [supabase]);
+  }, [dynamicInterests]);
 
   const [isGeneratingBio, setIsGeneratingBio] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);

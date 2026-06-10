@@ -69,18 +69,10 @@ export const isGibberish = (text: string): boolean => {
     const vowelsCount = vowelsMatch ? vowelsMatch.length : 0;
     if (letters.length >= 3 && vowelsCount === 0) return true;
 
-    // 3. Check for excessive consonant clusters.
-    const allowed_4_consonant_clusters = [
-        'взгл', 'вств', 'вспл', 'здрв', 'кстр', 'нтрв', 'ртств', 'рвств'
-    ];
-    const consonantClusters = letters.match(/[bcdfghjklmnpqrstvwxzбвгджзйклмнпрстфхцчшщ]{4,}/g);
+    // 3. Check for excessive consonant clusters (5+ consecutive consonants is always gibberish).
+    const consonantClusters = letters.match(/[bcdfghjklmnpqrstvwxzбвгджзйклмнпрстфхцчшщ]{5,}/g);
     if (consonantClusters) {
-      for (const cluster of consonantClusters) {
-        if (cluster.length === 4 && allowed_4_consonant_clusters.includes(cluster)) {
-          continue;
-        }
-        return true;
-      }
+      return true;
     }
 
     // 4. Common keyboard row sequences (mashing)

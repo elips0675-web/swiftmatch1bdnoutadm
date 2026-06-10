@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useMemo, useCallback, Suspense } from "react";
-import { Search, ChevronLeft, Send, MoveVertical as MoreVertical, Smile, Heart, Laugh, Zap, Flame, Star, Ghost, Rocket, Crown, Music, Phone, Video, Flag, Check, CheckCheck, Info, Users, MessageSquare, ChevronRight, Trash2, ThumbsUp, PartyPopper, Eye, Frown, Award } from "lucide-react";
+import { Search, ChevronLeft, Send, MoveVertical as MoreVertical, Smile, Heart, Laugh, Zap, Flame, Star, Ghost, Rocket, Crown, Music, Phone, Video, Flag, Check, CheckCheck, Info, Users, MessageSquare, ChevronRight, Trash2, ThumbsUp, PartyPopper, Eye, Frown, Award, Compass, Coffee, MessageSquareQuote, PawPrint, Globe, Film, BookOpen, Baby, Sun, TrendingUp } from "lucide-react";
 import Image from "@/shims/next-image";
 import { useSearchParams, useRouter } from "@/shims/next-navigation";
 import dynamic from "@/shims/next-dynamic";
@@ -104,6 +104,22 @@ const QUICK_REACTIONS = [
   { id: 'award', icon: Award, color: 'text-yellow-600', label: '💯' },
 ];
 
+const CHAT_THEMES = [
+  { id: 'romantic', labelKey: 'chats.theme.romantic', icon: Heart, color: 'text-pink-500', mood: 'Romantic, sweet and poetic' },
+  { id: 'funny', labelKey: 'chats.theme.funny', icon: Laugh, color: 'text-orange-500', mood: 'Funny, witty and lighthearted' },
+  { id: 'hobbies', labelKey: 'chats.theme.hobbies', icon: Compass, color: 'text-blue-500', mood: 'Focus on shared interests and activities' },
+  { id: 'daily', labelKey: 'chats.theme.daily', icon: Coffee, color: 'text-amber-600', mood: 'Casual, relaxed daily life conversation' },
+  { id: 'impressions', labelKey: 'chats.theme.impressions', icon: MessageSquareQuote, color: 'text-purple-500', mood: 'Sharing impressions and experiences' },
+  { id: 'bold', labelKey: 'chats.theme.bold', icon: Zap, color: 'text-yellow-500', mood: 'Bold, confident and slightly flirty' },
+  { id: 'pets', labelKey: 'chats.theme.pets', icon: PawPrint, color: 'text-amber-500', mood: 'Pets and animals conversation' },
+  { id: 'travel', labelKey: 'chats.theme.travel', icon: Globe, color: 'text-emerald-500', mood: 'Travel and adventures' },
+  { id: 'movies', labelKey: 'chats.theme.movies', icon: Film, color: 'text-red-500', mood: 'Movies, series and entertainment' },
+  { id: 'books', labelKey: 'chats.theme.books', icon: BookOpen, color: 'text-indigo-500', mood: 'Books and literature' },
+  { id: 'dreams', labelKey: 'chats.theme.dreams', icon: Star, color: 'text-yellow-400', mood: 'Dreams, goals and aspirations' },
+  { id: 'childhood', labelKey: 'chats.theme.childhood', icon: Baby, color: 'text-pink-400', mood: 'Childhood memories and stories' },
+  { id: 'nature', labelKey: 'chats.theme.nature', icon: Sun, color: 'text-orange-400', mood: 'Nature, weather and seasons' },
+];
+
 function getInitialMessages(t: (k: string) => string) {
   return [
     { id: 1, text: t('chats.demo.msg1'), sender: "other", time: "10:00" },
@@ -176,6 +192,7 @@ function ChatsContent() {
   const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [showTopicsDialog, setShowTopicsDialog] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
@@ -380,8 +397,12 @@ function ChatsContent() {
     loadMessages(chat.id).then(saved => {
       setMessages(saved && saved.length > 0 ? saved : getInitialMessages(t));
     });
-
   };
+
+  const handleThemeClick = useCallback((themeId: string) => {
+    setInputValue(t(`chats.theme_prompt.${themeId}`));
+    setShowTopicsDialog(false);
+  }, [t]);
 
   const handleBack = () => {
     if (matchId || groupId) {
@@ -463,6 +484,9 @@ function ChatsContent() {
                 <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50" onClick={() => setIsVoiceCall(true)}><Phone size={18} /></Button>
               </>
             )}
+            {!selectedChat.isGroup && (
+              <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50" onClick={() => setShowTopicsDialog(true)}><Info size={18} /></Button>
+            )}
             <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50"><MoreVertical size={18} /></Button>
@@ -487,6 +511,27 @@ function ChatsContent() {
         </div>
         {selectedChat && !selectedChat.isGroup && isVideoCall && <VideoCallDialog open={isVideoCall} onOpenChange={setIsVideoCall} user={selectedChat} />}
         {selectedChat && !selectedChat.isGroup && isVoiceCall && <VoiceCallDialog open={isVoiceCall} onOpenChange={setIsVoiceCall} user={selectedChat} />}
+
+        <Dialog open={showTopicsDialog} onOpenChange={setShowTopicsDialog}>
+          <DialogContent className="max-w-sm rounded-2xl border-0 p-6 bg-white app-shadow">
+            <DialogTitle className="text-lg font-black text-center">{t('chats.popular_topics')}</DialogTitle>
+            <div className="grid grid-cols-2 gap-2">
+              {CHAT_THEMES.map((theme) => {
+                const Icon = theme.icon;
+                return (
+                  <button
+                    key={theme.id}
+                    onClick={() => handleThemeClick(theme.id)}
+                    className="flex items-center gap-2 px-3 py-3 rounded-xl border border-border/40 bg-muted/20 hover:bg-primary/10 hover:border-primary/20 active:scale-95 transition-all text-left"
+                  >
+                    <Icon size={18} className={`${theme.color} flex-shrink-0`} />
+                    <span className="text-[11px] font-bold leading-tight">{t(theme.labelKey)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }

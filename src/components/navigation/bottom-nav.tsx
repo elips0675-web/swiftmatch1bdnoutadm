@@ -19,7 +19,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white/95 backdrop-blur-md border-t border-border z-50">
-      <div className="w-full flex justify-around items-center px-2 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+      <div className="w-full flex justify-around items-center px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
@@ -28,9 +28,9 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              prefetch={true} // Performance: Prefetch critical nav links
+              prefetch={true}
               className={cn(
-                "flex flex-col items-center justify-center flex-1 transition-all duration-200",
+                "flex flex-col items-center justify-center gap-1 flex-1 transition-all duration-200",
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -42,6 +42,7 @@ export function BottomNav() {
                   </span>
                 )}
               </div>
+              <span className="text-[10px] font-semibold">{item.label}</span>
             </Link>
           );
         })}

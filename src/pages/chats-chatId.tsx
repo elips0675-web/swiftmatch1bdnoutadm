@@ -83,12 +83,11 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
   const { mutate: sendMessage, loading: isSending } = useApiMutation();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+  const scrollToBottom = (behavior: ScrollBehavior = "auto") => messagesEndRef.current?.scrollIntoView({ behavior });
 
   useEffect(() => {
-    // Скролл при первой загрузке и при добавлении новых сообщений
     scrollToBottom();
-  }, [messages, optimisticMessages]);
+  }, [messages, optimisticMessages, viewportHeight]);
   
   const handleSendMessage = async (textOverride?: string) => {
     const content = textOverride || inputValue.trim();

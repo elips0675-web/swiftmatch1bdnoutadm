@@ -290,8 +290,9 @@ function ChatsContent() {
     setCurrentPage(1);
   }, [activeTab, searchQuery]);
 
-  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => messagesEndRef.current?.scrollIntoView({ behavior });
   useEffect(() => { if (selectedChat) scrollToBottom(); }, [messages, selectedChat]);
+  useEffect(() => { if (selectedChat) scrollToBottom("auto"); }, [viewportHeight]);
 
 
 

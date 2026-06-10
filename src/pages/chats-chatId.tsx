@@ -44,7 +44,7 @@ function ChatRoomSkeleton() {
           <Skeleton className="h-8 w-2/3 rounded-lg self-start" />
           <Skeleton className="h-10 w-3/4 rounded-lg self-end" />
         </main>
-      <div className="px-4 pt-2 pb-4 bg-white border-t">
+      <div className="px-4 py-2 bg-white border-t">
             <Skeleton className="h-11 w-full rounded-2xl" />
         </div>
       </div>
@@ -153,7 +153,7 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
       </header>
       
       <main ref={msgContainerRef} className="flex-1 overflow-y-auto anti-screenshot">
-        <div className="flex flex-col min-h-full p-4 space-y-2">
+        <div className="flex flex-col min-h-full px-4 pt-4 pb-2 space-y-2">
           <div className="flex-1" />
           <div className="text-center my-2"><Badge variant="secondary">{t('chats.today')}</Badge></div>
           <AnimatePresence initial={false}>

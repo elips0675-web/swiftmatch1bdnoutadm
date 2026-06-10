@@ -59,15 +59,18 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
 
   useEffect(() => {
-    const handleResize = () => setViewportHeight(window.innerHeight);
+    const handleResize = () => {
+      setViewportHeight(window.innerHeight);
+      requestAnimationFrame(() => messagesEndRef.current?.scrollIntoView({ behavior: "auto" }));
+    };
     window.addEventListener('resize', handleResize);
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', () => setViewportHeight(window.visualViewport?.height || window.innerHeight));
+      window.visualViewport.addEventListener('resize', handleResize);
     }
     return () => {
       window.removeEventListener('resize', handleResize);
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', () => {});
+        window.visualViewport.removeEventListener('resize', handleResize);
       }
     };
   }, []);
@@ -173,7 +176,7 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
       <div className="p-4 bg-white border-t">
          <div className="flex items-center gap-3">
           <div className="flex-1 relative">
-            <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder={t('chats.placeholder')} className="pr-12 h-11 bg-muted/50 border-0 rounded-xl" />
+            <Input value={inputValue} onChange={(e) => setInputValue(e.target.value)} onFocus={() => requestAnimationFrame(() => messagesEndRef.current?.scrollIntoView({ behavior: "auto" }))} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()} placeholder={t('chats.placeholder')} className="pr-12 h-11 bg-muted/50 border-0 rounded-xl" />
             <Popover>
               <PopoverTrigger asChild><button className="absolute right-4 top-1/2 -translate-y-1/2"><Smile size={20} /></button></PopoverTrigger>
               <PopoverContent side="top" align="end" className="p-2 w-auto">

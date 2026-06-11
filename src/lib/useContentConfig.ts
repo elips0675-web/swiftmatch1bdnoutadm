@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { INTEREST_OPTIONS, DATING_GOALS, EDUCATION_OPTIONS, CAPITALS } from './constants'
 import { FORBIDDEN_WORDS_DEFAULT } from './admin-mock-data'
 
@@ -20,6 +20,12 @@ const FALLBACK: ContentConfig = {
 
 let cached: ContentConfig | null = null
 let loadingPromise: Promise<ContentConfig> | null = null
+let version = 0
+const listeners: Set<() => void> = new Set()
+
+function notify() {
+  listeners.forEach(fn => fn())
+}
 
 function mapKeys(items: string[], prefix: string): string[] {
   return items.map(item => item.startsWith(prefix) ? item : prefix + item)
@@ -58,6 +64,17 @@ export function useContentConfig(): ContentConfig {
     getOrFetch().then(setConfig)
   }, [])
 
+  const forceRefresh = useCallback(() => {
+    cached = null
+    loadingPromise = null
+    getOrFetch().then(setConfig)
+  }, [])
+
+  useEffect(() => {
+    listeners.add(forceRefresh)
+    return () => listeners.delete(forceRefresh)
+  }, [forceRefresh])
+
   return config
 }
 
@@ -68,4 +85,6 @@ export function getContentConfig(): Promise<ContentConfig> {
 export function invalidateContentCache(): void {
   cached = null
   loadingPromise = null
+  version++
+  notify()
 }

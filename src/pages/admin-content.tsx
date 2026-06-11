@@ -36,7 +36,7 @@ function EditableList({ items, onAdd, onDelete, nounKey, section, saving }: Edit
   const { t } = useLanguage();
   const [newItem, setNewItem] = useState('');
   const handleAdd = () => {
-    const trimmed = newItem.trim();
+    const trimmed = stripPrefix(newItem.trim());
     if (trimmed && !items.includes(trimmed)) {
       onAdd(trimmed);
       setNewItem('');
@@ -72,15 +72,23 @@ function EditableList({ items, onAdd, onDelete, nounKey, section, saving }: Edit
   );
 }
 
+function stripPrefix(item: string): string {
+  for (const p of ['interest.', 'goal.', 'education.']) {
+    if (item.startsWith(p)) return item.slice(p.length)
+  }
+  return item
+}
+
 async function saveSection(section: string, items: string[]) {
   const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token')
+  const cleanItems = items.map(stripPrefix)
   const res = await fetch(`/api/admin/content/${section}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ items }),
+    body: JSON.stringify({ items: cleanItems }),
   })
   if (!res.ok) throw new Error('Failed to save')
   invalidateContentCache()

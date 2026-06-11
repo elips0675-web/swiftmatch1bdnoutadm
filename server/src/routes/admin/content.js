@@ -6,11 +6,12 @@ const router = Router()
 async function getContentConfig() {
   const [[row]] = await pool.query('SELECT * FROM content_config WHERE id = 1')
   if (!row) return null
+  function p(v, fb) { if (Array.isArray(v)) return v; if (typeof v === 'string') { try { return JSON.parse(v) } catch {} } return fb || [] }
   return {
-    interests: JSON.parse(row.interests || '[]'),
-    dating_goals: JSON.parse(row.dating_goals || '[]'),
-    education: JSON.parse(row.education || '[]'),
-    banned_words: JSON.parse(row.banned_words || '[]'),
+    interests: p(row.interests, []),
+    dating_goals: p(row.dating_goals, []),
+    education: p(row.education, []),
+    banned_words: p(row.banned_words, []),
   }
 }
 

@@ -87,7 +87,7 @@ function stripPrefix(item: string): string {
 
 async function saveSection(section: string, items: string[]) {
   const token = getToken()
-  const cleanItems = items.map(stripPrefix)
+  const cleanItems = [...new Set(items.map(stripPrefix))]
   const res = await fetch(`/api/admin/content/${section}`, {
     method: 'PUT',
     headers: {
@@ -119,7 +119,7 @@ export default function ContentManagementPage() {
   useEffect(() => {
     setInterests(config.interests.map(stripPrefix).sort((a, b) => a.localeCompare(b)));
     setGoals(config.dating_goals.map(stripPrefix));
-    setEducation(config.education.map(stripPrefix).sort((a, b) => a.localeCompare(b)));
+    setEducation([...new Set(config.education.map(stripPrefix))].sort((a, b) => a.localeCompare(b)));
     setCities(config.cities);
     setForbiddenWords(config.banned_words);
 
@@ -188,6 +188,12 @@ export default function ContentManagementPage() {
               <EditableList items={interests} nounKey="interests" section="interests" saving={saving === 'interests'} onAdd={i => setInterests(p => [...p, i])} onDelete={i => setInterests(p => { const next = p.filter(x => x !== i); handleSave('interests', next, setInterests); return next })} />
               <div className="mt-2 flex justify-end">
                 <Button size="sm" onClick={() => handleSave('interests', interests, setInterests)} disabled={saving === 'interests'}>{saving === 'interests' ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Сохранить</Button>
+              </div>
+            </TabsContent>
+            <TabsContent value="education">
+              <EditableList items={education} nounKey="education" section="education" saving={saving === 'education'} onAdd={i => setEducation(p => [...p, i])} onDelete={i => setEducation(p => { const next = p.filter(x => x !== i); handleSave('education', next, setEducation); return next })} />
+              <div className="mt-2 flex justify-end">
+                <Button size="sm" onClick={() => handleSave('education', education, setEducation)} disabled={saving === 'education'}>{saving === 'education' ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Сохранить</Button>
               </div>
             </TabsContent>
             <TabsContent value="goals">

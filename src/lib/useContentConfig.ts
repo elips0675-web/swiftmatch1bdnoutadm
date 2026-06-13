@@ -11,7 +11,7 @@ export interface ContentConfig {
 }
 
 const FALLBACK: ContentConfig = {
-  interests: [...INTEREST_OPTIONS],
+  interests: [...INTEREST_OPTIONS].sort(),
   dating_goals: [...DATING_GOALS],
   education: [...EDUCATION_OPTIONS],
   banned_words: [...FORBIDDEN_WORDS_DEFAULT],
@@ -28,7 +28,7 @@ function notify() {
 }
 
 function mapKeys(items: string[], prefix: string): string[] {
-  return items.map(item => item.startsWith(prefix) ? item : prefix + item)
+  return items.map(item => item.startsWith(prefix) ? item : prefix + item).sort()
 }
 
 async function fetchConfig(): Promise<ContentConfig> {

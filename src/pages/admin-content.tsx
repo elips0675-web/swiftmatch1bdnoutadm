@@ -28,9 +28,10 @@ function itemLabel(item: string, section: string, t: any): string {
     : section === 'education' ? 'education.'
     : null
   if (!prefix) return item
-  const key = item.startsWith(prefix) ? item : `${prefix}${item}`
+  const raw = item.startsWith(prefix) ? item.slice(prefix.length) : item
+  const key = `${prefix}${raw}`
   const translated = t(key)
-  return translated !== key ? translated : item
+  return translated !== key ? translated : raw
 }
 
 function EditableList({ items, onAdd, onDelete, nounKey, section, saving }: EditableListProps) {
@@ -38,7 +39,8 @@ function EditableList({ items, onAdd, onDelete, nounKey, section, saving }: Edit
   const [newItem, setNewItem] = useState('');
   const handleAdd = () => {
     const trimmed = stripPrefix(newItem.trim());
-    if (trimmed && !items.includes(trimmed)) {
+    const stripped = items.map(stripPrefix);
+    if (trimmed && !stripped.includes(trimmed)) {
       onAdd(trimmed);
       setNewItem('');
     }
@@ -107,9 +109,9 @@ export default function ContentManagementPage() {
   const [saving, setSaving] = useState<string | null>(null);
 
   useEffect(() => {
-    setInterests(config.interests);
-    setGoals(config.dating_goals);
-    setEducation(config.education);
+    setInterests(config.interests.map(stripPrefix));
+    setGoals(config.dating_goals.map(stripPrefix));
+    setEducation(config.education.map(stripPrefix));
     setCities(config.cities);
     setForbiddenWords(config.banned_words);
     setLoading(false);

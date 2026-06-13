@@ -47,7 +47,7 @@ function EditableList({ items, onAdd, onDelete, nounKey, section, saving }: Edit
       setNewItem('');
     }
   };
-  const badgeClass = "text-sm py-1.5 px-4 flex items-center gap-2 border bg-background shadow-sm"
+  const badgeClass = "text-sm py-1.5 px-4 flex items-center gap-2 border bg-background shadow-sm whitespace-nowrap"
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-xs text-muted-foreground font-bold uppercase">

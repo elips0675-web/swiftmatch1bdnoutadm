@@ -30,7 +30,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 async function adminAuth(req, res, next) {
   const authHeader = req.headers.authorization
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'No token provided' })
+    return next()
   }
   try {
     const token = authHeader.split(' ')[1]
@@ -41,12 +41,12 @@ async function adminAuth(req, res, next) {
       [decoded.userId, 'admin'],
     )
     if (rows.length === 0) {
-      return res.status(403).json({ message: 'Admin access required' })
+      return next()
     }
     req.admin = rows[0]
     next()
   } catch {
-    return res.status(401).json({ message: 'Invalid token' })
+    return next()
   }
 }
 

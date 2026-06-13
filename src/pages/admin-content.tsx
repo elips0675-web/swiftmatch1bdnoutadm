@@ -47,6 +47,9 @@ function EditableList({ items, onAdd, onDelete, nounKey, section, saving }: Edit
       setNewItem('');
     }
   };
+  const badgeClass = section === 'education'
+    ? "text-sm py-1 px-3 flex items-center gap-2 border bg-background shadow-sm"
+    : "text-sm py-1.5 px-4 flex items-center gap-2 border bg-background shadow-sm"
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-xs text-muted-foreground font-bold uppercase">
@@ -58,7 +61,7 @@ function EditableList({ items, onAdd, onDelete, nounKey, section, saving }: Edit
       </div>
       <div className="flex flex-wrap gap-2 p-4 rounded-2xl border bg-muted/30 min-h-[120px]">
         {items.map((item) => (
-          <Badge key={item} variant="secondary" className="text-sm py-1.5 px-4 flex items-center gap-2 border bg-background shadow-sm">
+          <Badge key={item} variant="secondary" className={badgeClass}>
             {itemLabel(item, section, t)}
             <button onClick={() => onDelete(item)} className="text-muted-foreground hover:text-destructive transition-colors">
               <Trash2 size={12} />

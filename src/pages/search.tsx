@@ -27,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { AttachmentStyle } from "@/lib/attachment-styles";
+import { POPULAR_CITIES } from "@/lib/constants";
 
 const MatchDialog = dynamic(() => import('@/components/dialogs/match-dialog').then(mod => mod.MatchDialog), { ssr: false });
 const FiltersDialog = dynamic(() => import('@/components/dialogs/filters-dialog').then(mod => mod.FiltersDialog), { ssr: false });
@@ -55,7 +56,11 @@ function calculateAttachmentCompatibility(style1?: AttachmentStyle, style2?: Att
 function performAutosearch(filters: any, allUsers: any[], currentUser: any) {
     if (!filters || !currentUser) return [];
 
-    const { ageRange, selectedCity, distance, selectedDatingGoal, selectedInterests } = filters;
+    const { ageRange, selectedCity, selectedCountry, distance, selectedDatingGoal, selectedInterests } = filters;
+
+    const countryCityList = selectedCountry && POPULAR_CITIES[selectedCountry]
+        ? POPULAR_CITIES[selectedCountry]
+        : null;
 
     return allUsers
         .filter(user => {
@@ -69,8 +74,9 @@ function performAutosearch(filters: any, allUsers: any[], currentUser: any) {
             
             const matchesAge = user.age >= ageRange[0] && user.age <= ageRange[1];
             const matchesCity = selectedCity === "Все" || user.city === selectedCity;
+            const matchesCountry = !countryCityList || countryCityList.includes(user.city);
             const matchesDistance = user.distance <= distance[0];
-            return matchesAge && matchesCity && matchesDistance;
+            return matchesAge && matchesCity && matchesCountry && matchesDistance;
         })
         .map(user => {
             const commonInterests = user.interests.filter((i: string) => selectedInterests.includes(i)).length;

@@ -65,6 +65,7 @@ export default function Home() {
     const filters = {
         ageRange: [18, 40],
         selectedCity: currentUser.city || "Все",
+        selectedCountry: "",
         distance: [50],
         genderPref: currentUser.gender === 'female' ? 'male' : 'female',
         selectedDatingGoal: currentUser.datingGoal || "all",

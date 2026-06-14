@@ -48,7 +48,7 @@ export function FiltersDialog({
   const [ageRange, setAgeRange] = useState(currentFilters.ageRange || [18, 40]);
   const [distance, setDistance] = useState(currentFilters.distance || [50]);
   const [selectedCity, setSelectedCity] = useState(currentFilters.selectedCity || "Все");
-  const [selectedCountryFilters, setSelectedCountryFilters] = useState("");
+  const [selectedCountryFilters, setSelectedCountryFilters] = useState(currentFilters.selectedCountry || "");
   const [genderPref, setGenderPref] = useState(currentFilters.genderPref || "all");
   const [selectedDatingGoal, setSelectedDatingGoal] = useState(currentFilters.selectedDatingGoal || "all");
   const [selectedInterests, setSelectedInterests] = useState<string[]>(currentFilters.selectedInterests || []);
@@ -61,7 +61,7 @@ export function FiltersDialog({
     return ["Все", ...(POPULAR_CITIES[selectedCountryFilters] || [])];
   }, [selectedCountryFilters]);
 
-  const ALL_COUNTRIES = useMemo(() => Object.keys(POPULAR_CITIES), []);
+  const ALL_COUNTRIES = useMemo(() => Object.keys(POPULAR_CITIES).sort(), []);
 
   useEffect(() => {
     if (selectedCity && selectedCity !== "Все" && !selectedCountryFilters) {
@@ -97,6 +97,7 @@ export function FiltersDialog({
       ageRange,
       distance,
       selectedCity,
+      selectedCountry: selectedCountryFilters,
       genderPref,
       selectedDatingGoal: isPro ? selectedDatingGoal : 'all',
       selectedInterests: isPro ? selectedInterests : [],

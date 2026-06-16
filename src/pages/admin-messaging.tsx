@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,12 +6,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Send, Mail, Bell, Download, Globe, Loader as Loader2 } from 'lucide-react';
+import { Send, Mail, Bell, Download, Globe, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { generateMockCampaigns, exportToCsv, type MockCampaign } from '@/lib/admin-mock-data';
 import { useLanguage } from '@/context/language-context';
+import { getToken } from '@/lib/token';
+
+interface Campaign {
+  id: number;
+  title: string;
+  body: string;
+  target: string;
+  channel: string;
+  status: string;
+  sentAt: string;
+  delivered: number;
+  opened: number;
+  clicked: number;
+}
 
 const STATUS_BADGE: Record<string, string> = {
   sent: 'bg-emerald-100 text-emerald-800',
@@ -21,31 +33,62 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function AdminMessagingPage() {
   const { t } = useLanguage();
-  const [campaigns, setCampaigns] = useState<MockCampaign[]>(generateMockCampaigns);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [target, setTarget] = useState('all');
   const [channel, setChannel] = useState('push');
   const [isSending, setIsSending] = useState(false);
 
-  const handleSend = () => {
+  const fetchCampaigns = async () => {
+    try {
+      const token = getToken();
+      const res = await fetch('/api/admin/campaigns', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data: Campaign[] = await res.json();
+      setCampaigns(data);
+    } catch {
+      setCampaigns([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchCampaigns(); }, []);
+
+  const handleSend = async () => {
     if (!title || !body) { toast.error(t('admin.messaging.fill_all')); return; }
     setIsSending(true);
-    setTimeout(() => {
-      const newCampaign: MockCampaign = {
-        id: campaigns.length + 1,
-        title, body, target: target as MockCampaign['target'],
-        channel: channel as MockCampaign['channel'],
-        status: 'sent', sentAt: new Date().toISOString().split('T')[0],
-        delivered: Math.floor(Math.random() * 8000) + 2000,
-        opened: Math.floor(Math.random() * 3000) + 500,
-        clicked: Math.floor(Math.random() * 800) + 100,
-      };
-      setCampaigns(prev => [newCampaign, ...prev]);
-      setTitle(''); setBody('');
-      setIsSending(false);
+    try {
+      const token = getToken();
+      const res = await fetch('/api/admin/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ title, body, target, channel }),
+      });
+      if (!res.ok) throw new Error('Failed to send');
       toast.success(t('admin.messaging.sent'));
-    }, 1500);
+      setTitle(''); setBody('');
+      fetchCampaigns();
+    } catch {
+      toast.error('Failed to send');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleExport = () => {
+    const csvRows = campaigns.map(c => ({ Заголовок: c.title, Канал: c.channel, Аудитория: c.target, Статус: c.status, Дата: c.sentAt, Доставлено: c.delivered, Открыто: c.opened, Клики: c.clicked }));
+    if (!csvRows.length) return;
+    const headers = Object.keys(csvRows[0]);
+    const csv = [headers.join(','), ...csvRows.map(r => headers.map(h => `"${String(r[h as keyof typeof r] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'campaigns.csv'; link.click();
+    URL.revokeObjectURL(link.href);
+    toast.success('CSV скачан');
   };
 
   return (
@@ -85,7 +128,7 @@ export default function AdminMessagingPage() {
             </div>
           </div>
           <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase text-muted-foreground">{t('admin.messaging.message_text')}</Label>
+            <Label className="text-[10px] font-bold uppercase text-muted-foreground">{t('admin.messaging.message_text')}</Label>
             <Textarea value={body} onChange={e => setBody(e.target.value)} placeholder={t('admin.messaging.text_placeholder')} className="min-h-[120px] rounded-xl" />
           </div>
         </CardContent>
@@ -100,10 +143,9 @@ export default function AdminMessagingPage() {
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-black">{t('admin.messaging.history')}</CardTitle>
-          <Button variant="outline" size="sm" className="rounded-xl h-8" onClick={() => {
-            exportToCsv('campaigns.csv', campaigns.map(c => ({ Заголовок: c.title, Канал: c.channel, Аудитория: c.target, Статус: c.status, Дата: c.sentAt, Доставлено: c.delivered, Открыто: c.opened, Клики: c.clicked })));
-            toast.success('CSV скачан');
-          }}><Download size={12} className="mr-1" /> CSV</Button>
+          <Button variant="outline" size="sm" className="rounded-xl h-8" onClick={handleExport}>
+            <Download size={12} className="mr-1" /> CSV
+          </Button>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -119,15 +161,17 @@ export default function AdminMessagingPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {campaigns.map(c => (
+              {loading ? (
+                <TableRow><TableCell colSpan={7} className="text-center py-8"><Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /></TableCell></TableRow>
+              ) : campaigns.map(c => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium text-sm max-w-[250px] truncate">{c.title}</TableCell>
                   <TableCell className="hidden sm:table-cell"><Badge variant="outline" className="text-[9px]">{c.channel}</Badge></TableCell>
                   <TableCell className="hidden md:table-cell text-xs">{c.target}</TableCell>
-                  <TableCell><Badge className={`text-[9px] border-0 ${STATUS_BADGE[c.status]}`}>{c.status}</Badge></TableCell>
-                  <TableCell className="hidden md:table-cell text-xs">{c.delivered.toLocaleString()}</TableCell>
-                  <TableCell className="hidden lg:table-cell text-xs">{c.opened.toLocaleString()}</TableCell>
-                  <TableCell className="hidden lg:table-cell text-xs">{c.clicked.toLocaleString()}</TableCell>
+                  <TableCell><Badge className={`text-[9px] border-0 ${STATUS_BADGE[c.status] || ''}`}>{c.status}</Badge></TableCell>
+                  <TableCell className="hidden md:table-cell text-xs">{c.delivered?.toLocaleString() ?? '—'}</TableCell>
+                  <TableCell className="hidden lg:table-cell text-xs">{c.opened?.toLocaleString() ?? '—'}</TableCell>
+                  <TableCell className="hidden lg:table-cell text-xs">{c.clicked?.toLocaleString() ?? '—'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

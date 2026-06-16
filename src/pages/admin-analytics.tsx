@@ -1,29 +1,73 @@
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Users, DollarSign, ArrowUpRight, Zap, ShieldCheck } from "lucide-react";
+import { TrendingUp, Users, DollarSign, ArrowUpRight, Zap, ShieldCheck, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getToken } from '@/lib/token';
 
-const REGISTRATION_DATA = [
-  { day: 'Пн', users: 120 }, { day: 'Вт', users: 150 }, { day: 'Ср', users: 180 },
-  { day: 'Чт', users: 220 }, { day: 'Пт', users: 280 }, { day: 'Сб', users: 350 }, { day: 'Вс', users: 310 },
-];
-const RETENTION_DATA = [
-  { day: 'Day 1', rate: 100 }, { day: 'Day 3', rate: 65 }, { day: 'Day 7', rate: 48 },
-  { day: 'Day 14', rate: 35 }, { day: 'Day 30', rate: 28 },
-];
-const REVENUE_SOURCES = [
-  { name: 'Subscriptions', value: 65, color: '#fe3c72' },
-  { name: 'Boosts', value: 25, color: '#ff8e53' },
-  { name: 'Ads', value: 10, color: '#3b82f6' },
-];
+interface Overview {
+  mau: string;
+  conversionRate: string;
+  arpu: string;
+}
+
+interface RetentionItem {
+  day: string;
+  rate: number;
+}
+
+interface RevenueMixItem {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface RegistrationItem {
+  day: string;
+  users: number;
+}
 
 export default function AdminAnalyticsPage() {
-  const stats = useMemo(() => [
-    { title: 'MAU', value: '12,480', sub: '+12% vs last month', icon: Users, color: 'text-blue-500', border: 'border-blue-500' },
-    { title: 'Conversion', value: '5.2%', sub: '0.8% improvement', icon: Zap, color: 'text-primary', border: 'border-primary' },
-    { title: 'ARPU', value: '$8.45', sub: 'Optimized', icon: DollarSign, color: 'text-amber-500', border: 'border-amber-500' },
-  ], []);
+  const [overview, setOverview] = useState<Overview | null>(null);
+  const [retention, setRetention] = useState<RetentionItem[]>([]);
+  const [revenueMix, setRevenueMix] = useState<RevenueMixItem[]>([]);
+  const [registrations, setRegistrations] = useState<RegistrationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = getToken();
+        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+        const apiGet = <T,>(url: string): Promise<T> => fetch(url, { headers }).then(r => { if (!r.ok) throw new Error('fetch failed'); return r.json(); });
+        const [ov, ret, mix, reg] = await Promise.all([
+          apiGet<Overview>('/api/admin/analytics/overview'),
+          apiGet<RetentionItem[]>('/api/admin/analytics/retention'),
+          apiGet<RevenueMixItem[]>('/api/admin/analytics/revenue-mix'),
+          apiGet<RegistrationItem[]>('/api/admin/analytics/registrations'),
+        ]);
+        setOverview(ov);
+        setRetention(ret);
+        setRevenueMix(mix);
+        setRegistrations(reg);
+      } catch {
+        setOverview({ mau: '—', conversionRate: '—', arpu: '—' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+
+  const stats = [
+    { title: 'MAU', value: overview?.mau ?? '—', sub: '', icon: Users, color: 'text-blue-500', border: 'border-blue-500' },
+    { title: 'Conversion', value: overview?.conversionRate ?? '—', sub: '', icon: Zap, color: 'text-primary', border: 'border-primary' },
+    { title: 'ARPU', value: overview?.arpu ?? '—', sub: '', icon: DollarSign, color: 'text-amber-500', border: 'border-amber-500' },
+  ];
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-24 animate-in fade-in duration-500">
@@ -31,12 +75,9 @@ export default function AdminAnalyticsPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Badge className="bg-emerald-500 text-white border-0 font-black text-[9px] uppercase tracking-widest">Live</Badge>
-            <span className="text-[10px] text-muted-foreground font-bold uppercase">Last updated: Just now</span>
+            <span className="text-[10px] text-muted-foreground font-bold uppercase">Real data from database</span>
           </div>
           <h2 className="text-3xl font-black tracking-tight">Аналитика и Метрики</h2>
-        </div>
-        <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-500 px-4 py-2.5 rounded-2xl border border-emerald-500/20">
-          <TrendingUp size={20} /><span className="font-black text-sm uppercase">+24.8% MoM</span>
         </div>
       </header>
 
@@ -49,7 +90,6 @@ export default function AdminAnalyticsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-black">{s.value}</div>
-              <div className="flex items-center gap-1 text-emerald-500 text-[10px] font-bold mt-1"><ArrowUpRight size={12} /> {s.sub}</div>
             </CardContent>
           </Card>
         ))}
@@ -60,7 +100,7 @@ export default function AdminAnalyticsPage() {
           <CardHeader><CardTitle className="text-lg font-black">Retention Rate</CardTitle><CardDescription>% вернувшихся</CardDescription></CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={RETENTION_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={retention} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs><linearGradient id="cR" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#fe3c72" stopOpacity={0.3}/><stop offset="95%" stopColor="#fe3c72" stopOpacity={0}/></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize:10,fill:'#94a3b8'}} />
@@ -75,9 +115,9 @@ export default function AdminAnalyticsPage() {
           <CardHeader><CardTitle className="text-lg font-black">Revenue Mix</CardTitle></CardHeader>
           <CardContent className="h-[300px] flex flex-col items-center justify-center">
             <ResponsiveContainer width="100%" height={200}>
-              <PieChart><Pie data={REVENUE_SOURCES} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">{REVENUE_SOURCES.map((e,i)=><Cell key={i} fill={e.color}/>)}</Pie><Tooltip contentStyle={{borderRadius:'12px',border:'none'}}/></PieChart>
+              <PieChart><Pie data={revenueMix} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">{revenueMix.map((e,i)=><Cell key={i} fill={e.color}/>)}</Pie><Tooltip contentStyle={{borderRadius:'12px',border:'none'}}/></PieChart>
             </ResponsiveContainer>
-            <div className="w-full space-y-2 mt-4">{REVENUE_SOURCES.map(s=>(<div key={s.name} className="flex items-center justify-between text-[10px] font-black"><div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{backgroundColor:s.color}}/><span className="text-muted-foreground">{s.name}</span></div><span>{s.value}%</span></div>))}</div>
+            <div className="w-full space-y-2 mt-4">{revenueMix.map(s=>(<div key={s.name} className="flex items-center justify-between text-[10px] font-black"><div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{backgroundColor:s.color}}/><span className="text-muted-foreground">{s.name}</span></div><span>{s.value}%</span></div>))}</div>
           </CardContent>
         </Card>
       </div>
@@ -87,7 +127,7 @@ export default function AdminAnalyticsPage() {
           <CardHeader><CardTitle className="text-lg font-black">Новые пользователи</CardTitle></CardHeader>
           <CardContent className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={REGISTRATION_DATA} margin={{top:10,right:10,left:-20,bottom:0}}>
+              <AreaChart data={registrations} margin={{top:10,right:10,left:-20,bottom:0}}>
                 <defs><linearGradient id="cU" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/><stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/></linearGradient></defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9"/>
                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize:10,fill:'#94a3b8'}}/>
@@ -103,7 +143,7 @@ export default function AdminAnalyticsPage() {
           <CardHeader><div className="flex items-center gap-2"><ShieldCheck className="text-primary" size={24}/><CardTitle className="text-lg font-black uppercase">Technical Health</CardTitle></div></CardHeader>
           <CardContent className="space-y-6 relative z-10">
             <div className="grid grid-cols-2 gap-4">
-              {[{l:'Uptime',v:'99.98%',c:'text-emerald-500'},{l:'LCP',v:'1.1s',c:'text-blue-500'},{l:'Errors',v:'0.02%',c:'text-muted-foreground'},{l:'API Latency',v:'180ms',c:'text-amber-500'}].map(s=>(
+              {[{l:'API Status',v:'Connected',c:'text-emerald-500'},{l:'Data Source',v:'Live DB',c:'text-blue-500'},{l:'Errors',v:'—',c:'text-muted-foreground'},{l:'API Latency',v:'—',c:'text-amber-500'}].map(s=>(
                 <div key={s.l} className="bg-background p-4 rounded-2xl shadow-sm border"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">{s.l}</p><p className={`text-xl font-black ${s.c}`}>{s.v}</p></div>
               ))}
             </div>

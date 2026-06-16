@@ -1,7 +1,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "@/shims/next-navigation";
-import { MapPin, ChevronLeft, ChevronRight, X, Heart, MessageCircle, Flag, Sparkles, Trophy, User, SlidersHorizontal } from "lucide-react";
+import { MapPin, ChevronLeft, ChevronRight, X, Heart, MessageCircle, Flag, Sparkles, Trophy, User, SlidersHorizontal, Chrome as HomeIcon, LogIn } from "lucide-react";
 import Image from "@/shims/next-image";
 import dynamic from "@/shims/next-dynamic";
 import { AppHeader } from "@/components/layout/app-header";
@@ -123,6 +123,7 @@ function SearchContent() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [votedEntries, setVotedEntries] = useState<number[]>([]);
+  const [hasError, setHasError] = useState(false);
 
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [searchFilters, setSearchFilters] = useState(null);
@@ -177,6 +178,14 @@ function SearchContent() {
     setCurrentIndex(0);
     setIsLoading(false);
   }, [searchParams, currentUser, t]);
+
+  useEffect(() => {
+    if (userList.length > 0) return;
+    const timer = setTimeout(() => {
+      if (userList.length === 0) setHasError(true);
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [isLoading, userList.length]);
   
   const handleApplyFilters = (newFilters: any) => {
       sessionStorage.setItem('autosearchFilters', JSON.stringify(newFilters));
@@ -252,6 +261,30 @@ function SearchContent() {
     setReportReason('');
     setReportDescription('');
   };
+
+  if (hasError) {
+    return (
+      <>
+        <AppHeader />
+        <main className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#f8f9fb] pb-24">
+          <Sparkles size={48} className="text-muted-foreground opacity-20 mb-4" />
+          <h4 className="text-xl font-black uppercase mb-6">{t('search.no_profiles')}</h4>
+          <div className="flex flex-col gap-3 w-full max-w-[240px]">
+            <Button onClick={() => router.push('/')} variant="outline" className="w-full h-12 rounded-xl font-black uppercase text-[11px] tracking-widest flex items-center gap-2">
+              <HomeIcon size={16} /> {t('nav.home')}
+            </Button>
+            <Button onClick={() => router.push('/login')} className="w-full h-12 rounded-xl gradient-bg text-white font-black uppercase text-[11px] tracking-widest border-0 flex items-center gap-2">
+              <LogIn size={16} /> {t('nav.login')}
+            </Button>
+            <Button onClick={() => router.back()} variant="outline" className="w-full h-12 rounded-xl font-black uppercase text-[11px] tracking-widest flex items-center gap-2" disabled={window.history.length <= 1}>
+              <ChevronLeft size={16} /> {t('button.back')}
+            </Button>
+          </div>
+        </main>
+        <BottomNav />
+      </>
+    );
+  }
 
   if (isLoading) return <div className="flex-1 flex items-center justify-center h-full"><Skeleton className="w-[90%] h-[70vh] rounded-2xl" /></div>;
 

@@ -146,10 +146,10 @@ function UserProfileContent() {
   return (
     <div className="flex flex-col min-h-screen bg-[#f8f9fb]">
       <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 p-4 flex items-center justify-between">
-         <Button 
+          <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => router.back()} 
+            onClick={() => window.history.length > 1 ? router.back() : router.push('/')} 
             className="rounded-full bg-white/40 backdrop-blur-md text-foreground hover:bg-white/60 border border-white/40 shadow-sm transition-all"
           >
             <ChevronLeft size={24} />
@@ -410,7 +410,7 @@ function UserProfileContent() {
       </main>
 
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] p-4 flex justify-center items-center gap-3 bg-white/80 backdrop-blur-md z-40 safe-pb border-t border-border/40">
-          <Button onClick={() => router.back()} variant="outline" className="w-12 h-12 rounded-full border-2 border-muted hover:bg-muted text-muted-foreground flex items-center justify-center transition-all active:scale-90 shadow-lg bg-white shrink-0">
+          <Button onClick={() => router.push('/')} variant="outline" className="w-12 h-12 rounded-full border-2 border-muted hover:bg-muted text-muted-foreground flex items-center justify-center transition-all active:scale-90 shadow-lg bg-white shrink-0">
             <X size={22} />
           </Button>
           <Button onClick={() => setShowInviteDialog(true)} variant="outline" className="w-12 h-12 rounded-full border-2 border-primary/20 bg-white hover:bg-primary/5 text-primary flex items-center justify-center transition-all active:scale-90 shadow-lg shrink-0">

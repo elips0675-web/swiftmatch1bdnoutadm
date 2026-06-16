@@ -1,31 +1,74 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Save, DollarSign, Crown } from 'lucide-react';
+import { Save, DollarSign, Crown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { generateRevenueData, generateConversionFunnel } from '@/lib/admin-mock-data';
 import { useLanguage } from '@/context/language-context';
+import { getToken } from '@/lib/token';
 
-const PRICING = [
-  { tier: 'Plus', prices: { '1': 299, '6': 1499, '12': 2399 }, color: '#3b82f6' },
-  { tier: 'Gold', prices: { '1': 599, '6': 2999, '12': 4799 }, color: '#f59e0b' },
-  { tier: 'Platinum', prices: { '1': 999, '6': 4999, '12': 7999 }, color: '#8b5cf6' },
-];
+interface PricingTier {
+  tier: string;
+  key: string;
+  color: string;
+  prices: Record<string, number>;
+}
+
+interface RevenueItem {
+  month: string;
+  subscriptions: number;
+  ads: number;
+  boosts: number;
+}
+
+interface FunnelItem {
+  stage: string;
+  count: number;
+}
 
 export default function MonetizationPage() {
   const { t } = useLanguage();
-  const [pricing, setPricing] = useState(PRICING);
-  const [ads, setAds] = useState({ google: true, yandex: false, googleId: 'ca-app-pub-3940256099942544/5224354917', yandexId: 'R-M-DEMO-rewarded' });
-  const revenueData = generateRevenueData();
-  const funnelData = generateConversionFunnel();
+  const [pricing, setPricing] = useState<PricingTier[]>([]);
+  const [revenueData, setRevenueData] = useState<RevenueItem[]>([]);
+  const [funnelData, setFunnelData] = useState<FunnelItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [ads, setAds] = useState({ google: false, yandex: false, googleId: '', yandexId: '' });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = getToken();
+        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+        const apiGet = <T,>(url: string): Promise<T> => fetch(url, { headers }).then(r => { if (!r.ok) throw new Error('fetch failed'); return r.json(); });
+        const [pricing, revenue, funnel] = await Promise.all([
+          apiGet<PricingTier[]>('/api/admin/monetization/pricing'),
+          apiGet<RevenueItem[]>('/api/admin/monetization/revenue'),
+          apiGet<FunnelItem[]>('/api/admin/monetization/funnel'),
+        ]);
+        setPricing(pricing);
+        setRevenueData(revenue);
+        setFunnelData(funnel);
+      } catch {
+        setPricing([]);
+        setRevenueData([]);
+        setFunnelData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const updatePrice = (tierIdx: number, period: string, value: string) => {
     setPricing(prev => prev.map((t, i) => i === tierIdx ? { ...t, prices: { ...t.prices, [period]: Number(value) || 0 } } : t));
   };
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -46,7 +89,7 @@ export default function MonetizationPage() {
                 {(['1', '6', '12'] as const).map(period => (
                   <div key={period} className="flex items-center gap-2">
                     <Label className="text-xs text-muted-foreground w-16">{period} {t('units.month_short')}</Label>
-                    <Input type="number" value={tier.prices[period]} onChange={e => updatePrice(ti, period, e.target.value)} className="h-9 rounded-lg text-right font-bold" />
+                    <Input type="number" value={tier.prices[period] || 0} onChange={e => updatePrice(ti, period, e.target.value)} className="h-9 rounded-lg text-right font-bold" />
                     <span className="text-xs text-muted-foreground">{t('units.ruble')}</span>
                   </div>
                 ))}
@@ -54,11 +97,6 @@ export default function MonetizationPage() {
             ))}
           </div>
         </CardContent>
-        <CardFooter className="border-t p-4 flex justify-end">
-          <Button onClick={() => toast.success(t('admin.monetization.prices_saved'))} className="rounded-full h-10 px-8 font-bold">
-            <Save className="mr-2 h-3 w-3" /> {t('admin.monetization.save')}
-          </Button>
-        </CardFooter>
       </Card>
 
       <Card className="border-0 shadow-sm">
@@ -118,7 +156,7 @@ export default function MonetizationPage() {
         <CardContent>
           <div className="space-y-2">
             {funnelData.map((step, i) => {
-              const pct = Math.round((step.count / funnelData[0].count) * 100);
+              const pct = funnelData.length > 0 ? Math.round((step.count / funnelData[0].count) * 100) : 0;
               return (
                 <div key={step.stage} className="flex items-center gap-3">
                   <span className="text-xs font-bold w-36 text-muted-foreground shrink-0">{step.stage}</span>

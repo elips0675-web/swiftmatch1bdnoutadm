@@ -1,13 +1,41 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Flag, MoveHorizontal as MoreHorizontal, Download, ShieldCheck, Ban, TriangleAlert as AlertTriangle, Circle as XCircle } from "lucide-react";
+import { Flag, MoveHorizontal as MoreHorizontal, Download, ShieldCheck, Ban, TriangleAlert as AlertTriangle, Circle as XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { generateMockUsers, generateMockReports, generateModerationLog, exportToCsv, type MockReport, type ModerationLogEntry } from "@/lib/admin-mock-data";
+import { getToken } from "@/lib/token";
+
+interface Report {
+  id: number;
+  reporterName: string;
+  reportedUserName: string;
+  reason: string;
+  description: string;
+  evidence: string;
+  date: string;
+  status: string;
+}
+
+interface ModLogEntry {
+  id: number;
+  date: string;
+  admin: string;
+  action: string;
+  targetUser: string;
+  reason: string;
+}
+
+interface BannedUser {
+  id: number;
+  name: string;
+  email: string;
+  city: string;
+  joined: string;
+}
 
 const REPORT_STATUS_COLORS: Record<string, string> = {
   new: 'bg-red-100 text-red-800 border-red-200',
@@ -15,20 +43,60 @@ const REPORT_STATUS_COLORS: Record<string, string> = {
   dismissed: 'bg-gray-100 text-gray-600',
   action_taken: 'bg-emerald-100 text-emerald-800 border-emerald-200',
 };
-const REPORT_STATUS_LABELS: Record<string, string> = { new: 'Новая', reviewed: 'На рассмотрении', dismissed: 'Отклонена', action_taken: 'Действие принято' };
+const REPORT_STATUS_LABELS: Record<string, string> = {
+  new: 'Новая', reviewed: 'На рассмотрении', dismissed: 'Отклонена', action_taken: 'Действие принято',
+};
 
 export default function AdminReportsPage() {
-  const users = useMemo(() => generateMockUsers(), []);
-  const [reports, setReports] = useState(() => generateMockReports(users));
-  const [modLog] = useState<ModerationLogEntry[]>(() => generateModerationLog());
-  const blockedUsers = useMemo(() => users.filter(u => u.status === 'banned'), [users]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [modLog, setModLog] = useState<ModLogEntry[]>([]);
+  const [bannedUsers, setBannedUsers] = useState<BannedUser[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const updateReport = (id: number, status: MockReport['status']) => {
-    setReports(prev => prev.map(r => r.id === id ? { ...r, status } : r));
-    toast.success(`Жалоба #${id}: ${REPORT_STATUS_LABELS[status]}`);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const token = getToken();
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const apiGet = <T,>(url: string): Promise<T> => fetch(url, { headers }).then(r => { if (!r.ok) throw new Error('fetch failed'); return r.json(); });
+      const [r, log, users] = await Promise.all([
+        apiGet<Report[]>('/api/admin/reports'),
+        apiGet<ModLogEntry[]>('/api/admin/moderation-log'),
+        apiGet<{ users: BannedUser[] }>('/api/admin/users?status=banned&page=1'),
+      ]);
+      setReports(r);
+      setModLog(log);
+      setBannedUsers(users.users);
+    } catch {
+      toast.error('Failed to load reports');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const updateReport = async (id: number, status: string) => {
+    try {
+      const token = getToken();
+      const res = await fetch(`/api/admin/reports/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      toast.success(`Жалоба #${id}: ${REPORT_STATUS_LABELS[status] || status}`);
+      fetchData();
+    } catch {
+      toast.error('Failed to update report');
+    }
   };
 
   const newCount = reports.filter(r => r.status === 'new').length;
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -37,8 +105,8 @@ export default function AdminReportsPage() {
           <TabsTrigger value="queue" className="rounded-lg font-bold text-xs">
             Очередь модерации {newCount > 0 && <Badge variant="destructive" className="ml-2 text-[9px] h-5">{newCount}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="blocked" className="rounded-lg font-bold text-xs">Заблокированные ({blockedUsers.length})</TabsTrigger>
-          <TabsTrigger value="log" className="rounded-lg font-bold text-xs">Лог действий</TabsTrigger>
+          <TabsTrigger value="blocked" className="rounded-lg font-bold text-xs">Заблокированные ({bannedUsers.length})</TabsTrigger>
+          <TabsTrigger value="log" className="rounded-lg font-bold text-xs">Лог действий ({modLog.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="queue">
@@ -46,7 +114,13 @@ export default function AdminReportsPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-black flex items-center gap-2"><Flag className="h-5 w-5 text-destructive" /> Жалобы</CardTitle>
               <Button variant="outline" size="sm" className="rounded-xl h-8" onClick={() => {
-                exportToCsv('reports.csv', reports.map(r => ({ ID: r.id, На_кого: r.reportedUserName, От_кого: r.reporterName, Причина: r.reason, Статус: REPORT_STATUS_LABELS[r.status], Дата: r.date })));
+                const csvRows = reports.map(r => ({ ID: r.id, На_кого: r.reportedUserName, От_кого: r.reporterName, Причина: r.reason, Статус: REPORT_STATUS_LABELS[r.status] || r.status, Дата: r.date }));
+                if (!csvRows.length) return;
+                const headers = Object.keys(csvRows[0]);
+                const csv = [headers.join(','), ...csvRows.map(r => headers.map(h => `"${String(r[h as keyof typeof r] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+                const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'reports.csv'; link.click();
+                URL.revokeObjectURL(link.href);
                 toast.success('CSV скачан');
               }}><Download size={12} className="mr-1" /> CSV</Button>
             </CardHeader>
@@ -69,9 +143,9 @@ export default function AdminReportsPage() {
                       <TableCell className="font-bold text-sm">{r.reportedUserName}</TableCell>
                       <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{r.reporterName}</TableCell>
                       <TableCell className="text-xs">{r.reason}</TableCell>
-                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{r.evidence}</TableCell>
+                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{r.evidence || '—'}</TableCell>
                       <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{r.date}</TableCell>
-                      <TableCell><Badge variant="outline" className={`text-[9px] ${REPORT_STATUS_COLORS[r.status]}`}>{REPORT_STATUS_LABELS[r.status]}</Badge></TableCell>
+                      <TableCell><Badge variant="outline" className={`text-[9px] ${REPORT_STATUS_COLORS[r.status] || ''}`}>{REPORT_STATUS_LABELS[r.status] || r.status}</Badge></TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><button className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted"><MoreHorizontal className="h-4 w-4" /></button></DropdownMenuTrigger>
@@ -110,7 +184,7 @@ export default function AdminReportsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {blockedUsers.map(u => (
+                  {bannedUsers.map(u => (
                     <TableRow key={u.id}>
                       <TableCell className="font-bold text-sm">{u.name}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{u.email}</TableCell>
@@ -129,7 +203,13 @@ export default function AdminReportsPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-black flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-blue-500" /> Лог модерации</CardTitle>
               <Button variant="outline" size="sm" className="rounded-xl h-8" onClick={() => {
-                exportToCsv('moderation_log.csv', modLog as any);
+                const csvRows = modLog.map(e => ({ Дата: e.date, Админ: e.admin, Действие: e.action, Пользователь: e.targetUser, Причина: e.reason }));
+                if (!csvRows.length) return;
+                const headers = Object.keys(csvRows[0]);
+                const csv = [headers.join(','), ...csvRows.map(r => headers.map(h => `"${String(r[h as keyof typeof r] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+                const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'moderation_log.csv'; link.click();
+                URL.revokeObjectURL(link.href);
                 toast.success('CSV скачан');
               }}><Download size={12} className="mr-1" /> CSV</Button>
             </CardHeader>

@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Save, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { Save, RotateCcw, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '@/context/language-context';
+import { getToken } from '@/lib/token';
 
 interface FeatureFlag {
   key: string;
@@ -19,34 +20,69 @@ interface FeatureFlag {
 export default function FeatureFlagsPage() {
   const { t } = useLanguage();
 
-  const INITIAL_FLAGS: FeatureFlag[] = useMemo(() => [
-    { key: 'videoCalls', label: t('admin.features.video_calls'), description: t('admin.features.video_calls_desc'), enabled: true, affectedUsers: 12480 },
-    { key: 'aiIcebreakers', label: t('admin.features.ai_icebreakers'), description: t('admin.features.ai_icebreakers_desc'), enabled: true, affectedUsers: 12480 },
-    { key: 'aiBioGeneration', label: t('admin.features.ai_bio'), description: t('admin.features.ai_bio_desc'), enabled: false, affectedUsers: 0 },
-    { key: 'aiCompatibility', label: t('admin.features.ai_compatibility'), description: t('admin.features.ai_compatibility_desc'), enabled: true, affectedUsers: 8200 },
-    { key: 'groupsPage', label: t('admin.features.groups_page'), description: t('admin.features.groups_page_desc'), enabled: true, affectedUsers: 12480 },
-    { key: 'contests', label: t('admin.features.contests'), description: t('admin.features.contests_desc'), enabled: true, affectedUsers: 6500 },
-    { key: 'premiumTiers', label: t('admin.features.premium_tiers'), description: t('admin.features.premium_tiers_desc'), enabled: true, affectedUsers: 2100 },
-  ], [t]);
+  const [flags, setFlags] = useState<FeatureFlag[]>([]);
+  const [savedFlags, setSavedFlags] = useState<FeatureFlag[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const [flags, setFlags] = useState(INITIAL_FLAGS);
-  const [saved, setSaved] = useState(INITIAL_FLAGS);
+  useEffect(() => {
+    const fetchFlags = async () => {
+      try {
+        const data = await api.get<Record<string, boolean>>('/api/admin/features');
+        const mapped: FeatureFlag[] = [
+          { key: 'videoCalls', label: t('admin.features.video_calls'), description: t('admin.features.video_calls_desc'), enabled: data.videoCalls ?? true, affectedUsers: 12480 },
+          { key: 'aiIcebreakers', label: t('admin.features.ai_icebreakers'), description: t('admin.features.ai_icebreakers_desc'), enabled: data.aiIcebreakers ?? true, affectedUsers: 12480 },
+          { key: 'aiBioGeneration', label: t('admin.features.ai_bio'), description: t('admin.features.ai_bio_desc'), enabled: false, affectedUsers: 0 },
+          { key: 'aiCompatibility', label: t('admin.features.ai_compatibility'), description: t('admin.features.ai_compatibility_desc'), enabled: data.aiCompatibility ?? true, affectedUsers: 8200 },
+          { key: 'groupsPage', label: t('admin.features.groups_page'), description: t('admin.features.groups_page_desc'), enabled: data.groupsPage ?? true, affectedUsers: 12480 },
+          { key: 'contests', label: t('admin.features.contests'), description: t('admin.features.contests_desc'), enabled: data.contest ?? true, affectedUsers: 6500 },
+          { key: 'premiumTiers', label: t('admin.features.premium_tiers'), description: t('admin.features.premium_tiers_desc'), enabled: true, affectedUsers: 2100 },
+        ];
+        setFlags(mapped);
+        setSavedFlags(mapped);
+      } catch {
+        toast.error('Failed to load feature flags');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFlags();
+  }, [t]);
 
   const toggle = (key: string) => {
     setFlags(prev => prev.map(f => f.key === key ? { ...f, enabled: !f.enabled } : f));
   };
 
-  const hasChanges = JSON.stringify(flags) !== JSON.stringify(saved);
+  const hasChanges = JSON.stringify(flags.map(f => ({ key: f.key, enabled: f.enabled }))) !== JSON.stringify(savedFlags.map(f => ({ key: f.key, enabled: f.enabled })));
 
-  const handleSave = () => {
-    setSaved(flags);
-    toast.success(t('admin.features.saved'));
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const payload: Record<string, boolean> = {};
+      flags.forEach(f => { payload[f.key] = f.enabled; });
+      const token = getToken();
+      await fetch('/api/admin/features', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(payload),
+      });
+      setSavedFlags([...flags]);
+      toast.success(t('admin.features.saved'));
+    } catch {
+      toast.error('Failed to save');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleReset = () => {
-    setFlags(saved);
+    setFlags([...savedFlags]);
     toast.info(t('admin.features.reset'));
   };
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
 
   return (
     <Card className="border-0 shadow-sm">
@@ -74,8 +110,9 @@ export default function FeatureFlagsPage() {
         <Button variant="ghost" onClick={handleReset} disabled={!hasChanges} className="rounded-full text-xs font-bold h-10 px-6">
           <RotateCcw className="mr-2 h-3 w-3" /> {t('admin.features.reset_btn')}
         </Button>
-        <Button onClick={handleSave} disabled={!hasChanges} className="min-w-[140px] rounded-full bg-primary text-primary-foreground font-bold h-10 px-8">
-          <Save className="mr-2 h-3 w-3" /> {t('admin.features.save_btn')}
+        <Button onClick={handleSave} disabled={!hasChanges || saving} className="min-w-[140px] rounded-full bg-primary text-primary-foreground font-bold h-10 px-8">
+          {saving ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <Save className="mr-2 h-3 w-3" />}
+          {t('admin.features.save_btn')}
         </Button>
       </CardFooter>
     </Card>

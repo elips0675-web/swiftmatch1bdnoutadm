@@ -16,6 +16,7 @@ import adminMessaging from './routes/admin/messaging.js'
 import adminMonetization from './routes/admin/monetization.js'
 import profileRoutes from './routes/profile.js'
 import uploadRoutes from './routes/upload.js'
+import pushRoutes from './routes/push.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -114,6 +115,7 @@ app.get('/api/content', async (req, res) => {
 
 app.use(profileRoutes)
 app.use(uploadRoutes)
+app.use(pushRoutes)
 
 app.use('/api/admin', adminAuth)
 

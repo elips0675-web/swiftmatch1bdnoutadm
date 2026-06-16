@@ -1,47 +1,115 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, Heart, DollarSign, TrendingUp, Crown, UserPlus, Flag } from "lucide-react";
+import { Users, UserCheck, Heart, DollarSign, TrendingUp, Crown, UserPlus, Flag, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell
 } from 'recharts';
-import {
-  generateMockUsers, generateRegistrationTrend, generateCityDistribution,
-  generateRecentActivity, type ActivityItem
-} from '@/lib/admin-mock-data';
 import { useLanguage } from '@/context/language-context';
+import { getToken } from '@/lib/token';
 
 const COLORS = ['#fe3c72','#ff8e53','#3b82f6','#8b5cf6','#10b981','#f59e0b','#ec4899','#6366f1'];
 
-const activityIcons: Record<ActivityItem['type'], React.ReactNode> = {
+const activityIcons: Record<string, React.ReactNode> = {
   registration: <UserPlus size={14} className="text-blue-500" />,
   match: <Heart size={14} className="text-primary" fill="currentColor" />,
   report: <Flag size={14} className="text-amber-500" />,
   premium: <Crown size={14} className="text-yellow-500" />,
 };
 
+interface Stats {
+  totalUsers: number;
+  activeToday: number;
+  totalMatches: number;
+  revenue: number;
+}
+
+interface TrendItem {
+  date: string;
+  users: number;
+}
+
+interface CityItem {
+  name: string;
+  value: number;
+}
+
+interface ActivityItem {
+  id: number;
+  type: string;
+  text: string;
+  time: string;
+}
+
 export default function AdminDashboardPage() {
   const [trendPeriod, setTrendPeriod] = useState<'7' | '30' | '90'>('7');
   const { t } = useLanguage();
 
-  const users = useMemo(() => generateMockUsers(), []);
-  const trendData = useMemo(() => generateRegistrationTrend(Number(trendPeriod)), [trendPeriod]);
-  const cityData = useMemo(() => generateCityDistribution(users), [users]);
-  const activity = useMemo(() => generateRecentActivity(), []);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [trendData, setTrendData] = useState<TrendItem[]>([]);
+  const [cityData, setCityData] = useState<CityItem[]>([]);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const activeToday = users.filter(u => u.online).length;
-  const totalMatches = users.reduce((s, u) => s + u.matchesCount, 0);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = getToken();
+        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+        const f = <T,>(url: string): Promise<T> => fetch(url, { headers }).then(r => { if (!r.ok) throw new Error('fetch failed'); return r.json(); });
+        const [s, trend, cities, act] = await Promise.all([
+          f<Stats>('/api/admin/stats'),
+          f<TrendItem[]>(`/api/admin/registration-trend?period=${trendPeriod}`),
+          f<CityItem[]>('/api/admin/city-distribution'),
+          f<ActivityItem[]>('/api/admin/recent-activity'),
+        ]);
+        setStats(s);
+        setTrendData(trend);
+        setCityData(cities);
+        setActivity(act);
+      } catch {
+        setStats({ totalUsers: 0, activeToday: 0, totalMatches: 0, revenue: 0 });
+        setTrendData([]);
+        setCityData([]);
+        setActivity([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (!trendPeriod) return;
+    const token = getToken();
+    fetch(`/api/admin/registration-trend?period=${trendPeriod}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(setTrendData)
+      .catch(() => setTrendData([]));
+  }, [trendPeriod]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   const dSuffix = t('units.d_short');
-  const currency = t('admin.dash.revenue_value');
+  const currency = stats?.revenue != null
+    ? `${(stats.revenue / 100).toLocaleString()} ₽`
+    : t('admin.dash.revenue_value');
 
   const kpis = [
-    { title: t('admin.dash.total_users'), value: users.length.toLocaleString(), icon: Users, color: 'text-blue-500', change: '+24.1%' },
-    { title: t('admin.dash.active_today'), value: activeToday, icon: UserCheck, color: 'text-emerald-500', change: `${Math.round(activeToday / users.length * 100)}% ${t('admin.dash.from_all')}` },
-    { title: t('admin.dash.total_matches'), value: totalMatches.toLocaleString(), icon: Heart, color: 'text-primary', change: '+19.2%' },
-    { title: t('admin.dash.revenue_month'), value: currency, icon: DollarSign, color: 'text-amber-500', change: '+32%' },
+    { title: t('admin.dash.total_users'), value: (stats?.totalUsers ?? 0).toLocaleString(), icon: Users, color: 'text-blue-500', change: '' },
+    { title: t('admin.dash.active_today'), value: stats?.activeToday ?? 0, icon: UserCheck, color: 'text-emerald-500', change: stats?.totalUsers ? `${Math.round((stats.activeToday / stats.totalUsers) * 100)}% ${t('admin.dash.from_all')}` : '' },
+    { title: t('admin.dash.total_matches'), value: (stats?.totalMatches ?? 0).toLocaleString(), icon: Heart, color: 'text-primary', change: '' },
+    { title: t('admin.dash.revenue_month'), value: currency, icon: DollarSign, color: 'text-amber-500', change: '' },
   ];
 
   return (
@@ -55,9 +123,11 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-black tracking-tighter">{kpi.value}</div>
-              <p className="text-[10px] text-emerald-500 font-bold mt-1 flex items-center gap-1">
-                <TrendingUp size={10} /> {kpi.change}
-              </p>
+              {kpi.change && (
+                <p className="text-[10px] text-emerald-500 font-bold mt-1 flex items-center gap-1">
+                  <TrendingUp size={10} /> {kpi.change}
+                </p>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -131,7 +201,7 @@ export default function AdminDashboardPage() {
             {activity.map(item => (
               <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors">
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  {activityIcons[item.type]}
+                  {activityIcons[item.type] || <Flag size={14} className="text-muted-foreground" />}
                 </div>
                 <span className="text-sm font-medium flex-1">{item.text}</span>
                 <Badge variant="outline" className="text-[9px] shrink-0">{item.time}</Badge>

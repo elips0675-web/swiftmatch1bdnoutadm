@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import pool from '../../db.js'
+import { sendPushToAll } from '../push.js'
 
 const router = Router()
 
@@ -30,6 +31,13 @@ router.post('/campaigns', async (req, res) => {
        VALUES (?, ?, ?, ?, ?, 'sent', 0, 0, 0)`,
       [title, body, target || 'all', channel || 'push', req.admin.id],
     )
+
+    if (channel === 'push') {
+      sendPushToAll(title, body, '/').catch(err => {
+        console.error('Campaign push send failed:', err)
+      })
+    }
+
     res.status(201).json({ id: result.insertId, message: 'Campaign sent' })
   } catch (err) {
     console.error('Create campaign error:', err)

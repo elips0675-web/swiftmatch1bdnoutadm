@@ -28,7 +28,12 @@ export default function FeatureFlagsPage() {
   useEffect(() => {
     const fetchFlags = async () => {
       try {
-        const data = await api.get<Record<string, boolean>>('/api/admin/features');
+        const token = getToken();
+        const res = await fetch('/api/admin/features', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data: Record<string, boolean> = await res.json();
         const mapped: FeatureFlag[] = [
           { key: 'videoCalls', label: t('admin.features.video_calls'), description: t('admin.features.video_calls_desc'), enabled: data.videoCalls ?? true, affectedUsers: 12480 },
           { key: 'aiIcebreakers', label: t('admin.features.ai_icebreakers'), description: t('admin.features.ai_icebreakers_desc'), enabled: data.aiIcebreakers ?? true, affectedUsers: 12480 },

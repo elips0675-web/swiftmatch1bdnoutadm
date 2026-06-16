@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "@/shims/next-navigation";
-import { useAuth } from "@/shims/firebase";
+import { useAuth } from "@/context/auth-context";
 import { 
   Bell, 
   Search, 
@@ -26,7 +26,7 @@ import { subscribeToPush, unsubscribeFromPush } from "@/lib/push-notifications";
 export default function SettingsPage() {
   const router = useRouter();
   const { t } = useLanguage();
-  const auth = useAuth();
+  const { logout } = useAuth();
   
   const [settings, setSettings] = useState({
     pushNotifications: true,
@@ -89,23 +89,21 @@ export default function SettingsPage() {
   };
 
   const handleLogout = () => {
-    auth.signOut().then(() => {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userProfile');
-      localStorage.removeItem('userProfileGallery');
-      localStorage.removeItem('incognito-mode');
-      // Clear encrypted chat data
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('swiftchat_')) keysToRemove.push(key);
-      }
-      keysToRemove.forEach(k => localStorage.removeItem(k));
-      toast({
-        title: t('logout.title'),
-      });
-      router.push("/login");
+    logout();
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userProfile');
+    localStorage.removeItem('userProfileGallery');
+    localStorage.removeItem('incognito-mode');
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('swiftchat_')) keysToRemove.push(key);
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+    toast({
+      title: t('logout.title'),
     });
+    router.push("/login");
   };
 
   return (

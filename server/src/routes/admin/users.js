@@ -39,7 +39,7 @@ router.get('/users', async (req, res) => {
     const [rows] = await pool.query(
       `SELECT u.id, up.display_name as name, up.age, u.email, up.city,
               CASE WHEN u.is_active = 1 THEN 'active' ELSE 'banned' END as status,
-              'free' as premium, u.online as online,
+               'free' as premium, false as online,
               DATE_FORMAT(u.created_at, '%Y-%m-%d') as joined,
               DATE_FORMAT(u.last_login, '%Y-%m-%d %H:%i') as lastActive,
               COALESCE(up.bio, '') as bio
@@ -52,8 +52,10 @@ router.get('/users', async (req, res) => {
     )
 
     const [[{ cities }]] = await pool.query(
-      `SELECT JSON_ARRAYAGG(DISTINCT city) as cities
-       FROM user_profiles WHERE city IS NOT NULL AND city != ''`,
+      `SELECT COALESCE(
+        (SELECT JSON_ARRAYAGG(city) FROM (SELECT DISTINCT city FROM user_profiles WHERE city IS NOT NULL AND city != '') t),
+        '[]'
+      ) as cities`,
     )
 
     res.json({ users: rows, total, cities: JSON.parse(cities || '[]') })

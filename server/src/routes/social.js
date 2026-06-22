@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit'
 import pool from '../db.js'
 import { getIO } from '../ws.js'
 import { getBannedWords, containsBannedWord } from '../banned-words.js'
+import { sendPushToUser } from './push.js'
 
 const likeLimiter = rateLimit({ windowMs: 60_000, max: 30, message: { message: 'Too many likes' } })
 
@@ -149,6 +150,11 @@ router.post('/api/likes', auth, likeLimiter, async (req, res) => {
       const [[notif]] = await pool.query('SELECT id, type, payload, created_at FROM notifications WHERE id = ?', [notifResult.insertId])
       io.to(`user:${liked_user_id}`).emit('notification:new', notif)
     }
+
+    const [[liker]] = await pool.query('SELECT display_name FROM user_profiles WHERE id = ?', [req.userId])
+    sendPushToUser(liked_user_id, 'SwiftMatch', matched
+      ? `It\'s a match with ${liker?.display_name || 'someone'}!`
+      : `${liker?.display_name || 'Someone'} liked you!`)
 
     res.status(201).json({ message: matched ? 'It\'s a match!' : 'Like sent', matched })
   } catch (err) {
@@ -371,6 +377,16 @@ router.post('/api/chats/:chatId/messages', auth, async (req, res) => {
       `SELECT id, sender_id, text, created_at FROM messages WHERE id = ?`,
       [result.insertId],
     )
+
+    const [otherParticipant] = await pool.query(
+      'SELECT user_id FROM chat_participants WHERE chat_id = ? AND user_id != ? LIMIT 1',
+      [req.params.chatId, req.userId],
+    )
+    if (otherParticipant.length > 0) {
+      const [[sender]] = await pool.query('SELECT display_name FROM user_profiles WHERE id = ?', [req.userId])
+      sendPushToUser(otherParticipant[0].user_id, sender?.display_name || 'New message', text.substring(0, 100), `/chats?matchId=${otherParticipant[0].user_id}`)
+    }
+
     res.status(201).json(msg)
   } catch (err) {
     console.error('Message send error:', err)

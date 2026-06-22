@@ -141,7 +141,8 @@ export default function EditProfilePage() {
         if (res.ok) {
           const data = await res.json()
           const photoUrls = (data.photos || []).map((ph: any) => ph.url)
-          setProfile(mapDbProfile(data))
+          const mapped = mapDbProfile(data)
+          setProfile(mapped)
           if (photoUrls.length > 0) setPhotos(photoUrls)
           else {
             const saved = localStorage.getItem('userProfileGallery')
@@ -299,13 +300,15 @@ export default function EditProfilePage() {
 
   const toggleInterest = (interest: string) => {
     if (BANNED_WORDS.includes(interest)) return;
-    const currentInterests = profile.interests || [];
-    setProfile((prev: any) => ({
-      ...prev,
-      interests: currentInterests.includes(interest)
-        ? currentInterests.filter((i: string) => i !== interest)
-        : [...currentInterests, interest]
-    }));
+    setProfile((prev: any) => {
+      const current = prev.interests || [];
+      return {
+        ...prev,
+        interests: current.includes(interest)
+          ? current.filter((i: string) => i !== interest)
+          : [...current, interest]
+      };
+    });
   };
 
   if (isLoading || !profile) {

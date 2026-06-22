@@ -1,6 +1,6 @@
 
-import React, { useState, useRef, useEffect, useMemo, useCallback, Suspense } from "react";
-import { Search, ChevronLeft, Send, MoveVertical as MoreVertical, Smile, Heart, Laugh, Zap, Flame, Star, Ghost, Rocket, Crown, Music, Phone, Video, Flag, Check, CheckCheck, Info, Users, MessageSquare, ChevronRight, Trash2, ThumbsUp, PartyPopper, Eye, Frown, Award, Compass, Coffee, MessageSquareQuote, PawPrint, Globe, Film, BookOpen, Baby, Sun, TrendingUp } from "lucide-react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { Search, ChevronLeft, Send, MoveVertical as MoreVertical, Smile, Heart, Laugh, Zap, Flame, Star, Ghost, Rocket, Crown, Music, Phone, Video, Flag, Info, ChevronRight, Trash2, ThumbsUp, PartyPopper, Eye, Frown, Award, Compass, Coffee, MessageSquareQuote, PawPrint, Globe, Film, BookOpen, Baby, Sun } from "lucide-react";
 import Image from "@/shims/next-image";
 import { useSearchParams, useRouter } from "@/shims/next-navigation";
 import dynamic from "@/shims/next-dynamic";
@@ -11,79 +11,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/context/language-context";
 import { toast } from "@/hooks/use-toast";
 import { useFeatureFlags } from "@/context/feature-flags-context";
-import { ALL_DEMO_USERS, GROUP_CATEGORIES } from "@/lib/demo-data";
 import { containsForbiddenWords, isGibberish } from "@/lib/word-filter";
-import { encryptStorage, decryptStorage } from "@/lib/crypto";
 import { useAntiScreenshot } from "@/hooks/useAntiScreenshot";
-const CategoryFeed = React.lazy(() => import("@/components/feeds/category-feed").then(m => ({ default: m.CategoryFeed })));
 
 const VideoCallDialog = dynamic(() => import('@/components/video-call').then(mod => mod.VideoCallDialog), { ssr: false });
 const VoiceCallDialog = dynamic(() => import('@/components/voice-call').then(mod => mod.VoiceCallDialog), { ssr: false });
 
 
 
-const STORAGE_PREFIX = 'swiftchat_';
-
-async function loadMessages(chatId: number): Promise<any[] | null> {
-  return decryptStorage<any[]>(`${STORAGE_PREFIX}messages_${chatId}`);
-}
-
-async function saveMessages(chatId: number, msgs: any[]) {
-  await encryptStorage(`${STORAGE_PREFIX}messages_${chatId}`, msgs);
-  if (msgs.length > 0) {
-    const last = msgs[msgs.length - 1];
-    updateLastMsgCache(chatId, last.text, last.time);
-  }
-}
-
-// Unencrypted cache for chat list preview only (last message text/time)
-// Full message history stays encrypted in localStorage
-function updateLastMsgCache(chatId: number, text: string, time: string) {
-  try {
-    const raw = localStorage.getItem(`${STORAGE_PREFIX}lastmsg_cache`);
-    const cache = raw ? JSON.parse(raw) : {};
-    cache[chatId] = { text, time };
-    localStorage.setItem(`${STORAGE_PREFIX}lastmsg_cache`, JSON.stringify(cache));
-  } catch {}
-}
-
-function getLastMsgCache(): Record<number, { text: string; time: string }> {
-  try {
-    const raw = localStorage.getItem(`${STORAGE_PREFIX}lastmsg_cache`);
-    return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
-}
-
-function getRecentChatIds(): number[] {
-  try {
-    const raw = localStorage.getItem(`${STORAGE_PREFIX}recent`);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
-function saveRecentChatId(chatId: number) {
-  const recent = getRecentChatIds().filter(id => id !== chatId);
-  recent.unshift(chatId);
-  try { localStorage.setItem(`${STORAGE_PREFIX}recent`, JSON.stringify(recent.slice(0, 50))); } catch {}
-}
-
-function removeRecentChatId(chatId: number) {
-  const recent = getRecentChatIds().filter(id => id !== chatId);
-  try { localStorage.setItem(`${STORAGE_PREFIX}recent`, JSON.stringify(recent)); } catch {}
-  localStorage.removeItem(`${STORAGE_PREFIX}messages_${chatId}`);
-  const cache = getLastMsgCache();
-  delete cache[chatId];
-  try { localStorage.setItem(`${STORAGE_PREFIX}lastmsg_cache`, JSON.stringify(cache)); } catch {}
+function deleteConversation(chatId: number) {
+  fetch(`/api/chats/${chatId}`, { method: 'DELETE' }).catch(() => {});
 }
 
 const QUICK_REACTIONS = [
@@ -119,14 +63,6 @@ const CHAT_THEMES = [
   { id: 'childhood', labelKey: 'chats.theme.childhood', icon: Baby, color: 'text-pink-400', mood: 'Childhood memories and stories' },
   { id: 'nature', labelKey: 'chats.theme.nature', icon: Sun, color: 'text-orange-400', mood: 'Nature, weather and seasons' },
 ];
-
-function getInitialMessages(t: (k: string) => string) {
-  return [
-    { id: 1, text: t('chats.demo.msg1'), sender: "other", time: "10:00" },
-    { id: 2, text: t('chats.demo.msg2'), sender: "me", time: "10:02" },
-    { id: 3, text: t('chats.demo.msg3'), sender: "other", time: "10:05" },
-  ];
-}
 
 const ITEMS_PER_PAGE = 8;
 
@@ -205,7 +141,6 @@ function ChatsContent() {
     };
   }, []);
 
-  const [activeTab, setActiveTab] = useState<"direct" | "groups">("direct");
   const [selectedChat, setSelectedChat] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -221,85 +156,30 @@ function ChatsContent() {
   const [reportDescription, setReportDescription] = useState('');
   const [isVideoCall, setIsVideoCall] = useState(false);
   const [isVoiceCall, setIsVoiceCall] = useState(false);  
-  const [joinedGroupNames, setJoinedGroupNames] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [recentIds, setRecentIds] = useState<number[]>(() => getRecentChatIds());
-  const [unreadCounts, setUnreadCounts] = useState<Record<number, number>>({});
   const [apiChats, setApiChats] = useState<any[]>([]);
-  const [useApi, setUseApi] = useState(false);
   const msgContainerRef = useAntiScreenshot<HTMLDivElement>();
 
-  useEffect(() => {
-    const saved = localStorage.getItem('userProfile');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setJoinedGroupNames(parsed.joinedGroups || []);
-      } catch (e) {}
-    }
-  }, []);
-
   const allDirectChats = useMemo(() => {
-    if (useApi && apiChats.length > 0) {
-      return apiChats.map(c => ({
-        id: c.id,
-        name: c.display_name,
-        img: c.avatar_url || '',
-        online: c.online,
-        lastMessage: c.last_message || '',
-        time: c.updated_at || '',
-        last_read_at: c.last_read_at,
-        unread_count: c.unread_count || 0,
-        isApi: true,
-      }));
-    }
-    const cache = getLastMsgCache();
-    const recent = recentIds.map(id => {
-      const user = ALL_DEMO_USERS.find(u => u.id === id);
-      if (!user) return null;
-      const cached = cache[id];
-      return { ...user, lastMessage: cached ? cached.text : '', time: cached ? cached.time : '', isApi: false };
-    }).filter(Boolean);
-
-    const remaining = ALL_DEMO_USERS.filter(u => !u.isSystem && !recentIds.includes(u.id)).map(u => ({
-      ...u, lastMessage: '', time: '', isApi: false
+    return apiChats.map(c => ({
+      id: c.id,
+      name: c.display_name,
+      img: c.avatar_url || '',
+      online: c.online,
+      lastMessage: c.last_message || '',
+      time: c.updated_at || '',
+      last_read_at: c.last_read_at,
+      unread_count: c.unread_count || 0,
     }));
-
-    return [...recent, ...remaining];
-  }, [language, recentIds, useApi, apiChats]);
-
-  const allGroupChats = useMemo(() => {
-    const groups: any[] = [];
-    GROUP_CATEGORIES.forEach(cat => {
-      cat.subgroups.forEach(sub => {
-        const isJoined = joinedGroupNames.some(name => 
-          name === sub.name_ru || name === sub.name_en
-        );
-
-        if (isJoined) {
-          groups.push({
-            ...sub,
-            isGroup: true,
-            img: cat.img,
-            categoryName: language === 'RU' ? cat.name_ru : cat.name_en,
-            name: language === 'RU' ? sub.name_ru : sub.name_en,
-            lastMessage: t('chats.new_group_message'),
-            time: "12:45"
-          });
-        }
-      });
-    });
-    return groups;
-  }, [language, joinedGroupNames]);
+  }, [apiChats]);
 
   const filteredData = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const source = activeTab === "direct" ? allDirectChats : allGroupChats;
-    if (!query) return source;
-    return source.filter(item => 
+    if (!query) return allDirectChats;
+    return allDirectChats.filter(item =>
       item.name.toLowerCase().includes(query)
     );
-  }, [searchQuery, activeTab, allDirectChats, allGroupChats]);
+  }, [searchQuery, allDirectChats]);
 
   const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
   const paginatedItems = useMemo(() => {
@@ -309,7 +189,7 @@ function ChatsContent() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, searchQuery]);
+  }, [searchQuery]);
 
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => messagesEndRef.current?.scrollIntoView({ behavior });
   useEffect(() => { if (selectedChat) scrollToBottom(); }, [messages, selectedChat]);
@@ -319,93 +199,42 @@ function ChatsContent() {
 
   useEffect(() => {
     if (matchId) {
-      const id = parseInt(matchId);
-      const chat = ALL_DEMO_USERS.find(u => u.id === id);
-      if (chat) { 
-        setSelectedChat(chat); 
-        setActiveTab("direct");
-        loadMessages(id).then(saved => {
-          if (saved && saved.length > 0) {
-            setMessages(saved);
-          } else {
-            const msgs = [{ id: Date.now(), text: t('chats.match_greeting'), sender: "me", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }];
-            setMessages(msgs);
-            saveMessages(id, msgs);
-            saveRecentChatId(id);
-            setRecentIds(getRecentChatIds());
-          }
+      const chat = apiChats.find(c => c.id === parseInt(matchId));
+      if (chat) {
+        setSelectedChat({
+          id: chat.id,
+          name: chat.display_name,
+          img: chat.avatar_url || '',
+          online: chat.online,
         });
-      }
-    } else if (groupId) {
-      const id = parseInt(groupId);
-      let foundGroup: any = null;
-      let foundCategory: any = null;
-      GROUP_CATEGORIES.forEach(c => {
-        c.subgroups.forEach(s => {
-          if (s.id === id) {
-            foundGroup = { ...s, isGroup: true, name: language === 'RU' ? s.name_ru : s.name_en };
-            foundCategory = c;
-          }
-        });
-      });
-      
-      if (foundGroup) {
-        foundGroup.categoryNameRu = foundCategory?.name_ru || '';
-        foundGroup.categoryNameEn = foundCategory?.name_en || '';
-        setSelectedChat(foundGroup);
-        setActiveTab("groups");
-        loadMessages(id).then(saved => {
-          if (saved && saved.length > 0) {
-            setMessages(saved);
-          } else {
-            const msgs = [{ id: Date.now(), text: t('chats.welcome_group'), sender: "other", time: "12:00" }];
-            setMessages(msgs);
-            saveMessages(id, msgs);
-            saveRecentChatId(id);
-            setRecentIds(getRecentChatIds());
-          }
-        });
+        fetch(`/api/chats/${chat.id}/messages`)
+          .then(res => res.ok ? res.json() : [])
+          .then(data => {
+            if (Array.isArray(data)) {
+              const msgs = data.map((m: any) => ({
+                id: m.id, text: m.text,
+                sender: m.sender_id === 1 ? 'me' : 'other',
+                time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                reactions: m.reactions || [],
+              }));
+              setMessages(msgs);
+              const rMap: Record<number, any[]> = {};
+              data.forEach((m: any) => { if (m.reactions?.length) rMap[m.id] = m.reactions; });
+              setReactions(rMap);
+            }
+          })
+          .catch(() => {});
       }
     }
-  }, [matchId, groupId, language, t]);
+  }, [matchId]);
 
   useEffect(() => {
     fetch('/api/chats')
       .then(res => res.ok ? res.json() : [])
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          const map: Record<number, number> = {};
-          data.forEach((c: any) => { map[c.id] = c.unread_count || 0 });
-          setUnreadCounts(map);
-          setApiChats(data);
-          setUseApi(true);
-        }
-      })
+      .then(data => { if (Array.isArray(data)) setApiChats(data); })
       .catch(() => {});
   }, []);
 
-  const handleToggleJoin = useCallback(() => {
-    setJoinedGroupNames(prev => {
-      const name = selectedChat?.name;
-      if (!name) return prev;
-      if (prev.includes(name)) {
-        const next = prev.filter(n => n !== name);
-        try {
-          const saved = JSON.parse(localStorage.getItem('userProfile') || '{}');
-          saved.joinedGroups = next;
-          localStorage.setItem('userProfile', JSON.stringify(saved));
-        } catch {}
-        return next;
-      }
-      const next = [...prev, name];
-      try {
-        const saved = JSON.parse(localStorage.getItem('userProfile') || '{}');
-        saved.joinedGroups = next;
-        localStorage.setItem('userProfile', JSON.stringify(saved));
-      } catch {}
-      return next;
-    });
-  }, [selectedChat]);
 
 
   const handleSendMessage = (textOverride?: string) => {
@@ -422,76 +251,45 @@ function ChatsContent() {
       return;
     }
 
-    if (selectedChat?.isApi) {
-      fetch(`/api/chats/${selectedChat.id}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: textToSend }),
+    fetch(`/api/chats/${selectedChat.id}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: textToSend }),
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(msg => {
+        if (msg) {
+          const newMessage = { id: msg.id, text: msg.text, sender: 'me', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+          const updated = [...messages, newMessage];
+          setMessages(updated);
+        }
       })
-        .then(res => res.ok ? res.json() : null)
-        .then(msg => {
-          if (msg) {
-            const newMessage = { id: msg.id, text: msg.text, sender: 'me', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-            const updated = [...messages, newMessage];
-            setMessages(updated);
-          }
-        })
-        .catch(() => {});
-      if (!textOverride) setInputValue('');
-      return;
-    }
-
-    const newMessage = { id: Date.now(), text: textToSend, sender: "me", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-    const updated = [...messages, newMessage];
-    setMessages(updated);
-    saveMessages(selectedChat.id, updated);
-    saveRecentChatId(selectedChat.id);
-    setRecentIds(getRecentChatIds());
-    if (!textOverride) setInputValue("");
-    
-    if (!selectedChat.isGroup) {
-      setTimeout(() => { 
-        setIsTyping(true); 
-        setTimeout(() => { 
-          setIsTyping(false); 
-          const text = t('chats.demo.reply');
-          const response = { id: Date.now() + 1, text, sender: "other", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-          const withReply = [...updated, response];
-          setMessages(withReply);
-          saveMessages(selectedChat.id, withReply);
-        }, 2000); 
-      }, 1000);
-    }
+      .catch(() => {});
+    if (!textOverride) setInputValue('');
   };
 
   const openChat = (chat: any) => {
     setSelectedChat(chat);
     setReactions({});
-    if (chat.isApi) {
-      fetch(`/api/chats/${chat.id}/messages`)
-        .then(res => res.ok ? res.json() : [])
-        .then(data => {
-          if (Array.isArray(data) && data.length > 0) {
-            const msgs = data.map((m: any) => ({
-              id: m.id,
-              text: m.text,
-              sender: m.sender_id === 1 ? 'me' : 'other',
-              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              reactions: m.reactions || [],
-            }));
-            setMessages(msgs);
-            const rMap: Record<number, any[]> = {};
-            data.forEach((m: any) => { if (m.reactions?.length) rMap[m.id] = m.reactions; });
-            setReactions(rMap);
-          } else setMessages(getInitialMessages(t));
-        })
-        .catch(() => setMessages(getInitialMessages(t)));
-      fetch(`/api/chats/${chat.id}/read`, { method: 'PUT' }).catch(() => {});
-    } else {
-      loadMessages(chat.id).then(saved => {
-        setMessages(saved && saved.length > 0 ? saved : getInitialMessages(t));
-      });
-    }
+    fetch(`/api/chats/${chat.id}/messages`)
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        if (Array.isArray(data)) {
+          const msgs = data.map((m: any) => ({
+            id: m.id,
+            text: m.text,
+            sender: m.sender_id === 1 ? 'me' : 'other',
+            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            reactions: m.reactions || [],
+          }));
+          setMessages(msgs);
+          const rMap: Record<number, any[]> = {};
+          data.forEach((m: any) => { if (m.reactions?.length) rMap[m.id] = m.reactions; });
+          setReactions(rMap);
+        }
+      })
+      .catch(() => {});
+    fetch(`/api/chats/${chat.id}/read`, { method: 'PUT' }).catch(() => {});
   };
 
   const handleThemeClick = useCallback((themeId: string) => {
@@ -532,54 +330,6 @@ function ChatsContent() {
   };
 
   if (selectedChat) {
-    // Группы: вместо чата показываем ленту подгруппы
-    if (selectedChat.isGroup) {
-      return (
-<div className="flex flex-col bg-[#f8f9fb]" style={{ height: viewportHeight }}>
-           <header className="flex items-center gap-2 px-3 py-2 border-b border-border sticky top-0 bg-white/90 backdrop-blur-lg z-50 h-16">
-            <Button variant="ghost" size="icon" onClick={handleBack} className="rounded-full hover:bg-muted/50">
-              <ChevronLeft size={24} />
-            </Button>
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full overflow-hidden relative border-2 border-white shadow-sm bg-muted flex items-center justify-center">
-                <Users size={20} className="text-muted-foreground" />
-              </div>
-            </div>
-            <div className="flex-1 min-w-0 text-center">
-              <h3 className="font-black text-sm leading-tight tracking-tight text-foreground truncate">
-                {selectedChat.name}
-              </h3>
-              <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">
-                {selectedChat.members} {t('chats.members')}
-              </p>
-            </div>
-            <Button
-              variant={joinedGroupNames.includes(selectedChat.name) ? "outline" : "default"}
-              size="sm"
-              className={cn(
-                "shrink-0 h-8 px-4 rounded-full font-black text-[9px] uppercase tracking-widest",
-                joinedGroupNames.includes(selectedChat.name)
-                  ? "border-primary/20 text-primary hover:bg-primary/5"
-                  : "gradient-bg text-white border-0 shadow-lg shadow-primary/20"
-              )}
-              onClick={handleToggleJoin}
-            >
-              {joinedGroupNames.includes(selectedChat.name) ? t('button.leave') : t('button.join')}
-            </Button>
-          </header>
-          <main className="flex-1 overflow-y-auto pb-20 p-0">
-            <Suspense fallback={<div className="flex-1 flex items-center justify-center p-8"><div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>}>
-              <CategoryFeed
-                categoryNameRu={selectedChat.categoryNameRu || ''}
-                categoryNameEn={selectedChat.categoryNameEn || ''}
-              />
-            </Suspense>
-          </main>
-          <BottomNav />
-        </div>
-      );
-    }
-
     return (
       <>
       <div className="flex flex-col bg-[#f8f9fb]" style={{ height: `calc(${viewportHeight}px - 4rem)` }}>
@@ -587,32 +337,26 @@ function ChatsContent() {
           <Button variant="ghost" size="icon" onClick={handleBack} className="rounded-full hover:bg-muted/50"><ChevronLeft size={24} /></Button>
           <div className="relative">
             <div className="w-10 h-10 rounded-full overflow-hidden relative border-2 border-white shadow-sm bg-muted flex items-center justify-center">
-              {selectedChat.isGroup ? <Users size={20} className="text-muted-foreground" /> : <Image src={selectedChat.img} alt={selectedChat.name || ''} fill sizes="40px" className="object-cover" />}
+              <Image src={selectedChat.img} alt={selectedChat.name || ''} fill sizes="40px" className="object-cover" />
             </div>
-            {!selectedChat.isGroup && selectedChat.online && <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#2ecc71] border-2 border-white rounded-full shadow-sm"></span>}
+            {selectedChat.online && <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#2ecc71] border-2 border-white rounded-full shadow-sm"></span>}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-black text-sm leading-tight tracking-tight text-foreground truncate">{selectedChat.name}</h3>
             <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">
-              {selectedChat.isGroup ? `${selectedChat.members} ${t('chats.members')}` : (selectedChat.online ? `• ${t('chats.online')}` : t('chats.offline'))}
+              {selectedChat.online ? `• ${t('chats.online')}` : t('chats.offline')}
             </p>
           </div>
           <div className="flex items-center">
-            {!selectedChat.isGroup && (
-              <>
-                {videoCallsEnabled && <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50" onClick={() => setIsVideoCall(true)}><Video size={18} /></Button>}
-                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50" onClick={() => setIsVoiceCall(true)}><Phone size={18} /></Button>
-              </>
-            )}
-            {!selectedChat.isGroup && (
-              <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50" onClick={() => setShowTopicsDialog(true)}><Info size={18} /></Button>
-            )}
+            {videoCallsEnabled && <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50" onClick={() => setIsVideoCall(true)}><Video size={18} /></Button>}
+            <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50" onClick={() => setIsVoiceCall(true)}><Phone size={18} /></Button>
+            <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50" onClick={() => setShowTopicsDialog(true)}><Info size={18} /></Button>
             <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50"><MoreVertical size={18} /></Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="rounded-2xl border-0 app-shadow p-1.5 min-w-[160px] bg-white">
-                    <DropdownMenuItem onSelect={() => { removeRecentChatId(selectedChat.id); setRecentIds(getRecentChatIds()); handleBack(); }} className="rounded-xl font-bold text-[10px] uppercase tracking-wider cursor-pointer py-2 text-destructive focus:text-destructive focus:bg-destructive/10">
+                    <DropdownMenuItem onSelect={() => { deleteConversation(selectedChat.id); handleBack(); }} className="rounded-xl font-bold text-[10px] uppercase tracking-wider cursor-pointer py-2 text-destructive focus:text-destructive focus:bg-destructive/10">
                         <Trash2 size={14} className="mr-2" />
                         {t('chats.delete_conversation')}
                     </DropdownMenuItem>
@@ -726,61 +470,32 @@ function ChatsContent() {
           <Badge className="gradient-bg text-white rounded-full px-3 py-1 font-black text-[10px] border-0 shadow-lg shadow-primary/20">3 {t('activity.new')}</Badge>
         </div>
 
-        <div className="flex gap-2 p-1 bg-white rounded-2xl app-shadow mb-6 mx-1 border border-border/40">
-          <button 
-            onClick={() => setActiveTab("direct")}
-            className={cn(
-              "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-              activeTab === "direct" ? "gradient-bg text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-muted/50"
-            )}
-          >
-            <MessageSquare size={14} /> {t('chats.tab.direct')}
-          </button>
-          <button 
-            onClick={() => setActiveTab("groups")}
-            className={cn(
-              "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-              activeTab === "groups" ? "gradient-bg text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-muted/50"
-            )}
-          >
-            <Users size={14} /> {t('chats.tab.groups')}
-          </button>
-        </div>
-
         <div className="relative mb-8 px-1">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground/60" size={16} />
           <Input 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-12 h-12 bg-white border-0 rounded-2xl app-shadow text-sm font-medium" 
-            placeholder={activeTab === 'direct' ? t('chats.search') : t('chats.search_groups_placeholder')}
+            placeholder={t('chats.search')}
           />
         </div>
 
         <div className="space-y-1 px-1">
           {paginatedItems.length > 0 ? (
             paginatedItems.map((item) => {
-              const hasUnread = item.isApi ? (item.unread_count || 0) > 0 : (unreadCounts[item.id] || 0) > 0;
+              const hasUnread = (item.unread_count || 0) > 0;
               return (
-                <div key={`${activeTab}-${item.id}`} onClick={() => openChat(item)} className={cn(
+                <div key={item.id} onClick={() => openChat(item)} className={cn(
                   "flex items-center gap-3 p-3 rounded-2xl transition-all cursor-pointer group border border-white mb-2",
                   "bg-white app-shadow hover:bg-muted/30"
                 )}>
                     <div className="relative flex-shrink-0">
-                    {item.isGroup ? (
-                      <div className={cn(
-                        "w-12 h-12 rounded-xl overflow-hidden border-2 border-white shadow-sm transition-transform group-hover:scale-105 bg-muted flex items-center justify-center"
-                      )}>
-                        <Users size={24} className="text-orange-500" />
-                      </div>
-                    ) : (
                       <div className={cn(
                         "w-12 h-12 rounded-xl overflow-hidden border-2 border-white shadow-sm transition-transform group-hover:scale-105 bg-muted"
                       )}>
                         <Image src={item.img} alt={item.name || ''} fill sizes="48px" className="object-cover" />
                       </div>
-                    )}
-                    {!item.isGroup && item.online && <span className="absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full shadow-md bg-[#2ecc71]"></span>}
+                    {item.online && <span className="absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full shadow-md bg-[#2ecc71]"></span>}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-0.5">
@@ -788,17 +503,11 @@ function ChatsContent() {
                         <span className="font-black text-sm text-foreground tracking-tight group-hover:text-primary transition-colors truncate">
                           {item.name}
                         </span>
-                        {item.isGroup && <Badge variant="secondary" className="bg-muted text-[7px] font-black uppercase px-1 py-0 border-0 h-3.5">{t('chats.group_badge')}</Badge>}
                       </div>
                       <span className="text-[10px] text-muted-foreground font-bold opacity-60 flex-shrink-0 ml-2">{item.time}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        {!item.isGroup && (item.id % 4 === 0 ? (
-                          <CheckCheck size={12} className="text-primary flex-shrink-0" />
-                        ) : (
-                          <Check size={12} className="text-muted-foreground/40 flex-shrink-0" />
-                        ))}
                         <p className={cn(
                           "text-xs truncate pr-2 font-medium leading-snug",
                           hasUnread ? "text-foreground font-bold" : "text-muted-foreground opacity-80"
@@ -808,7 +517,7 @@ function ChatsContent() {
                       </div>
                       {hasUnread && (
                         <Badge className="h-5 min-w-[20px] px-1.5 gradient-bg text-white border-0 text-[9px] font-black flex items-center justify-center rounded-full scale-90 shadow-lg shadow-primary/20">
-                          {item.isApi ? (item.unread_count || 0) : (unreadCounts[item.id] || 2)}
+                          {item.unread_count}
                         </Badge>
                       )}
                     </div>
@@ -822,11 +531,6 @@ function ChatsContent() {
                 <Info size={24} />
               </div>
               <p className="text-[10px] font-black uppercase tracking-widest">{t('activity.empty')}</p>
-              {activeTab === 'groups' && joinedGroupNames.length === 0 && (
-                <p className="text-[9px] text-muted-foreground max-w-[200px] leading-relaxed">
-                  {t('chats.no_groups')}
-                </p>
-              )}
             </div>
           )}
 

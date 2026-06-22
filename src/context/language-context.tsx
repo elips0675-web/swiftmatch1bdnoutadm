@@ -39,6 +39,9 @@ const translations = {
     'nav.chats': 'Чаты',
     'nav.profile': 'Профиль',
     'nav.groups': 'Группы',
+    'nav.matches': 'Мэтчи',
+    'nav.notifications': 'Уведомления',
+    'notification.mark_all_read': 'Прочитать все',
     // Common Buttons
     'button.continue': 'Продолжить',
     'button.skip': 'Пропустить',
@@ -217,6 +220,12 @@ const translations = {
     'swipes.nearby': 'анкет рядом',
     'match.insight_default': 'Вы отлично подходите друг другу!',
     'match.liked_each_other': 'понравились друг другу.',
+    'matches.title': 'Мэтчи',
+    'matches.subtitle': 'Все, кто вам взаимно понравились',
+    'matches.empty_title': 'Пока нет мэтчей',
+    'matches.empty_desc': 'Ставьте лайки, чтобы находить новых друзей',
+    'matches.start_searching': 'Начать поиск',
+    'profile.years_old': 'лет',
     'user.match_score': 'Совпадение',
     'user.from_you': 'от вас',
     // Filter
@@ -390,6 +399,8 @@ const translations = {
     'admin.monetization.save_success_desc': 'Изменения будут применены в приложении.',
     'admin.monetization.pricing_title': 'Тарифы подписок (₽)',
     'admin.monetization.prices_saved': 'Цены сохранены',
+    'admin.monetization.ads_saved': 'Конфиг рекламы сохранён',
+    'admin.monetization.save_error': 'Ошибка сохранения',
     'admin.monetization.save': 'Сохранить',
     'admin.monetization.ad_blocks': 'Рекламные блоки',
     'admin.monetization.monthly_revenue': 'Доход по месяцам',
@@ -768,6 +779,7 @@ const translations = {
     'units.km': 'км',
     'units.min': 'мин',
     'units.month_short': 'мес',
+    'units.per_month': '/мес',
     'units.ruble': '₽',
 
     // Toast messages
@@ -1033,6 +1045,18 @@ const translations = {
     'notifications.read_all': 'Прочитать все',
     'notifications.sent_message': 'Отправил(а) сообщение',
 
+    // Ads
+    'ads.banner_title': 'Реклама',
+    'ads.banner_desc': 'Переходите по ссылке и получайте бонусы!',
+    'ads.learn_more': 'Узнать',
+    'ads.open': 'Открыть',
+    'ads.swiftmatch_title': 'SwiftMatch Premium',
+    'ads.swiftmatch_desc': 'Узнайте, кто лайкнул вас!',
+    'ads.premium_title': 'Премиум на 30% дешевле',
+    'ads.premium_desc': 'Ограниченное предложение',
+    'ads.coffee_title': 'Кофе в подарок',
+    'ads.coffee_desc': 'При первом свидании',
+
     // Premium
     'premium.incognito': 'Инкогнито',
     'premium.select_plan': 'Выберите тариф',
@@ -1040,6 +1064,8 @@ const translations = {
     'premium.super_likes': 'Суперлайки',
     'premium.unlimited': 'Безлимитно',
     'premium.views': 'Просмотры',
+    'premium.activated': 'Подписка активирована!',
+    'premium.error': 'Ошибка оформления подписки',
 
     // PWA
     'pwa.install.ios_add': 'На экран "Домой"',
@@ -1092,6 +1118,9 @@ const translations = {
     'nav.chats': 'Chats',
     'nav.profile': 'Profile',
     'nav.groups': 'Groups',
+    'nav.matches': 'Matches',
+    'nav.notifications': 'Notifications',
+    'notification.mark_all_read': 'Mark all read',
     // Common Buttons
     'button.continue': 'Continue',
     'button.skip': 'Skip',
@@ -1270,6 +1299,12 @@ const translations = {
     'swipes.nearby': 'profiles nearby',
     'match.insight_default': 'You are a great match!',
     'match.liked_each_other': 'liked each other.',
+    'matches.title': 'Matches',
+    'matches.subtitle': 'People who liked you back',
+    'matches.empty_title': 'No matches yet',
+    'matches.empty_desc': 'Start liking people to find your match',
+    'matches.start_searching': 'Start searching',
+    'profile.years_old': 'years old',
     'user.match_score': 'Match',
     'user.from_you': 'from you',
     // Filter
@@ -1443,6 +1478,8 @@ const translations = {
     'admin.monetization.save_success_desc': 'Changes will be applied in the app.',
     'admin.monetization.pricing_title': 'Subscription Plans',
     'admin.monetization.prices_saved': 'Prices saved',
+    'admin.monetization.ads_saved': 'Ad config saved',
+    'admin.monetization.save_error': 'Failed to save',
     'admin.monetization.save': 'Save',
     'admin.monetization.ad_blocks': 'Ad Blocks',
     'admin.monetization.monthly_revenue': 'Monthly Revenue',
@@ -1823,6 +1860,7 @@ const translations = {
     'units.km': 'km',
     'units.min': 'min',
     'units.month_short': 'mo',
+    'units.per_month': '/mo',
     'units.ruble': '₽',
 
     // Toast messages
@@ -2088,6 +2126,18 @@ const translations = {
     'notifications.read_all': 'Read All',
     'notifications.sent_message': 'Sent a message',
 
+    // Ads
+    'ads.banner_title': 'Advertisement',
+    'ads.banner_desc': 'Click here to get bonuses!',
+    'ads.learn_more': 'Learn More',
+    'ads.open': 'Open',
+    'ads.swiftmatch_title': 'SwiftMatch Premium',
+    'ads.swiftmatch_desc': 'Find out who liked you!',
+    'ads.premium_title': 'Premium 30% off',
+    'ads.premium_desc': 'Limited time offer',
+    'ads.coffee_title': 'Free Coffee',
+    'ads.coffee_desc': 'On your first date',
+
     // Premium
     'premium.incognito': 'Incognito',
     'premium.select_plan': 'Select Plan',
@@ -2095,6 +2145,8 @@ const translations = {
     'premium.super_likes': 'Super Likes',
     'premium.unlimited': 'Unlimited',
     'premium.views': 'Views',
+    'premium.activated': 'Subscription activated!',
+    'premium.error': 'Failed to process subscription',
 
     // PWA
     'pwa.install.ios_add': 'Add to Home Screen',

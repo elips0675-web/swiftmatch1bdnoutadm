@@ -10,56 +10,33 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { useLanguage } from '@/context/language-context';
 import { getToken } from '@/lib/token';
 
-interface PricingTier {
-  tier: string;
-  key: string;
-  color: string;
-  prices: Record<string, number>;
-}
-
-interface RevenueItem {
-  month: string;
-  subscriptions: number;
-  ads: number;
-  boosts: number;
-}
-
-interface FunnelItem {
-  stage: string;
-  count: number;
-}
-
 export default function MonetizationPage() {
   const { t } = useLanguage();
-  const [pricing, setPricing] = useState<PricingTier[]>([]);
-  const [revenueData, setRevenueData] = useState<RevenueItem[]>([]);
-  const [funnelData, setFunnelData] = useState<FunnelItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [ads, setAds] = useState({ google: false, yandex: false, googleId: '', yandexId: '' });
+  const [pricing, setPricing] = useState<any[]>([]);
+  const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [funnelData, setFunnelData] = useState<any[]>([]);
+  const [ads, setAds] = useState({ google: true, yandex: false, googleId: 'ca-app-pub-3940256099942544/5224354917', yandexId: 'R-M-DEMO-rewarded' });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = getToken();
-        const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-        const apiGet = <T,>(url: string): Promise<T> => fetch(url, { headers }).then(r => { if (!r.ok) throw new Error('fetch failed'); return r.json(); });
-        const [pricing, revenue, funnel] = await Promise.all([
-          apiGet<PricingTier[]>('/api/admin/monetization/pricing'),
-          apiGet<RevenueItem[]>('/api/admin/monetization/revenue'),
-          apiGet<FunnelItem[]>('/api/admin/monetization/funnel'),
-        ]);
-        setPricing(pricing);
+    const token = getToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    Promise.all([
+      fetch('/api/admin/monetization/pricing', { headers }).then(r => r.json()),
+      fetch('/api/admin/monetization/revenue', { headers }).then(r => r.json()),
+      fetch('/api/admin/monetization/funnel', { headers }).then(r => r.json()),
+    ])
+      .then(([pricingData, revenue, funnel]) => {
+        setPricing(pricingData);
         setRevenueData(revenue);
         setFunnelData(funnel);
-      } catch {
-        setPricing([]);
-        setRevenueData([]);
-        setFunnelData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+      })
+      .catch(() => {
+        toast.error('Failed to load monetization data');
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const updatePrice = (tierIdx: number, period: string, value: string) => {
@@ -67,7 +44,11 @@ export default function MonetizationPage() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
@@ -81,7 +62,7 @@ export default function MonetizationPage() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             {pricing.map((tier, ti) => (
-              <div key={tier.tier} className="p-4 rounded-2xl border space-y-3">
+              <div key={tier.key || tier.tier} className="p-4 rounded-2xl border space-y-3">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tier.color }} />
                   <span className="font-black text-sm uppercase">{tier.tier}</span>
@@ -89,7 +70,7 @@ export default function MonetizationPage() {
                 {(['1', '6', '12'] as const).map(period => (
                   <div key={period} className="flex items-center gap-2">
                     <Label className="text-xs text-muted-foreground w-16">{period} {t('units.month_short')}</Label>
-                    <Input type="number" value={tier.prices[period] || 0} onChange={e => updatePrice(ti, period, e.target.value)} className="h-9 rounded-lg text-right font-bold" />
+                    <Input type="number" value={tier.prices[period]} onChange={e => updatePrice(ti, period, e.target.value)} className="h-9 rounded-lg text-right font-bold" />
                     <span className="text-xs text-muted-foreground">{t('units.ruble')}</span>
                   </div>
                 ))}
@@ -97,6 +78,24 @@ export default function MonetizationPage() {
             ))}
           </div>
         </CardContent>
+        <CardFooter className="border-t p-4 flex justify-end">
+          <Button onClick={async () => {
+            const token = getToken()
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+            if (token) headers['Authorization'] = `Bearer ${token}`
+            try {
+              const res = await fetch('/api/admin/monetization/pricing', {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify({ tiers: pricing }),
+              })
+              if (res.ok) toast.success(t('admin.monetization.prices_saved'))
+              else throw new Error()
+            } catch { toast.error(t('admin.monetization.save_error')) }
+          }} className="rounded-full h-10 px-8 font-bold">
+            <Save className="mr-2 h-3 w-3" /> {t('admin.monetization.save')}
+          </Button>
+        </CardFooter>
       </Card>
 
       <Card className="border-0 shadow-sm">
@@ -127,6 +126,24 @@ export default function MonetizationPage() {
             </div>
           )}
         </CardContent>
+        <CardFooter className="border-t p-4 flex justify-end">
+          <Button onClick={async () => {
+            const token = getToken()
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+            if (token) headers['Authorization'] = `Bearer ${token}`
+            try {
+              const res = await fetch('/api/admin/monetization/ads', {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify(ads),
+              })
+              if (res.ok) toast.success(t('admin.monetization.ads_saved'))
+              else throw new Error()
+            } catch { toast.error(t('admin.monetization.save_error')) }
+          }} className="rounded-full h-10 px-8 font-bold">
+            <Save className="mr-2 h-3 w-3" /> {t('admin.monetization.save')}
+          </Button>
+        </CardFooter>
       </Card>
 
       <Card className="border-0 shadow-sm">

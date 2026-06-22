@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getToken } from "@/lib/token";
 import { useRouter } from "@/shims/next-navigation";
 import { 
   Heart, 
@@ -29,33 +30,35 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/context/language-context";
+import { useFeatureFlags } from "@/context/feature-flags-context";
+import { usePremium } from "@/hooks/use-premium";
 
 const PremiumDialog = dynamic(() => import('@/components/dialogs/premium-dialog').then(mod => mod.PremiumDialog), { ssr: false });
 const AdDialog = dynamic(() => import('@/components/dialogs/ad-dialog').then(mod => mod.AdDialog), { ssr: false });
 
-const ACTIVITY_DATA = [
-  { id: 1, userId: 1, user: 'Анна', age: 24, img: PlaceHolderImages[0].imageUrl, type: 'like', time: '5 мин назад', seen: false, blurred: true },
-  { id: 2, userId: 3, user: 'Елена', age: 26, img: PlaceHolderImages[2].imageUrl, type: 'visit', time: '15 мин назад', seen: false, blurred: false },
-  { id: 3, userId: 7, user: 'Мария', age: 29, img: PlaceHolderImages[6].imageUrl, type: 'match', time: '1 час назад', seen: true, blurred: false },
-  { id: 4, userId: 5, user: 'София', age: 22, img: PlaceHolderImages[4].imageUrl, type: 'like', time: '3 часа назад', seen: true, blurred: true },
-  { id: 5, userId: 9, user: 'Ксения', age: 23, img: PlaceHolderImages[8].imageUrl, type: 'visit', time: '5 часов назад', seen: true, blurred: false },
-];
-
-const INVITE_DATA = [
-  { id: 101, userId: 1, user: 'Анна', age: 24, img: PlaceHolderImages[0].imageUrl, type: 'coffee', time: '10 мин назад', seen: false },
-  { id: 102, userId: 7, user: 'Мария', age: 29, img: PlaceHolderImages[6].imageUrl, type: 'cinema', time: '2 часа назад', seen: false },
-  { id: 103, userId: 3, user: 'Елена', age: 26, img: PlaceHolderImages[2].imageUrl, type: 'walk', time: '1 день назад', seen: true },
-];
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'только что';
+  if (mins < 60) return `${mins} мин назад`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} ч назад`;
+  const days = Math.floor(hrs / 24);
+  return `${days} дн назад`;
+}
 
 export default function ActivityPage() {
   const router = useRouter();
   const { t } = useLanguage();
+  const { showAdsEnabled } = useFeatureFlags();
+  const { isPremium } = usePremium();
   const [activeTab, setActiveTab] = useState("all");
   const [showPremium, setShowPremium] = useState(false);
   const [showAd, setShowAd] = useState(false);
   const [isIncognito, setIsIncognito] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [invites, setInvites] = useState<any[]>(INVITE_DATA);
+  const [invites, setInvites] = useState<any[]>([]);
+  const [activity, setActivity] = useState<any[]>([]);
 
   useEffect(() => {
     setIsClient(true);
@@ -63,13 +66,27 @@ export default function ActivityPage() {
     if (savedIncognito) {
       setIsIncognito(JSON.parse(savedIncognito));
     }
-    const savedInvites = localStorage.getItem('receivedInvites');
-    if (savedInvites) {
-      try { setInvites(JSON.parse(savedInvites)); } catch {}
-    }
+    const token = getToken();
+    if (!token) return;
+    fetch('/api/activity', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => setActivity(data.map((a: any) => ({
+        id: a.id, userId: a.user_id, user: a.user_name, img: a.user_avatar || '',
+        type: a.action_type === 'profile_view' ? 'visit' : a.action_type,
+        time: timeAgo(a.created_at), seen: false,
+        blurred: a.action_type === 'profile_view',
+      }))))
+      .catch(() => {});
+    fetch('/api/invites', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => setInvites(data.map((i: any) => ({
+        id: i.id, userId: i.sender_id, user: i.sender_name, img: i.sender_avatar || '',
+        type: i.type, time: timeAgo(i.created_at), seen: i.status !== 'pending',
+      }))))
+      .catch(() => {});
   }, []);
 
-  const filteredActivity = ACTIVITY_DATA.filter(item => {
+  const filteredActivity = activity.filter(item => {
     if (activeTab === "all") return true;
     if (activeTab === "likes") return item.type === "like" || item.type === "match";
     if (activeTab === "visits") return item.type === "visit";
@@ -125,6 +142,7 @@ export default function ActivityPage() {
                     </div>
                 </motion.div>
             )}
+            {showAdsEnabled && (
             <motion.button 
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
@@ -136,6 +154,7 @@ export default function ActivityPage() {
               </div>
               {t('button.unlock')}
             </motion.button>
+            )}
 
             <div className="space-y-2">
               {activeTab === 'invites' ? (
@@ -172,9 +191,12 @@ export default function ActivityPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9 }}
                         key={item.id}
-                        onClick={() => router.push(`/user?id=${item.userId}`)}
+                        onClick={() => {
+                          if (item.blurred && !isPremium) { setShowPremium(true); return }
+                          router.push(`/user?id=${item.userId}`)
+                        }}
                       >
-                        <ActivityItem item={item} onUnlock={() => setShowAd(true)} />
+                        <ActivityItem item={item} onUnlock={() => isPremium ? setShowAd(true) : setShowPremium(true)} />
                       </motion.div>
                     ))
                   ) : (
@@ -191,6 +213,7 @@ export default function ActivityPage() {
           </TabsContent>
         </Tabs>
 
+        {!isPremium && (
         <motion.div 
           whileHover={{ y: -4 }}
           whileTap={{ scale: 0.98 }}
@@ -217,6 +240,7 @@ export default function ActivityPage() {
             </div>
           </div>
         </motion.div>
+        )}
       </main>
 
       {showPremium && <PremiumDialog open={showPremium} onOpenChange={setShowPremium} />}

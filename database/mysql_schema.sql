@@ -599,6 +599,29 @@ CREATE TABLE campaigns (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------
+-- 40. PUSH SUBSCRIPTIONS (Web push)
+-- -----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id       INT UNSIGNED NOT NULL,
+  endpoint      TEXT NOT NULL,
+  p256dh        VARCHAR(255) NOT NULL,
+  auth          VARCHAR(255) NOT NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_push_user (user_id, endpoint(255)),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------
+-- 41. CONFIG (key-value for pricing, ads settings, etc.)
+-- -----------------------------------------------------------
+CREATE TABLE IF NOT EXISTS config (
+  config_key    VARCHAR(50) PRIMARY KEY,
+  config_value  JSON NOT NULL,
+  updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------
 -- SEED DATA
 -- -----------------------------------------------------------
 

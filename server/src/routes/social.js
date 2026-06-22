@@ -324,7 +324,7 @@ router.get('/api/chats/:chatId/messages', auth, async (req, res) => {
     )
 
     const msgIds = rows.map(r => r.id)
-    const reactionsMap: Record<number, any[]> = {}
+    const reactionsMap = {}
     if (msgIds.length > 0) {
       const [reactions] = await pool.query(
         `SELECT mr.id, mr.message_id, mr.user_id, mr.emoji, mr.created_at,

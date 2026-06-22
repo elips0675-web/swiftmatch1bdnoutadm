@@ -4,6 +4,7 @@ import cors from 'cors'
 import jwt from 'jsonwebtoken'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import rateLimit from 'express-rate-limit'
 import pool from './db.js'
 
 import adminDashboard from './routes/admin/dashboard.js'
@@ -17,6 +18,8 @@ import adminMonetization from './routes/admin/monetization.js'
 import profileRoutes from './routes/profile.js'
 import uploadRoutes from './routes/upload.js'
 import pushRoutes from './routes/push.js'
+import socialRoutes from './routes/social.js'
+import premiumRoutes from './routes/premium.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -24,9 +27,14 @@ const app = express()
 const PORT = process.env.PORT || 3001
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production'
 
+const limiter = rateLimit({ windowMs: 60_000, max: 100, message: { message: 'Too many requests' } })
+const authLimiter = rateLimit({ windowMs: 60_000, max: 10, message: { message: 'Too many auth attempts' } })
+
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }))
 app.use(express.json())
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
+app.use('/api/', limiter)
+app.use('/api/auth/', authLimiter)
 
 async function adminAuth(req, res, next) {
   const authHeader = req.headers.authorization
@@ -116,6 +124,8 @@ app.get('/api/content', async (req, res) => {
 app.use(profileRoutes)
 app.use(uploadRoutes)
 app.use(pushRoutes)
+app.use(premiumRoutes)
+app.use(socialRoutes)
 
 app.use('/api/admin', adminAuth)
 

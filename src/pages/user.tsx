@@ -4,11 +4,12 @@ import { useSearchParams, useRouter } from "@/shims/next-navigation";
 import Image from "@/shims/next-image";
 import Link from "@/shims/next-link";
 import dynamic from "@/shims/next-dynamic";
-import { MapPin, CircleCheck as CheckCircle2, Star, Camera, Coffee, Music, Globe, Dumbbell, Palette, Film, Flower2, Briefcase, Gamepad2, Maximize2, X, Dog, Ruler, Target, Sparkles, Heart, MessageCircle, ChevronLeft, ChevronRight, Cpu, Anchor, Map, Sprout, BookOpen, Scissors, FlaskConical, Car, ChefHat, Brush, Mountain, Wine, Flag, Sun, User, Info, Trophy, VenetianMask, Search, ThumbsUp, ThumbsDown, RefreshCw, BrainCircuit, Trees, UtensilsCrossed, Send, ImageIcon } from "lucide-react";
+import { MapPin, CircleCheck as CheckCircle2, Star, Camera, Coffee, Music, Globe, Dumbbell, Palette, Film, Flower2, Briefcase, Gamepad2, Maximize2, X, Dog, Ruler, Target, Sparkles, Heart, MessageCircle, ChevronLeft, ChevronRight, Cpu, Anchor, Map, Sprout, BookOpen, Scissors, FlaskConical, Car, ChefHat, Brush, Mountain, Wine, Flag, Sun, User, Info, Trophy, VenetianMask, Search, ThumbsUp, ThumbsDown, RefreshCw, BrainCircuit, Trees, UtensilsCrossed, Send, ImageIcon, Ban } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { getToken } from "@/lib/token";
 import { useLanguage } from "@/context/language-context";
 import { cn, getUserTitles } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -165,6 +166,25 @@ function UserProfileContent() {
               className="rounded-full bg-white/40 backdrop-blur-md text-destructive hover:bg-white/60 border border-white/40 shadow-sm transition-all"
             >
               <Flag size={20} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={async () => {
+                if (!confirm(t('user.block_confirm'))) return
+                try {
+                  const res = await fetch('/api/block', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+                    body: JSON.stringify({ blocked_id: userId }),
+                  })
+                  if (res.ok) { toast({ title: t('user.blocked') }); router.back() }
+                  else { toast({ variant: 'destructive', title: t('user.block_error') }) }
+                } catch { toast({ variant: 'destructive', title: t('user.block_error') }) }
+              }}
+              className="rounded-full bg-white/40 backdrop-blur-md text-muted-foreground hover:bg-white/60 hover:text-destructive border border-white/40 shadow-sm transition-all"
+            >
+              <Ban size={20} />
             </Button>
           </div>
       </header>

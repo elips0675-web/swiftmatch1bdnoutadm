@@ -1,7 +1,18 @@
 import { Router } from 'express'
+import jwt from 'jsonwebtoken'
 import pool from '../db.js'
 
 const router = Router()
+const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production'
+
+function auth(req, res, next) {
+  const header = req.headers.authorization
+  if (!header || !header.startsWith('Bearer ')) return res.status(401).json({ message: 'Auth required' })
+  try {
+    req.userId = jwt.verify(header.split(' ')[1], JWT_SECRET).userId
+    next()
+  } catch { return res.status(401).json({ message: 'Invalid token' }) }
+}
 
 function parseJsonField(val, fallback) {
   if (Array.isArray(val)) return val
@@ -73,6 +84,17 @@ router.put('/api/profile/:id', async (req, res) => {
   } catch (err) {
     console.error('Profile PUT error:', err)
     res.status(500).json({ message: 'Failed to update profile' })
+  }
+})
+
+// ─── Account deletion ──────────────────────────────────────────
+router.delete('/api/profile/me', auth, async (req, res) => {
+  try {
+    await pool.query('UPDATE users SET is_active = 0, email = CONCAT(email, \'.deleted\', UNIX_TIMESTAMP()) WHERE id = ?', [req.userId])
+    res.json({ message: 'Account deleted' })
+  } catch (err) {
+    console.error('Delete account error:', err)
+    res.status(500).json({ message: 'Failed to delete account' })
   }
 })
 

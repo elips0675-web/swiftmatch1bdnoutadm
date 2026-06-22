@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
 import { subscribeToPush, unsubscribeFromPush } from "@/lib/push-notifications";
+import { getToken } from "@/lib/token";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -87,6 +88,24 @@ export default function SettingsPage() {
       description: val ? t('settings.consent_enabled') : t('settings.consent_withdrawn'),
     });
   };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm(t('delete_profile.confirm'))) return
+    try {
+      const res = await fetch('/api/profile/me', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${getToken()}` },
+      })
+      if (res.ok) {
+        toast({ title: t('delete_profile.done') })
+        handleLogout()
+      } else {
+        toast({ variant: 'destructive', title: t('delete_profile.error') })
+      }
+    } catch {
+      toast({ variant: 'destructive', title: t('delete_profile.error') })
+    }
+  }
 
   const handleLogout = () => {
     logout();
@@ -276,6 +295,7 @@ export default function SettingsPage() {
             </Button>
             <Button 
                 variant="ghost" 
+                onClick={handleDeleteAccount}
                 className="w-full justify-center text-muted-foreground/60 hover:text-destructive text-xs font-normal h-auto py-3 gap-2 px-0 transition-colors">
                 <Trash2 size={14} /> {t('delete_profile.button')}
             </Button>

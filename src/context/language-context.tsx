@@ -228,6 +228,9 @@ const translations = {
     'profile.years_old': 'лет',
     'user.match_score': 'Совпадение',
     'user.from_you': 'от вас',
+    'user.block_confirm': 'Заблокировать пользователя?',
+    'user.blocked': 'Пользователь заблокирован',
+    'user.block_error': 'Ошибка блокировки',
     // Filter
     'filter.who_to_see': 'Кого вы ищете?',
     'filter.distance': 'Расстояние',
@@ -313,6 +316,9 @@ const translations = {
     'logout.title': 'Вы вышли из системы',
     'logout.button': 'Выйти',
     'delete_profile.button': 'Удалить профиль',
+    'delete_profile.confirm': 'Вы уверены? Профиль будет удалён безвозвратно.',
+    'delete_profile.done': 'Профиль удалён',
+    'delete_profile.error': 'Ошибка удаления профиля',
     // Support Chat
     'support.title': 'Команда SwiftMatch',
     'support.placeholder': 'Напишите ваше сообщение...',
@@ -1307,6 +1313,9 @@ const translations = {
     'profile.years_old': 'years old',
     'user.match_score': 'Match',
     'user.from_you': 'from you',
+    'user.block_confirm': 'Block this user?',
+    'user.blocked': 'User blocked',
+    'user.block_error': 'Failed to block user',
     // Filter
     'filter.who_to_see': 'Who are you looking for?',
     'filter.distance': 'Distance',
@@ -1392,6 +1401,9 @@ const translations = {
     'logout.title': 'You have been logged out',
     'logout.button': 'Logout',
     'delete_profile.button': 'Delete Profile',
+    'delete_profile.confirm': 'Are you sure? Your profile will be permanently deleted.',
+    'delete_profile.done': 'Profile deleted',
+    'delete_profile.error': 'Failed to delete profile',
     // Support Chat
     'support.title': 'SwiftMatch Team',
     'support.placeholder': 'Write your message...',

@@ -238,19 +238,26 @@ function normalizeInterests(interests: any): string[] {
     fileInputRef.current?.click();
   };
 
-  const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
 
-      // `URL.createObjectURL` дает временный `blob:` URL.
-      // Чтобы фото реально "сохранялось", конвертируем его в `data:` URL и persist'им в localStorage.
       const previewUrl = URL.createObjectURL(file);
       setPhotos((prev) => [...prev, previewUrl]);
 
-      toast({
-        title: t('toast.photo_selected'),
-        description: t('toast.photo_selected_desc'),
-      });
+      const formData = new FormData();
+      formData.append('photo', file);
+      formData.append('user_id', '2');
+      formData.append('sort_order', String(photos.length));
+
+      try {
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        if (res.ok) {
+          toast({ title: t('toast.photo_uploaded'), description: t('toast.photo_uploaded_desc') });
+        }
+      } catch {
+        toast({ variant: 'destructive', title: t('common.error') });
+      }
 
       const fileToDataUrl = (f: File) =>
         new Promise<string>((resolve, reject) => {

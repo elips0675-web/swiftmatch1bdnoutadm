@@ -8,16 +8,21 @@
 -- 1. AUTH & USERS
 -- -----------------------------------------------------------
 CREATE TABLE users (
-  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  email         VARCHAR(255) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,
-  role          ENUM('user','admin') NOT NULL DEFAULT 'user',
-  is_active     BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  last_login    TIMESTAMP NULL,
+  id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  email               VARCHAR(255) NOT NULL UNIQUE,
+  password_hash       VARCHAR(255) NOT NULL,
+  role                ENUM('user','admin') NOT NULL DEFAULT 'user',
+  is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+  email_verified_at   TIMESTAMP NULL,
+  verification_token  VARCHAR(64) NULL,
+  reset_token         VARCHAR(64) NULL,
+  reset_token_expires TIMESTAMP NULL,
+  created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  last_login          TIMESTAMP NULL,
   INDEX idx_users_email (email),
-  INDEX idx_users_role (role)
+  INDEX idx_users_role (role),
+  INDEX idx_users_reset_token (reset_token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------
@@ -187,7 +192,23 @@ CREATE TABLE messages (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------
--- 12. GROUP CATEGORIES
+-- 12. MESSAGE REACTIONS
+-- -----------------------------------------------------------
+CREATE TABLE message_reactions (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  message_id  INT UNSIGNED NOT NULL,
+  user_id     INT UNSIGNED NOT NULL,
+  emoji       VARCHAR(50) NOT NULL,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_reaction (message_id, user_id, emoji),
+  FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_reactions_message (message_id),
+  INDEX idx_reactions_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------
+-- 13. GROUP CATEGORIES
 -- -----------------------------------------------------------
 CREATE TABLE group_categories (
   id        INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

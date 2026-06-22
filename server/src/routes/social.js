@@ -243,19 +243,33 @@ router.get('/api/chats', auth, async (req, res) => {
     const [rows] = await pool.query(
       `SELECT c.id, c.last_message, c.last_sender_id, c.updated_at,
               up.display_name, up.avatar_url, up.online,
-              cp.last_read_at
+              cp.last_read_at,
+              (SELECT COUNT(*) FROM messages m2 WHERE m2.chat_id = c.id AND (cp.last_read_at IS NULL OR m2.created_at > cp.last_read_at) AND m2.sender_id != ?) AS unread_count
        FROM chats c
        JOIN chat_participants cp ON cp.chat_id = c.id AND cp.user_id = ?
        JOIN chat_participants other ON other.chat_id = c.id AND other.user_id != ?
        JOIN user_profiles up ON up.id = other.user_id
        WHERE c.is_group = 0
        ORDER BY c.updated_at DESC`,
-      [req.userId, req.userId],
+      [req.userId, req.userId, req.userId],
     )
     res.json(rows)
   } catch (err) {
     console.error('Chats error:', err)
     res.status(500).json({ message: 'Failed to fetch chats' })
+  }
+})
+
+router.put('/api/chats/:chatId/read', auth, async (req, res) => {
+  try {
+    await pool.query(
+      'UPDATE chat_participants SET last_read_at = NOW() WHERE chat_id = ? AND user_id = ?',
+      [req.params.chatId, req.userId],
+    )
+    res.json({ message: 'Chat marked as read' })
+  } catch (err) {
+    console.error('Chat read error:', err)
+    res.status(500).json({ message: 'Failed to mark chat as read' })
   }
 })
 
@@ -302,7 +316,25 @@ router.get('/api/chats/:chatId/messages', auth, async (req, res) => {
        LIMIT 100`,
       [req.params.chatId],
     )
-    res.json(rows)
+
+    const msgIds = rows.map(r => r.id)
+    const reactionsMap: Record<number, any[]> = {}
+    if (msgIds.length > 0) {
+      const [reactions] = await pool.query(
+        `SELECT mr.id, mr.message_id, mr.user_id, mr.emoji, mr.created_at,
+                up.display_name as user_name
+         FROM message_reactions mr
+         JOIN user_profiles up ON mr.user_id = up.id
+         WHERE mr.message_id IN (?)`,
+        [msgIds],
+      )
+      for (const r of reactions) {
+        if (!reactionsMap[r.message_id]) reactionsMap[r.message_id] = []
+        reactionsMap[r.message_id].push(r)
+      }
+    }
+    const result = rows.map(msg => ({ ...msg, reactions: reactionsMap[msg.id] || [] }))
+    res.json(result)
   } catch (err) {
     console.error('Messages error:', err)
     res.status(500).json({ message: 'Failed to fetch messages' })
@@ -360,6 +392,47 @@ router.delete('/api/chats/:chatId/messages/:msgId', auth, async (req, res) => {
   } catch (err) {
     console.error('Delete message error:', err)
     res.status(500).json({ message: 'Failed to delete message' })
+  }
+})
+
+// ─── Message Reactions ────────────────────────────────────────
+router.post('/api/chats/:chatId/messages/:msgId/reactions', auth, async (req, res) => {
+  const { emoji } = req.body
+  if (!emoji) return res.status(400).json({ message: 'emoji is required' })
+
+  try {
+    const [participant] = await pool.query(
+      'SELECT chat_id FROM chat_participants WHERE chat_id = ? AND user_id = ?',
+      [req.params.chatId, req.userId],
+    )
+    if (participant.length === 0) return res.status(403).json({ message: 'Not a participant' })
+
+    const [existing] = await pool.query(
+      'SELECT id FROM message_reactions WHERE message_id = ? AND user_id = ? AND emoji = ?',
+      [req.params.msgId, req.userId, emoji],
+    )
+    if (existing.length > 0) {
+      await pool.query('DELETE FROM message_reactions WHERE id = ?', [existing[0].id])
+      return res.json({ message: 'Reaction removed', action: 'removed' })
+    }
+
+    const [result] = await pool.query(
+      'INSERT INTO message_reactions (message_id, user_id, emoji) VALUES (?, ?, ?)',
+      [req.params.msgId, req.userId, emoji],
+    )
+
+    const [[reaction]] = await pool.query(
+      `SELECT mr.id, mr.message_id, mr.user_id, mr.emoji, mr.created_at,
+              up.display_name as user_name
+       FROM message_reactions mr
+       JOIN user_profiles up ON mr.user_id = up.id
+       WHERE mr.id = ?`,
+      [result.insertId],
+    )
+    res.status(201).json(reaction)
+  } catch (err) {
+    console.error('Reaction error:', err)
+    res.status(500).json({ message: 'Failed to add reaction' })
   }
 })
 

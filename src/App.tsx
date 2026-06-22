@@ -38,6 +38,8 @@ const LegalDataProcessing = lazy(() => import("./pages/legal-data-processing"))
 const LegalPrivacy = lazy(() => import("./pages/legal-privacy"))
 const LegalTerms = lazy(() => import("./pages/legal-terms"))
 const Login = lazy(() => import("./pages/login"))
+const ForgotPassword = lazy(() => import("./pages/forgot-password"))
+const ResetPassword = lazy(() => import("./pages/reset-password"))
 const Onboarding = lazy(() => import("./pages/onboarding"))
 const Profile = lazy(() => import("./pages/profile"))
 const ProfileEdit = lazy(() => import("./pages/profile-edit"))
@@ -139,6 +141,8 @@ const App = () => (
                             <Route path="/legal/privacy" element={<LegalPrivacy />} />
                             <Route path="/legal/terms" element={<LegalTerms />} />
                             <Route path="/login" element={<Login />} />
+                            <Route path="/forgot-password" element={<ForgotPassword />} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
                             <Route path="/onboarding" element={<Onboarding />} />
                             <Route path="/profile" element={<Profile />} />
                             <Route path="/profile/edit" element={<ProfileEdit />} />

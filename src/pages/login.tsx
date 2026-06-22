@@ -196,6 +196,14 @@ export default function LoginPage() {
                 </div>
               </>
             )}
+
+            {loginMethod === "email" && (
+              <div className="text-right -mt-2">
+                <Link href="/forgot-password" className="text-[10px] font-bold text-primary hover:underline">
+                  {t('auth.forgot_password')}
+                </Link>
+              </div>
+            )}
             
             <Button 
               type="submit" 

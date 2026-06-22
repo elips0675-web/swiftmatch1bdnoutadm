@@ -214,6 +214,8 @@ function ChatsContent() {
   const [showTopicsDialog, setShowTopicsDialog] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [reactions, setReactions] = useState<Record<number, any[]>>({});
+  const [reactionMsgId, setReactionMsgId] = useState<number | null>(null);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportDescription, setReportDescription] = useState('');
@@ -222,6 +224,7 @@ function ChatsContent() {
   const [joinedGroupNames, setJoinedGroupNames] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [recentIds, setRecentIds] = useState<number[]>(() => getRecentChatIds());
+  const [unreadCounts, setUnreadCounts] = useState<Record<number, number>>({});
   const msgContainerRef = useAntiScreenshot<HTMLDivElement>();
 
   useEffect(() => {
@@ -351,6 +354,19 @@ function ChatsContent() {
     }
   }, [matchId, groupId, language, t]);
 
+  useEffect(() => {
+    fetch('/api/chats')
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        if (Array.isArray(data)) {
+          const map: Record<number, number> = {};
+          data.forEach((c: any) => { map[c.id] = c.unread_count || 0 });
+          setUnreadCounts(map);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const handleToggleJoin = useCallback(() => {
     setJoinedGroupNames(prev => {
       const name = selectedChat?.name;
@@ -412,17 +428,43 @@ function ChatsContent() {
     }
   };
 
-  const openChat = (chat: any) => { 
+  const openChat = (chat: any) => {
     setSelectedChat(chat);
+    setReactions({});
     loadMessages(chat.id).then(saved => {
       setMessages(saved && saved.length > 0 ? saved : getInitialMessages(t));
     });
+    fetch(`/api/chats/${chat.id}/read`, { method: 'PUT' }).catch(() => {});
   };
 
   const handleThemeClick = useCallback((themeId: string) => {
     setInputValue(t(`chats.theme_prompt.${themeId}`));
     setShowTopicsDialog(false);
   }, [t]);
+
+  const toggleReaction = async (msgId: number, emoji: string) => {
+    try {
+      const res = await fetch(`/api/chats/${selectedChat.id}/messages/${msgId}/reactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setReactions(prev => {
+          const next = { ...prev }
+          const existing = (next[msgId] || []).filter(r => r.emoji !== emoji)
+          if (data.action === 'removed') {
+            next[msgId] = existing
+          } else {
+            next[msgId] = [...existing, data]
+          }
+          return next
+        })
+      }
+    } catch {}
+    setReactionMsgId(null)
+  }
 
   const handleBack = () => {
     if (matchId || groupId) {
@@ -529,7 +571,45 @@ function ChatsContent() {
           <div className="flex flex-col min-h-full px-4 pt-4 pb-2 space-y-2">
             <div className="flex-1" />
             <div className="text-center my-2"><Badge variant="secondary" className="bg-white/50 text-[9px] text-muted-foreground border-0 font-black uppercase tracking-widest px-2.5 py-0.5">{t('chats.today')}</Badge></div>
-            <AnimatePresence>{messages.map((msg: any) => (<motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} key={msg.id} className={cn("flex flex-col max-w-[80%]", msg.sender === "me" ? "ml-auto items-end" : "items-start")}><div className={cn("px-3 py-2 rounded-lg text-sm shadow-sm font-medium leading-snug", msg.sender === "me" ? "gradient-bg text-white rounded-br-none shadow-primary/10" : "bg-white text-foreground rounded-bl-none border border-border/40")}>{msg.text}</div><span className="text-[9px] text-muted-foreground mt-1.5 px-1 font-bold uppercase tracking-tighter opacity-60">{msg.time}</span></motion.div>))}</AnimatePresence>
+            <AnimatePresence>{messages.map((msg: any) => {
+              const msgReactions = reactions[msg.id] || [];
+              const reactionEmojis = [...new Set(msgReactions.map((r: any) => r.emoji))];
+              const isReactionPickerOpen = reactionMsgId === msg.id;
+              return (
+              <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} key={msg.id} className={cn("flex flex-col max-w-[80%]", msg.sender === "me" ? "ml-auto items-end" : "items-start")}>
+                <button onClick={() => setReactionMsgId(isReactionPickerOpen ? null : msg.id)} className={cn("px-3 py-2 rounded-lg text-sm shadow-sm font-medium leading-snug text-left w-full transition-all active:scale-95", msg.sender === "me" ? "gradient-bg text-white rounded-br-none shadow-primary/10" : "bg-white text-foreground rounded-bl-none border border-border/40")}>
+                  {msg.text}
+                </button>
+                {reactionEmojis.length > 0 && (
+                  <div className={cn("flex gap-1 mt-1", msg.sender === "me" ? "justify-end" : "justify-start")}>
+                    {reactionEmojis.map(emoji => (
+                      <button key={emoji} onClick={(e) => { e.stopPropagation(); toggleReaction(msg.id, emoji); }} className="text-xs bg-white/70 rounded-full px-1.5 py-0.5 border border-border/30 shadow-sm hover:bg-muted/50 transition-all active:scale-90">
+                        {emoji} <span className="text-[9px] text-muted-foreground font-bold">{msgReactions.filter((r: any) => r.emoji === emoji).length}</span>
+                      </button>
+                    ))}
+                    <button onClick={() => setReactionMsgId(isReactionPickerOpen ? null : msg.id)} className="text-muted-foreground/50 hover:text-muted-foreground transition-all"><Smile size={12} /></button>
+                  </div>
+                )}
+                {reactionEmojis.length === 0 && (
+                  <div className={cn("flex mt-0.5", msg.sender === "me" ? "justify-end" : "justify-start")}>
+                    <button onClick={() => setReactionMsgId(isReactionPickerOpen ? null : msg.id)} className="text-muted-foreground/30 hover:text-muted-foreground/60 transition-all"><Smile size={10} /></button>
+                  </div>
+                )}
+                {isReactionPickerOpen && (
+                  <div className={cn("flex gap-1 mt-1 p-1.5 bg-white rounded-xl border border-border/40 shadow-lg", msg.sender === "me" ? "justify-end" : "justify-start")}>
+                    {QUICK_REACTIONS.map(reaction => {
+                      const ReactionIcon = reaction.icon;
+                      return (
+                        <button key={reaction.id} onClick={() => toggleReaction(msg.id, reaction.label)} className="w-7 h-7 flex items-center justify-center hover:bg-muted rounded-lg transition-all active:scale-90">
+                          <span className="[transform:translateZ(0)] scale-75"><ReactionIcon size={18} className={reaction.color} /></span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <span className="text-[9px] text-muted-foreground mt-1 px-1 font-bold uppercase tracking-tighter opacity-60">{msg.time}</span>
+              </motion.div>
+            )})}</AnimatePresence>
             {isTyping && (<motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-1.5 text-muted-foreground"><div className="flex gap-1 bg-white px-3 py-2.5 rounded-lg border border-border/40 shadow-sm rounded-bl-none"><span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce"></span><span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]"></span><span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]"></span></div><span className="text-[9px] font-bold uppercase tracking-widest">{t('chats.typing')}</span></motion.div>)}
             <div ref={messagesEndRef} />
           </div>
@@ -623,7 +703,7 @@ function ChatsContent() {
         <div className="space-y-1 px-1">
           {paginatedItems.length > 0 ? (
             paginatedItems.map((item) => {
-              const hasUnread = item.id % 3 === 0;
+              const hasUnread = (unreadCounts[item.id] || 0) > 0;
               return (
                 <div key={`${activeTab}-${item.id}`} onClick={() => openChat(item)} className={cn(
                   "flex items-center gap-3 p-3 rounded-2xl transition-all cursor-pointer group border border-white mb-2",
@@ -671,7 +751,7 @@ function ChatsContent() {
                       </div>
                       {hasUnread && (
                         <Badge className="h-5 min-w-[20px] px-1.5 gradient-bg text-white border-0 text-[9px] font-black flex items-center justify-center rounded-full scale-90 shadow-lg shadow-primary/20">
-                          2
+                          {unreadCounts[item.id] || 2}
                         </Badge>
                       )}
                     </div>

@@ -20,6 +20,7 @@ import uploadRoutes from './routes/upload.js'
 import pushRoutes from './routes/push.js'
 import socialRoutes from './routes/social.js'
 import premiumRoutes from './routes/premium.js'
+import authRoutes from './routes/auth.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -126,6 +127,7 @@ app.use(uploadRoutes)
 app.use(pushRoutes)
 app.use(premiumRoutes)
 app.use(socialRoutes)
+app.use(authRoutes)
 
 app.use('/api/admin', adminAuth)
 

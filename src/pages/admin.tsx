@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, Heart, DollarSign, TrendingUp, Crown, UserPlus, Flag, Loader2 } from "lucide-react";
+import { Users, UserCheck, Heart, DollarSign, TrendingUp, Crown, UserPlus, Flag, Loader2, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -23,6 +23,13 @@ interface Stats {
   totalUsers: number;
   activeToday: number;
   totalMatches: number;
+  revenue: number;
+  activeSubs: number;
+  newToday: number;
+}
+
+interface RevenueMonth {
+  month: string;
   revenue: number;
 }
 
@@ -51,6 +58,7 @@ export default function AdminDashboardPage() {
   const [trendData, setTrendData] = useState<TrendItem[]>([]);
   const [cityData, setCityData] = useState<CityItem[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [revenueByMonth, setRevenueByMonth] = useState<RevenueMonth[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,18 +67,20 @@ export default function AdminDashboardPage() {
         const token = getToken();
         const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
         const f = <T,>(url: string): Promise<T> => fetch(url, { headers }).then(r => { if (!r.ok) throw new Error('fetch failed'); return r.json(); });
-        const [s, trend, cities, act] = await Promise.all([
+        const [s, trend, cities, act, rev] = await Promise.all([
           f<Stats>('/api/admin/stats'),
           f<TrendItem[]>(`/api/admin/registration-trend?period=${trendPeriod}`),
           f<CityItem[]>('/api/admin/city-distribution'),
           f<ActivityItem[]>('/api/admin/recent-activity'),
+          f<RevenueMonth[]>('/api/admin/revenue-by-month'),
         ]);
         setStats(s);
         setTrendData(trend);
         setCityData(cities);
         setActivity(act);
+        setRevenueByMonth(rev);
       } catch {
-        setStats({ totalUsers: 0, activeToday: 0, totalMatches: 0, revenue: 0 });
+        setStats({ totalUsers: 0, activeToday: 0, totalMatches: 0, revenue: 0, activeSubs: 0, newToday: 0 });
         setTrendData([]);
         setCityData([]);
         setActivity([]);
@@ -107,7 +117,9 @@ export default function AdminDashboardPage() {
 
   const kpis = [
     { title: t('admin.dash.total_users'), value: (stats?.totalUsers ?? 0).toLocaleString(), icon: Users, color: 'text-blue-500', change: '' },
+    { title: t('admin.dash.new_today'), value: stats?.newToday ?? 0, icon: UserPlus, color: 'text-sky-500', change: '' },
     { title: t('admin.dash.active_today'), value: stats?.activeToday ?? 0, icon: UserCheck, color: 'text-emerald-500', change: stats?.totalUsers ? `${Math.round((stats.activeToday / stats.totalUsers) * 100)}% ${t('admin.dash.from_all')}` : '' },
+    { title: t('admin.dash.active_subs'), value: (stats?.activeSubs ?? 0).toLocaleString(), icon: Crown, color: 'text-yellow-500', change: '' },
     { title: t('admin.dash.total_matches'), value: (stats?.totalMatches ?? 0).toLocaleString(), icon: Heart, color: 'text-primary', change: '' },
     { title: t('admin.dash.revenue_month'), value: currency, icon: DollarSign, color: 'text-amber-500', change: '' },
   ];
@@ -191,6 +203,29 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-lg font-black">{t('admin.dash.revenue_trend')}</CardTitle>
+        </CardHeader>
+        <CardContent className="h-[250px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={revenueByMonth} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#94a3b8'}} />
+              <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
+              <Area type="monotone" dataKey="revenue" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       <Card className="border-0 shadow-sm">
         <CardHeader>

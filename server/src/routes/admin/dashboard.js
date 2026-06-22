@@ -13,16 +13,41 @@ router.get('/stats', async (req, res) => {
     const [[{ revenue }]] = await pool.query(
       'SELECT COALESCE(SUM(price), 0) as revenue FROM subscriptions WHERE is_active = 1',
     )
+    const [[{ activeSubs }]] = await pool.query(
+      'SELECT COUNT(*) as activeSubs FROM subscriptions WHERE is_active = 1 AND expires_at > NOW()',
+    )
+    const [[{ newToday }]] = await pool.query(
+      'SELECT COUNT(*) as newToday FROM users WHERE DATE(created_at) = CURDATE()',
+    )
 
     res.json({
       totalUsers: total,
       activeToday,
       totalMatches,
       revenue: Math.round(revenue),
+      activeSubs,
+      newToday,
     })
   } catch (err) {
     console.error('Stats error:', err)
     res.status(500).json({ message: 'Failed to fetch stats' })
+  }
+})
+
+router.get('/revenue-by-month', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT DATE_FORMAT(started_at, '%Y-%m') as month, SUM(price) as revenue
+       FROM subscriptions
+       WHERE is_active = 1
+       GROUP BY DATE_FORMAT(started_at, '%Y-%m')
+       ORDER BY month
+       LIMIT 12`,
+    )
+    res.json(rows)
+  } catch (err) {
+    console.error('Revenue by month error:', err)
+    res.status(500).json({ message: 'Failed to fetch revenue data' })
   }
 })
 

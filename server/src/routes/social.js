@@ -1,25 +1,14 @@
 import { Router } from 'express'
-import jwt from 'jsonwebtoken'
 import rateLimit from 'express-rate-limit'
 import pool from '../db.js'
 import { getIO } from '../ws.js'
 import { getBannedWords, containsBannedWord } from '../banned-words.js'
 import { sendPushToUser } from './push.js'
+import { auth } from '../middleware.js'
 
 const likeLimiter = rateLimit({ windowMs: 60_000, max: 30, message: { message: 'Too many likes' } })
 
 const router = Router()
-const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production'
-
-function auth(req, res, next) {
-  const authHeader = req.headers.authorization
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ message: 'Authentication required' })
-  try {
-    const decoded = jwt.verify(authHeader.split(' ')[1], JWT_SECRET)
-    req.userId = decoded.userId
-    next()
-  } catch { return res.status(401).json({ message: 'Invalid or expired token' }) }
-}
 
 // ─── Search / Discovery ────────────────────────────────────────
 router.get('/api/users/search', auth, async (req, res) => {

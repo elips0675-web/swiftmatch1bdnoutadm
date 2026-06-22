@@ -22,12 +22,12 @@ import socialRoutes from './routes/social.js'
 import premiumRoutes from './routes/premium.js'
 import authRoutes from './routes/auth.js'
 import adminModerationRoutes from './routes/admin-moderation.js'
+import { JWT_SECRET } from './middleware.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const app = express()
 const PORT = process.env.PORT || 3001
-const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production'
 
 const limiter = rateLimit({ windowMs: 60_000, max: 100, message: { message: 'Too many requests' } })
 const authLimiter = rateLimit({ windowMs: 60_000, max: 10, message: { message: 'Too many auth attempts' } })

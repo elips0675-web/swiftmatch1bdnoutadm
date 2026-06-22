@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import webpush from 'web-push'
 import pool from '../db.js'
+import { auth } from '../middleware.js'
 
 const router = Router()
 

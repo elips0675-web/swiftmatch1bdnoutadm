@@ -1,18 +1,6 @@
 import { Router } from 'express'
-import jwt from 'jsonwebtoken'
 import pool from '../db.js'
-
-const router = Router()
-const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production'
-
-function auth(req, res, next) {
-  const header = req.headers.authorization
-  if (!header || !header.startsWith('Bearer ')) return res.status(401).json({ message: 'Auth required' })
-  try {
-    req.userId = jwt.verify(header.split(' ')[1], JWT_SECRET).userId
-    next()
-  } catch { return res.status(401).json({ message: 'Invalid token' }) }
-}
+import { auth } from '../middleware.js'
 
 function parseJsonField(val, fallback) {
   if (Array.isArray(val)) return val

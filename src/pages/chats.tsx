@@ -225,6 +225,8 @@ function ChatsContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [recentIds, setRecentIds] = useState<number[]>(() => getRecentChatIds());
   const [unreadCounts, setUnreadCounts] = useState<Record<number, number>>({});
+  const [apiChats, setApiChats] = useState<any[]>([]);
+  const [useApi, setUseApi] = useState(false);
   const msgContainerRef = useAntiScreenshot<HTMLDivElement>();
 
   useEffect(() => {
@@ -238,20 +240,33 @@ function ChatsContent() {
   }, []);
 
   const allDirectChats = useMemo(() => {
+    if (useApi && apiChats.length > 0) {
+      return apiChats.map(c => ({
+        id: c.id,
+        name: c.display_name,
+        img: c.avatar_url || '',
+        online: c.online,
+        lastMessage: c.last_message || '',
+        time: c.updated_at || '',
+        last_read_at: c.last_read_at,
+        unread_count: c.unread_count || 0,
+        isApi: true,
+      }));
+    }
     const cache = getLastMsgCache();
     const recent = recentIds.map(id => {
       const user = ALL_DEMO_USERS.find(u => u.id === id);
       if (!user) return null;
       const cached = cache[id];
-      return { ...user, lastMessage: cached ? cached.text : '', time: cached ? cached.time : '' };
+      return { ...user, lastMessage: cached ? cached.text : '', time: cached ? cached.time : '', isApi: false };
     }).filter(Boolean);
 
     const remaining = ALL_DEMO_USERS.filter(u => !u.isSystem && !recentIds.includes(u.id)).map(u => ({
-      ...u, lastMessage: '', time: ''
+      ...u, lastMessage: '', time: '', isApi: false
     }));
 
     return [...recent, ...remaining];
-  }, [language, recentIds]);
+  }, [language, recentIds, useApi, apiChats]);
 
   const allGroupChats = useMemo(() => {
     const groups: any[] = [];
@@ -358,10 +373,12 @@ function ChatsContent() {
     fetch('/api/chats')
       .then(res => res.ok ? res.json() : [])
       .then(data => {
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           const map: Record<number, number> = {};
           data.forEach((c: any) => { map[c.id] = c.unread_count || 0 });
           setUnreadCounts(map);
+          setApiChats(data);
+          setUseApi(true);
         }
       })
       .catch(() => {});
@@ -405,6 +422,25 @@ function ChatsContent() {
       return;
     }
 
+    if (selectedChat?.isApi) {
+      fetch(`/api/chats/${selectedChat.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: textToSend }),
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(msg => {
+          if (msg) {
+            const newMessage = { id: msg.id, text: msg.text, sender: 'me', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+            const updated = [...messages, newMessage];
+            setMessages(updated);
+          }
+        })
+        .catch(() => {});
+      if (!textOverride) setInputValue('');
+      return;
+    }
+
     const newMessage = { id: Date.now(), text: textToSend, sender: "me", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
     const updated = [...messages, newMessage];
     setMessages(updated);
@@ -431,10 +467,31 @@ function ChatsContent() {
   const openChat = (chat: any) => {
     setSelectedChat(chat);
     setReactions({});
-    loadMessages(chat.id).then(saved => {
-      setMessages(saved && saved.length > 0 ? saved : getInitialMessages(t));
-    });
-    fetch(`/api/chats/${chat.id}/read`, { method: 'PUT' }).catch(() => {});
+    if (chat.isApi) {
+      fetch(`/api/chats/${chat.id}/messages`)
+        .then(res => res.ok ? res.json() : [])
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            const msgs = data.map((m: any) => ({
+              id: m.id,
+              text: m.text,
+              sender: m.sender_id === 1 ? 'me' : 'other',
+              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              reactions: m.reactions || [],
+            }));
+            setMessages(msgs);
+            const rMap: Record<number, any[]> = {};
+            data.forEach((m: any) => { if (m.reactions?.length) rMap[m.id] = m.reactions; });
+            setReactions(rMap);
+          } else setMessages(getInitialMessages(t));
+        })
+        .catch(() => setMessages(getInitialMessages(t)));
+      fetch(`/api/chats/${chat.id}/read`, { method: 'PUT' }).catch(() => {});
+    } else {
+      loadMessages(chat.id).then(saved => {
+        setMessages(saved && saved.length > 0 ? saved : getInitialMessages(t));
+      });
+    }
   };
 
   const handleThemeClick = useCallback((themeId: string) => {
@@ -703,7 +760,7 @@ function ChatsContent() {
         <div className="space-y-1 px-1">
           {paginatedItems.length > 0 ? (
             paginatedItems.map((item) => {
-              const hasUnread = (unreadCounts[item.id] || 0) > 0;
+              const hasUnread = item.isApi ? (item.unread_count || 0) > 0 : (unreadCounts[item.id] || 0) > 0;
               return (
                 <div key={`${activeTab}-${item.id}`} onClick={() => openChat(item)} className={cn(
                   "flex items-center gap-3 p-3 rounded-2xl transition-all cursor-pointer group border border-white mb-2",
@@ -751,7 +808,7 @@ function ChatsContent() {
                       </div>
                       {hasUnread && (
                         <Badge className="h-5 min-w-[20px] px-1.5 gradient-bg text-white border-0 text-[9px] font-black flex items-center justify-center rounded-full scale-90 shadow-lg shadow-primary/20">
-                          {unreadCounts[item.id] || 2}
+                          {item.isApi ? (item.unread_count || 0) : (unreadCounts[item.id] || 2)}
                         </Badge>
                       )}
                     </div>

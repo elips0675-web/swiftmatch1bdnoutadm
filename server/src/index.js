@@ -20,7 +20,7 @@ import uploadRoutes from './routes/upload.js'
 import pushRoutes from './routes/push.js'
 import socialRoutes from './routes/social.js'
 import premiumRoutes from './routes/premium.js'
-import authRoutes from './routes/auth.js'
+import authRoutes, { createRefreshToken } from './routes/auth.js'
 import adminModerationRoutes from './routes/admin-moderation.js'
 import { JWT_SECRET } from './middleware.js'
 
@@ -90,7 +90,8 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '24h' })
-    res.json({ token, role: user.role, email_verified: !!user.email_verified_at })
+    const refresh_token = await createRefreshToken(user.id)
+    res.json({ token, refresh_token, role: user.role, email_verified: !!user.email_verified_at })
   } catch (err) {
     console.error('Login error:', err)
     res.status(500).json({ message: 'Internal server error' })

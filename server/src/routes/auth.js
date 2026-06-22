@@ -2,9 +2,19 @@ import { Router } from 'express'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 import pool from '../db.js'
+import { JWT_SECRET } from '../middleware.js'
 
 const router = Router()
-const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production'
+const REFRESH_EXPIRY_DAYS = 30
+
+async function createRefreshToken(userId) {
+  const token = crypto.randomBytes(40).toString('hex')
+  await pool.query(
+    'INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? DAY))',
+    [userId, token, REFRESH_EXPIRY_DAYS],
+  )
+  return token
+}
 
 router.post('/api/auth/register', async (req, res) => {
   const { email, password, displayName } = req.body
@@ -31,7 +41,8 @@ router.post('/api/auth/register', async (req, res) => {
     )
 
     const token = jwt.sign({ userId, role: 'user' }, JWT_SECRET, { expiresIn: '24h' })
-    res.status(201).json({ token, userId, verification_token, message: 'Account created' })
+    const refresh_token = await createRefreshToken(userId)
+    res.status(201).json({ token, refresh_token, userId, verification_token, message: 'Account created' })
   } catch (err) {
     console.error('Register error:', err)
     res.status(500).json({ message: 'Failed to create account' })
@@ -133,4 +144,28 @@ router.post('/api/auth/verify-email', async (req, res) => {
   }
 })
 
+router.post('/api/auth/refresh', async (req, res) => {
+  const { refresh_token } = req.body
+  if (!refresh_token) return res.status(400).json({ message: 'Refresh token required' })
+
+  try {
+    const [rows] = await pool.query(
+      'SELECT user_id FROM refresh_tokens WHERE token = ? AND expires_at > NOW()',
+      [refresh_token],
+    )
+    if (rows.length === 0) return res.status(401).json({ message: 'Invalid or expired refresh token' })
+
+    const { userId } = rows[0]
+    await pool.query('DELETE FROM refresh_tokens WHERE token = ?', [refresh_token])
+
+    const token = jwt.sign({ userId, role: 'user' }, JWT_SECRET, { expiresIn: '24h' })
+    const new_refresh_token = await createRefreshToken(userId)
+    res.json({ token, refresh_token: new_refresh_token })
+  } catch (err) {
+    console.error('Refresh error:', err)
+    res.status(500).json({ message: 'Failed to refresh token' })
+  }
+})
+
+export { createRefreshToken }
 export default router

@@ -87,6 +87,24 @@ class ApiClient {
           }
 
           if (response.status === 401) {
+            const refreshToken = sessionStorage.getItem('swiftmatch_refresh_token')
+            if (refreshToken) {
+              try {
+                const refreshRes = await fetch('/api/auth/refresh', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ refresh_token: refreshToken }),
+                })
+                if (refreshRes.ok) {
+                  const { token: newToken, refresh_token: newRefresh } = await refreshRes.json()
+                  const { setToken } = await import('./token')
+                  setToken(newToken)
+                  sessionStorage.setItem('swiftmatch_refresh_token', newRefresh)
+                  headers['Authorization'] = `Bearer ${newToken}`
+                  continue
+                }
+              } catch {}
+            }
             const { clearToken } = await import('./token')
             clearToken()
             window.dispatchEvent(new CustomEvent('auth:unauthorized'))

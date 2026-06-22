@@ -20,8 +20,8 @@ router.post('/api/auth/register', async (req, res) => {
     const verification_token = crypto.randomBytes(32).toString('hex')
 
     const [result] = await pool.query(
-      'INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)',
-      [email, password_hash, 'user'],
+      'INSERT INTO users (email, password_hash, role, verification_token) VALUES (?, ?, ?, ?)',
+      [email, password_hash, 'user', verification_token],
     )
     const userId = result.insertId
 
@@ -31,7 +31,7 @@ router.post('/api/auth/register', async (req, res) => {
     )
 
     const token = jwt.sign({ userId, role: 'user' }, JWT_SECRET, { expiresIn: '24h' })
-    res.status(201).json({ token, userId, message: 'Account created' })
+    res.status(201).json({ token, userId, verification_token, message: 'Account created' })
   } catch (err) {
     console.error('Register error:', err)
     res.status(500).json({ message: 'Failed to create account' })
@@ -82,6 +82,31 @@ router.post('/api/auth/reset-password', async (req, res) => {
   } catch (err) {
     console.error('Reset password error:', err)
     res.status(500).json({ message: 'Failed to reset password' })
+  }
+})
+
+router.post('/api/auth/resend-verification', async (req, res) => {
+  const { email } = req.body
+  if (!email) return res.status(400).json({ message: 'Email required' })
+
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, email_verified_at FROM users WHERE email = ?',
+      [email],
+    )
+    if (rows.length === 0) return res.status(404).json({ message: 'User not found' })
+    if (rows[0].email_verified_at) return res.json({ message: 'Email already verified' })
+
+    const verification_token = crypto.randomBytes(32).toString('hex')
+    await pool.query(
+      'UPDATE users SET verification_token = ? WHERE id = ?',
+      [verification_token, rows[0].id],
+    )
+
+    res.json({ message: 'Verification email sent', verification_token })
+  } catch (err) {
+    console.error('Resend verification error:', err)
+    res.status(500).json({ message: 'Failed to resend verification' })
   }
 })
 

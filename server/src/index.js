@@ -74,7 +74,7 @@ app.post('/api/auth/login', async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      'SELECT id, email, role, password_hash FROM users WHERE email = ? AND is_active = 1',
+      'SELECT id, email, role, password_hash, email_verified_at FROM users WHERE email = ? AND is_active = 1',
       [email],
     )
     if (rows.length === 0) {
@@ -89,7 +89,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '24h' })
-    res.json({ token, role: user.role })
+    res.json({ token, role: user.role, email_verified: !!user.email_verified_at })
   } catch (err) {
     console.error('Login error:', err)
     res.status(500).json({ message: 'Internal server error' })

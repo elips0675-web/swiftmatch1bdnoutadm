@@ -295,6 +295,7 @@ const translations = {
     'report.toast.no_reason_desc': 'Необходимо указать причину для отправки жалобы.',
     // Settings
     'settings.account': 'Аккаунт',
+    'settings.theme': 'Тёмная тема',
     'settings.push_notifications': 'Push-уведомления',
     'settings.email_newsletter': 'Email-рассылка',
     'settings.location': 'Геолокация',
@@ -1380,6 +1381,7 @@ const translations = {
     'report.toast.no_reason_desc': 'A reason is required to send a report.',
     // Settings
     'settings.account': 'Account',
+    'settings.theme': 'Dark Theme',
     'settings.push_notifications': 'Push Notifications',
     'settings.email_newsletter': 'Email Newsletter',
     'settings.location': 'Geolocation',

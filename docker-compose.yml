@@ -1,0 +1,30 @@
+services:
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: swiftmatch1bd
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/mysql_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/demo_data.sql:/docker-entrypoint-initdb.d/02-data.sql
+
+  app:
+    build: .
+    ports:
+      - "3002:3002"
+      - "8081:8081"
+    environment:
+      PORT: 3002
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: swiftmatch1bd
+      JWT_SECRET: change-me-in-production
+    depends_on:
+      - db
+
+volumes:
+  db_data:

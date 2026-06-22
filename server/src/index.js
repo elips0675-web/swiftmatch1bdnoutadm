@@ -21,6 +21,7 @@ import pushRoutes from './routes/push.js'
 import socialRoutes from './routes/social.js'
 import premiumRoutes from './routes/premium.js'
 import authRoutes from './routes/auth.js'
+import adminModerationRoutes from './routes/admin-moderation.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -157,6 +158,7 @@ app.use('/api/admin', adminContent)
 app.use('/api/admin', adminFeatures)
 app.use('/api/admin', adminMessaging)
 app.use('/api/admin', adminMonetization)
+app.use('/api/admin', adminModerationRoutes)
 
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err)

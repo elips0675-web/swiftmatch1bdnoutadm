@@ -64,14 +64,20 @@ CREATE TABLE user_profiles (
 -- 3. USER PHOTOS (gallery)
 -- -----------------------------------------------------------
 CREATE TABLE user_photos (
-  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  user_id     INT UNSIGNED NOT NULL,
-  url         VARCHAR(500) NOT NULL,
-  sort_order  TINYINT UNSIGNED NOT NULL DEFAULT 0,
-  is_avatar   BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id             INT UNSIGNED NOT NULL,
+  url                 VARCHAR(500) NOT NULL,
+  sort_order          TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  is_avatar           BOOLEAN NOT NULL DEFAULT FALSE,
+  moderation_status   ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  moderation_reason   VARCHAR(500) DEFAULT NULL,
+  moderated_by        INT UNSIGNED DEFAULT NULL,
+  moderated_at        TIMESTAMP NULL,
+  created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_photos_user (user_id)
+  FOREIGN KEY (moderated_by) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_photos_user (user_id),
+  INDEX idx_photos_moderation (moderation_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------

@@ -102,6 +102,18 @@ export default function Home() {
       </AnimatePresence>
 
       <AppHeader />
+      {localStorage.getItem('email_verified') === '0' && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center justify-between">
+          <p className="text-xs font-bold text-amber-800">{t('auth.verify_prompt')} — {t('auth.verify_prompt_desc')}</p>
+          <button onClick={() => {
+            const email = localStorage.getItem('email') || '';
+            fetch('/api/auth/resend-verification', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
+              .then(res => res.json())
+              .then(data => toast({ title: data.message }))
+              .catch(() => toast({ variant: 'destructive', title: t('common.error') }));
+          }} className="text-[10px] font-black uppercase tracking-wider text-amber-700 hover:text-amber-900 shrink-0 ml-2">{t('auth.resend_verification')}</button>
+        </div>
+      )}
       <main className="flex-1 overflow-y-auto pb-24">
         <section className="px-6 py-10 text-center relative overflow-hidden bg-white border-b border-border/40">
           <Badge variant="secondary" className="mb-4 bg-primary/10 text-primary border-0 gap-1.5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em]">

@@ -56,6 +56,8 @@ export default function LoginPage() {
 
       if (response.ok) {
         setToken(data.token);
+        localStorage.setItem('email_verified', data.email_verified ? '1' : '0');
+        localStorage.setItem('email', email);
         router.push('/');
         toast({
           title: t('auth.welcome_back'),

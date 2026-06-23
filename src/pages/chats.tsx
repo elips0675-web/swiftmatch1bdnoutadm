@@ -379,7 +379,15 @@ function ChatsContent() {
   };
 
   if (groupId && selectedChat?.isGroup) {
-    return <GroupFeed categoryNameRu={selectedChat.name} categoryNameEn={selectedChat.name} />;
+    return (
+      <>
+        <AppHeader />
+        <div className="flex-1 overflow-y-auto pb-24">
+          <GroupFeed categoryNameRu={selectedChat.name} categoryNameEn={selectedChat.name} />
+        </div>
+        <BottomNav />
+      </>
+    );
   }
 
   if (selectedChat) {

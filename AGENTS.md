@@ -81,6 +81,26 @@ No `nodemailer` or `mail.js` for verification emails, password reset, etc. Auth 
 ### 8. No WebSocket server
 No socket.io for real-time features (chat, notifications). **Fix:** Created `server/src/ws.js` using `socket.io`, integrated into `server/src/index.js` (wraps `http.createServer`). Listens on same port 3002.
 
+### 10. Admin 500 errors — DB schema mismatches
+`/api/admin/stats`, `/api/admin/photos/pending`, `/api/admin/reports` returned 500 because the code referenced columns that don't exist in the MySQL `swiftmatch` database:
+- `users.online` → use `user_profiles.online` (stats)
+- `user_photos.moderation_status` + `moderation_reason` — columns missing → added via ALTER TABLE
+- `reports.evidence` — column missing → added via ALTER TABLE
+
+**Lesson:** Before writing SQL in server routes, verify columns against `DESCRIBE table` output. The database schema in `database/mysql_schema.sql` may drift from what's actually deployed.
+
+### 11. LookingFor missing in profile-edit
+`/profile/edit` had no UI for "кого ищу" (lookingFor). The data model had `lookingFor` but no form control. **Fix:** Added `<Select>` with Male/Female/Все options, saves to `profile.lookingFor`.
+
+### 12. Server needs npm install after git pull
+When pulling new commits that add server dependencies (e.g. `express-rate-limit`, `socket.io`, `nodemailer`), run `npm install` in `server/` before starting. Missing deps cause `ERR_MODULE_NOT_FOUND`.
+
+## Startup reminder
+- After `git pull noutadm main` in `C:\swiftmatch1bd` (the run directory), also run `cd server && npm install` if new packages were added.
+- Kill old node processes: `Get-Process -Name "node" | Stop-Process -Force`
+- Start server: `cd C:\swiftmatch1bd\server && node src/index.js`
+- Start frontend: `cd C:\swiftmatch1bd && npx vite --port 8081 --host`
+
 ### 9. Read receipts & emoji reactions missing in chat
 Chat page had no "seen" indicator or emoji reaction UI. **Fix:** Added `seenIndicator` boolean, reaction picker (happy/love/sad/angry/like) with `reactions` array per message, and UI rendering in `src/pages/chats-chatId.tsx`.
 

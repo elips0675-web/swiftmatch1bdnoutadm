@@ -7,7 +7,7 @@ router.get('/stats', async (req, res) => {
   try {
     const [[{ total }]] = await pool.query('SELECT COUNT(*) as total FROM users')
     const [[{ activeToday }]] = await pool.query(
-      'SELECT COUNT(*) as activeToday FROM users WHERE online = 1',
+      'SELECT COUNT(*) as activeToday FROM user_profiles WHERE online = 1',
     )
     const [[{ totalMatches }]] = await pool.query('SELECT COUNT(*) as totalMatches FROM matches')
     const [[{ revenue }]] = await pool.query(

@@ -6,7 +6,7 @@ const router = Router()
 router.get('/photos/pending', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT p.id, p.url, p.user_id, p.created_at,
+      `SELECT p.id, p.url, p.user_id, p.created_at, p.moderation_status,
               up.display_name, up.avatar_url
        FROM user_photos p
        JOIN user_profiles up ON up.id = p.user_id

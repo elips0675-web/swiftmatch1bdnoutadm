@@ -3,6 +3,23 @@ import pool from '../db.js'
 
 const router = Router()
 
+router.get('/photos', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT p.id, p.url, p.user_id, p.created_at, p.moderation_status,
+              up.display_name, up.avatar_url
+       FROM user_photos p
+       JOIN user_profiles up ON up.id = p.user_id
+       ORDER BY p.created_at DESC
+       LIMIT 200`,
+    )
+    res.json(rows)
+  } catch (err) {
+    console.error('All photos error:', err)
+    res.status(500).json({ message: 'Failed to fetch photos' })
+  }
+})
+
 router.get('/photos/pending', async (req, res) => {
   try {
     const [rows] = await pool.query(

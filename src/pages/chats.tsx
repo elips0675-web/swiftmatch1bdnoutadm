@@ -19,6 +19,7 @@ import { useLanguage } from "@/context/language-context";
 import { toast } from "@/hooks/use-toast";
 import { useFeatureFlags } from "@/context/feature-flags-context";
 import { getToken } from '@/lib/token';
+import { GROUP_CATEGORIES } from '@/lib/demo-data';
 import { containsForbiddenWords, isGibberish } from "@/lib/word-filter";
 import { useAntiScreenshot } from "@/hooks/useAntiScreenshot";
 
@@ -236,45 +237,12 @@ function ChatsContent() {
 
   useEffect(() => {
     if (groupId) {
-      const token = getToken();
-      const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
-      const authFetch = (url: string) => fetch(url, { headers: authHeaders });
-
-      Promise.all([
-        authFetch(`/api/groups/${groupId}`).then(r => r.ok ? r.json() : null),
-        authFetch(`/api/groups/${groupId}/chat`).then(r => r.ok ? r.json() : null),
-      ])
-        .then(([group, chat]) => {
-          if (group && chat) {
-            setSelectedChat({
-              id: chat.id,
-              name: group.name_ru || group.name_en || `Group #${groupId}`,
-              img: group.img || '',
-              online: false,
-              isGroup: true,
-            });
-            return authFetch(`/api/chats/${chat.id}/messages`);
-          }
-          throw new Error('Failed to load group');
-        })
-        .then(res => res.ok ? res.json() : [])
-        .then(data => {
-          if (Array.isArray(data)) {
-            const msgs = data.map((m: any) => ({
-              id: m.id, text: m.text, image_url: m.image_url,
-              sender: m.sender_id === 1 ? 'me' : 'other',
-              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              reactions: m.reactions || [],
-            }));
-            setMessages(msgs);
-            const rMap: Record<number, any[]> = {};
-            data.forEach((m: any) => { if (m.reactions?.length) rMap[m.id] = m.reactions; });
-            setReactions(rMap);
-          }
-        })
-        .catch(() => {});
+      const allSubs = GROUP_CATEGORIES.flatMap(c => c.subgroups);
+      const sub = allSubs.find(s => String(s.id) === groupId);
+      const label = sub ? (language === 'RU' ? sub.name_ru : sub.name_en) : `Group #${groupId}`;
+      setSelectedChat({ id: Number(groupId), name: label, img: '', online: false, isGroup: true });
     }
-  }, [groupId]);
+  }, [groupId, language]);
 
   useEffect(() => {
     fetch('/api/chats')

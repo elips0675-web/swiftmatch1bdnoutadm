@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/context/language-context";
 import { toast } from "@/hooks/use-toast";
 import { useFeatureFlags } from "@/context/feature-flags-context";
+import { getToken } from '@/lib/token';
 import { containsForbiddenWords, isGibberish } from "@/lib/word-filter";
 import { useAntiScreenshot } from "@/hooks/useAntiScreenshot";
 
@@ -230,9 +231,13 @@ function ChatsContent() {
 
   useEffect(() => {
     if (groupId) {
+      const token = getToken();
+      const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+      const authFetch = (url: string) => fetch(url, { headers: authHeaders });
+
       Promise.all([
-        fetch(`/api/groups/${groupId}`).then(r => r.ok ? r.json() : null),
-        fetch(`/api/groups/${groupId}/chat`).then(r => r.ok ? r.json() : null),
+        authFetch(`/api/groups/${groupId}`).then(r => r.ok ? r.json() : null),
+        authFetch(`/api/groups/${groupId}/chat`).then(r => r.ok ? r.json() : null),
       ])
         .then(([group, chat]) => {
           if (group && chat) {
@@ -243,7 +248,7 @@ function ChatsContent() {
               online: false,
               isGroup: true,
             });
-            return fetch(`/api/chats/${chat.id}/messages`);
+            return authFetch(`/api/chats/${chat.id}/messages`);
           }
           throw new Error('Failed to load group');
         })

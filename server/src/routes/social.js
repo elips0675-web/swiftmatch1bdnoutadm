@@ -232,6 +232,67 @@ router.put('/api/invites/:id/status', auth, async (req, res) => {
   }
 })
 
+// ─── Groups ────────────────────────────────────────────────────
+router.get('/api/groups/:groupId', auth, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT g.id, g.name_ru, g.name_en, g.description, g.img, g.members_count, g.online_count, g.href
+       FROM chat_groups g
+       WHERE g.id = ?`,
+      [req.params.groupId],
+    )
+    if (rows.length === 0) return res.status(404).json({ message: 'Group not found' })
+    res.json(rows[0])
+  } catch (err) {
+    console.error('Group fetch error:', err)
+    res.status(500).json({ message: 'Failed to fetch group' })
+  }
+})
+
+router.get('/api/groups/:groupId/chat', auth, async (req, res) => {
+  try {
+    const [existing] = await pool.query(
+      'SELECT id FROM chats WHERE group_id = ? AND is_group = 1 LIMIT 1',
+      [req.params.groupId],
+    )
+    if (existing.length > 0) {
+      const [participant] = await pool.query(
+        'SELECT chat_id FROM chat_participants WHERE chat_id = ? AND user_id = ?',
+        [existing[0].id, req.userId],
+      )
+      if (participant.length === 0) {
+        await pool.query(
+          'INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)',
+          [existing[0].id, req.userId],
+        )
+      }
+      return res.json({ id: existing[0].id, isGroup: true })
+    }
+
+    const [result] = await pool.query(
+      'INSERT INTO chats (is_group, group_id, last_message) VALUES (1, ?, ?)',
+      [req.params.groupId, ''],
+    )
+    const chatId = result.insertId
+
+    const [members] = await pool.query(
+      'SELECT user_id FROM group_members WHERE group_id = ?',
+      [req.params.groupId],
+    )
+    for (const m of members) {
+      await pool.query(
+        'INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE chat_id = chat_id',
+        [chatId, m.user_id],
+      )
+    }
+
+    res.json({ id: chatId, isGroup: true })
+  } catch (err) {
+    console.error('Group chat error:', err)
+    res.status(500).json({ message: 'Failed to get group chat' })
+  }
+})
+
 // ─── Chats ─────────────────────────────────────────────────────
 router.get('/api/chats', auth, async (req, res) => {
   try {

@@ -229,6 +229,44 @@ function ChatsContent() {
   }, [matchId]);
 
   useEffect(() => {
+    if (groupId) {
+      Promise.all([
+        fetch(`/api/groups/${groupId}`).then(r => r.ok ? r.json() : null),
+        fetch(`/api/groups/${groupId}/chat`).then(r => r.ok ? r.json() : null),
+      ])
+        .then(([group, chat]) => {
+          if (group && chat) {
+            setSelectedChat({
+              id: chat.id,
+              name: group.name_ru || group.name_en || `Group #${groupId}`,
+              img: group.img || '',
+              online: false,
+              isGroup: true,
+            });
+            return fetch(`/api/chats/${chat.id}/messages`);
+          }
+          throw new Error('Failed to load group');
+        })
+        .then(res => res.ok ? res.json() : [])
+        .then(data => {
+          if (Array.isArray(data)) {
+            const msgs = data.map((m: any) => ({
+              id: m.id, text: m.text,
+              sender: m.sender_id === 1 ? 'me' : 'other',
+              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              reactions: m.reactions || [],
+            }));
+            setMessages(msgs);
+            const rMap: Record<number, any[]> = {};
+            data.forEach((m: any) => { if (m.reactions?.length) rMap[m.id] = m.reactions; });
+            setReactions(rMap);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [groupId]);
+
+  useEffect(() => {
     fetch('/api/chats')
       .then(res => res.ok ? res.json() : [])
       .then(data => { if (Array.isArray(data)) setApiChats(data); })
@@ -348,8 +386,8 @@ function ChatsContent() {
             </p>
           </div>
           <div className="flex items-center">
-            {videoCallsEnabled && <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50" onClick={() => setIsVideoCall(true)}><Video size={18} /></Button>}
-            <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50" onClick={() => setIsVoiceCall(true)}><Phone size={18} /></Button>
+            {!selectedChat.isGroup && videoCallsEnabled && <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50" onClick={() => setIsVideoCall(true)}><Video size={18} /></Button>}
+            {!selectedChat.isGroup && <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50" onClick={() => setIsVoiceCall(true)}><Phone size={18} /></Button>}
             <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-muted/50" onClick={() => setShowTopicsDialog(true)}><Info size={18} /></Button>
             <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
@@ -431,6 +469,8 @@ function ChatsContent() {
         </div>
         {selectedChat && !selectedChat.isGroup && isVideoCall && <VideoCallDialog open={isVideoCall} onOpenChange={setIsVideoCall} user={selectedChat} />}
         {selectedChat && !selectedChat.isGroup && isVoiceCall && <VoiceCallDialog open={isVoiceCall} onOpenChange={setIsVoiceCall} user={selectedChat} />}
+        {selectedChat && selectedChat.isGroup && isVideoCall && <VideoCallDialog open={isVideoCall} onOpenChange={setIsVideoCall} user={selectedChat} />}
+        {selectedChat && selectedChat.isGroup && isVoiceCall && <VoiceCallDialog open={isVoiceCall} onOpenChange={setIsVoiceCall} user={selectedChat} />}
 
         <Dialog open={showTopicsDialog} onOpenChange={setShowTopicsDialog}>
           <DialogContent className="max-w-sm rounded-2xl border-0 p-6 bg-white app-shadow">

@@ -1,36 +1,120 @@
-Готово. Проект в C:\swiftmatch1 адаптирован для продакшена:
+Что сделано и что осталось — swiftmatch1bdnoutadm
+===================================================
 
-Что сделано
-Типизация — создан src/types/index.ts с 20+ интерфейсами (UserProfile, AdminUser, Message, Chat, FeatureFlags, GroupCategory, etc). Все any заменены в demo-data.ts, utils.ts.
+✅ ПОЧИНЕНО (было сломано)
+━━━━━━━━━━━━━━━━━━━━━━━━━
 
-API-клиент (src/lib/api.ts):
+1. Build падал — src/hooks/use-premium.ts
+   - Файл был в UTF-16 LE (Vite требует UTF-8)
+   - Рекурсия: const fetch внутри хука вызывала сама себя вместо window.fetch
+   ✅ Исправлено: пересохранён в UTF-8, переименован в loadSubscription
 
-Fetch-обёртка с Bearer-авторизацией, retry (exponential backoff), timeout
-Автоочистка токена при 401 + dispatch события auth:unauthorized
-Поддержка GET/POST/PUT/PATCH/DELETE, параметров запроса
-Auth (src/context/auth-context.tsx):
+2. Сервер не запускался — server/src/routes/profile.js
+   - Отсутствовал `const router = Router()`
+   ✅ Добавлен
 
-Контекст с login/register/logout/loginWithGoogle
-JWT-токен в localStorage, проверка /auth/me при загрузке
-Слушатель события auth:unauthorized для глобального выхода
-Environment (.env.development, .env.production, .env.example):
+3. Сервер не запускался — server/src/banned-words.js
+   - Файл не существовал, но импортировался в social.js
+   ✅ Создан (читает из content_config в БД)
 
-VITE_API_URL, VITE_WS_URL, VITE_SENTRY_DSN и др.
-Типизированный ImportMetaEnv в vite-env.d.ts
-Валидация обязательных переменных в production
-Error handling:
+4. Admin дашборд — chartData.slice is not a function
+   - Recharts получал не-массив (пустая БД / ошибка API)
+   ✅ Добавлены fallback `|| []` на все data-пропы и .map()/.slice()
 
-ErrorBoundary — ловит ошибки рендера, кнопка "Попробовать снова"
-LoadingScreen, PageLoading, LoadingSpinner — единые компоненты загрузки
-Билд (vite.config.ts):
+5. chats-chatId.tsx — отправлял `content` вместо `text`
+   - Сервер ожидает `text`, фронт отправлял `content` → сообщения не уходили
+   ✅ Исправлено
 
-lazy() + Suspense для всех 33 страниц — код грузится по запросу
-manualChunks: vendor (React 164KB), ui (Radix 94KB), animations (Framer 128KB), charts (Recharts 415KB)
-Sourcemap только в dev, target ES2020
-Тесты — 3 файла, 16 тестов (API client: запросы, токен, retry, timeout, 401; utils: cn merge, title logic; проходят за 1с)
+6. chats-chatId.tsx — не было реакций и отметок прочитано
+   - Не вызывался PUT /api/chats/:id/read
+   - Не отображались emoji-реакции
+   - Не было иконки "Seen" (CheckCheck / Eye)
+   ✅ Добавлены реакции, чтение чата при открытии, статус прочтения
 
-Запуск
-cd C:\swiftmatch1
-npm run dev        # dev-сервер на localhost:8080
-npm test           # vitest
-npm run build      # production build
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ РЕАЛИЗОВАНО НОВОЕ
+━━━━━━━━━━━━━━━━━━━━━━━
+
+▶ Этап 1 — Email-инфраструктура
+┌──────────────────────────────┬──────────────────────────┐
+│ Что                          │ Статус                   │
+├──────────────────────────────┼──────────────────────────┤
+│ nodemailer (установлен)      │ ✅ server/package.json    │
+│ server/src/mail.js           │ ✅ отправка писем         │
+│ Регистрация → письмо        │ ✅ verify-email           │
+│ Forgot password → письмо    │ ✅ reset-password         │
+│ Resend verification → письмо │ ✅                        │
+│ SMTP в server/.env          │ ✅ (закомментирован)      │
+└──────────────────────────────┴──────────────────────────┘
+
+▶ Этап 2 — Read receipts + emoji в chats-chatId
+┌──────────────────────────────┬──────────────────────────┐
+│ Что                          │ Статус                   │
+├──────────────────────────────┼──────────────────────────┤
+│ Per-message "Seen" флаг     │ ✅ сервер считает через   │
+│                              │   last_read_at партнёра  │
+│ PUT /api/chats/:id/read     │ ✅ вызывается при входе  │
+│ Реакции в chats-chatId       │ ✅ + picker + toggle     │
+│ Иконка CheckCheck / Eye     │ ✅                        │
+│ read_by колонка в messages  │ ✅ в mysql_schema.sql     │
+└──────────────────────────────┴──────────────────────────┘
+
+▶ Этап 3 — WebSocket сервер
+┌──────────────────────────────┬──────────────────────────┐
+│ Что                          │ Статус                   │
+├──────────────────────────────┼──────────────────────────┤
+│ socket.io (установлен)      │ ✅ server/package.json    │
+│ server/src/ws.js             │ ✅ JWT auth + user:ID    │
+│                              │   комнаты               │
+│ index.js: createServer      │ ✅ HTTP + WS на одном    │
+│                              │   порту                 │
+│ Уведомления через WS        │ ✅ лайки/инвайты         │
+└──────────────────────────────┴──────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ ЧТО ОСТАЛОСЬ
+━━━━━━━━━━━━━━━━━━━━━━━
+
+┌───┬────────────────────────────────┬──────────┬──────────┐
+│ # │ Задача                         │ Приоритет│ Зависит  │
+├───┼────────────────────────────────┼──────────┼──────────┤
+│ 1 │ Stripe live — реальные ключи  │ Высокий  │ Твои     │
+│   │ (сейчас mock, всегда успех)   │          │ API-ключи│
+│   │ Нужно: stripe npm, ключи в .env│          │          │
+├───┼────────────────────────────────┼──────────┼──────────┤
+│ 2 │ Реальная реклама — AdMob /    │ Высокий  │ Твои     │
+│   │ Yandex SDK вместо таймера     │          │ ключи    │
+├───┼────────────────────────────────┼──────────┼──────────┤
+│ 3 │ SMTP — раскомментировать и    │ Средний  │ Твои     │
+│   │ вписать SMTP_HOST/USER/PASS   │          │ SMTP     │
+│   │ в server/.env для работы писем│          │ данные   │
+├───┼────────────────────────────────┼──────────┼──────────┤
+│ 4 │ Frontend WebSocket — подклю-  │ Средний  │ —        │
+│   │ чить socket.io-client в чатах │          │          │
+│   │ для real-time сообщений       │          │          │
+├───┼────────────────────────────────┼──────────┼──────────┤
+│ 5 │ Stripe success/cancel страницы│ Средний  │ п.1      │
+│   │ Фронтенд для редиректа после  │          │          │
+│   │ оплаты                        │          │          │
+├───┼────────────────────────────────┼──────────┼──────────┤
+│ 6 │ В админке users — показать    │ Низкий   │ —        │
+│   │ реальный premium статус       │          │          │
+│   │ (сейчас хардкод 'free')       │          │          │
+├───┼────────────────────────────────┼──────────┼──────────┤
+│ 7 │ Stripe webhook raw body       │ Низкий   │ п.1      │
+│   │ Express.json съедает raw body │          │          │
+│   │ — webhook не сможет           │          │          │
+│   │ верифицировать подпись        │          │          │
+└───┴────────────────────────────────┴──────────┴──────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Запуск (локально):
+  cd C:\swiftmatch1bddomadm
+  npm run dev            # фронт localhost:8080
+  cd server && npm start # API localhost:3002
+
+Прокси в vite.config.ts настроен на localhost:3001.
+Если сервер на 3002 — поменяй в vite.config.ts: target: 'http://localhost:3002'

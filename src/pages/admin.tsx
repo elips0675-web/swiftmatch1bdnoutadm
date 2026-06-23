@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={trendData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorReg" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#fe3c72" stopOpacity={0.3}/>
@@ -183,14 +183,14 @@ export default function AdminDashboardPage() {
           <CardContent className="h-[300px] flex flex-col items-center">
             <ResponsiveContainer width="100%" height={180}>
               <PieChart>
-                <Pie data={cityData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={3} dataKey="value">
-                  {cityData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                <Pie data={cityData || []} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={3} dataKey="value">
+                  {(cityData || []).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip contentStyle={{ borderRadius: '12px', border: 'none' }} />
               </PieChart>
             </ResponsiveContainer>
             <div className="w-full space-y-1.5 mt-2">
-              {cityData.slice(0, 5).map((c, i) => (
+              {(cityData || []).slice(0, 5).map((c, i) => (
                 <div key={c.name} className="flex items-center justify-between text-[10px] font-bold">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i] }} />
@@ -210,7 +210,7 @@ export default function AdminDashboardPage() {
         </CardHeader>
         <CardContent className="h-[250px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={revenueByMonth} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={revenueByMonth || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
@@ -233,7 +233,7 @@ export default function AdminDashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {activity.map(item => (
+            {(activity || []).map(item => (
               <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors">
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
                   {activityIcons[item.type] || <Flag size={14} className="text-muted-foreground" />}

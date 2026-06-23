@@ -448,6 +448,18 @@ export default function EditProfilePage() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">{t('profile.label.looking_for')}</Label>
+              <Select value={profile.lookingFor || 'male'} onValueChange={(val) => setProfile({ ...profile, lookingFor: val })}>
+                <SelectTrigger className="rounded-xl bg-muted/30 border-0 h-11 font-bold px-4"><SelectValue /></SelectTrigger>
+                <SelectContent className="rounded-xl border-0 shadow-2xl">
+                  <SelectItem value="male" className="font-bold text-[11px]">{t('gender.male')}</SelectItem>
+                  <SelectItem value="female" className="font-bold text-[11px]">{t('gender.female')}</SelectItem>
+                  <SelectItem value="everyone" className="font-bold text-[11px]">{t('gender.all')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Interests */}

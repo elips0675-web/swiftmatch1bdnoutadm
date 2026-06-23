@@ -363,7 +363,7 @@ router.get('/api/chats/:chatId/messages', auth, async (req, res) => {
     if (participant.length === 0) return res.status(403).json({ message: 'Not a participant' })
 
     const [rows] = await pool.query(
-      `SELECT m.id, m.sender_id, m.text, m.reply_to, m.created_at,
+      `SELECT m.id, m.sender_id, m.text, m.image_url, m.reply_to, m.created_at,
               up.display_name as sender_name
        FROM messages m
        JOIN user_profiles up ON m.sender_id = up.id
@@ -407,8 +407,8 @@ router.get('/api/chats/:chatId/messages', auth, async (req, res) => {
 })
 
 router.post('/api/chats/:chatId/messages', auth, async (req, res) => {
-  const { text } = req.body
-  if (!text) return res.status(400).json({ message: 'Text is required' })
+  const { text, image_url } = req.body
+  if (!text && !image_url) return res.status(400).json({ message: 'Text or image is required' })
 
   const bannedWords = await getBannedWords()
   if (containsBannedWord(text, bannedWords)) {
@@ -423,17 +423,18 @@ router.post('/api/chats/:chatId/messages', auth, async (req, res) => {
     if (participant.length === 0) return res.status(403).json({ message: 'Not a participant' })
 
     const [result] = await pool.query(
-      'INSERT INTO messages (chat_id, sender_id, text) VALUES (?, ?, ?)',
-      [req.params.chatId, req.userId, text],
+      'INSERT INTO messages (chat_id, sender_id, text, image_url) VALUES (?, ?, ?, ?)',
+      [req.params.chatId, req.userId, text || null, image_url || null],
     )
 
+    const preview = image_url ? '📷 Photo' : (text || '')
     await pool.query(
       `UPDATE chats SET last_message = ?, last_sender_id = ?, updated_at = NOW() WHERE id = ?`,
-      [text, req.userId, req.params.chatId],
+      [preview, req.userId, req.params.chatId],
     )
 
     const [[msg]] = await pool.query(
-      `SELECT m.id, m.sender_id, m.text, m.reply_to, m.created_at,
+      `SELECT m.id, m.sender_id, m.text, m.image_url, m.reply_to, m.created_at,
               up.display_name as sender_name
        FROM messages m
        JOIN user_profiles up ON m.sender_id = up.id

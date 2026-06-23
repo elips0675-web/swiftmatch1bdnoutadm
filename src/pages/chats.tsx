@@ -31,6 +31,8 @@ function deleteConversation(chatId: number) {
   fetch(`/api/chats/${chatId}`, { method: 'DELETE' }).catch(() => {});
 }
 
+const Upload = ({ size }: { size: number }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+
 const QUICK_REACTIONS = [
   { id: 'heart', icon: Heart, color: 'text-red-500', label: '❤️' },
   { id: 'flame', icon: Flame, color: 'text-orange-500', label: '🔥' },
@@ -159,6 +161,7 @@ function ChatsContent() {
   const [isVoiceCall, setIsVoiceCall] = useState(false);  
   const [currentPage, setCurrentPage] = useState(1);
   const [apiChats, setApiChats] = useState<any[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const msgContainerRef = useAntiScreenshot<HTMLDivElement>();
 
   const allDirectChats = useMemo(() => {
@@ -256,7 +259,7 @@ function ChatsContent() {
         .then(data => {
           if (Array.isArray(data)) {
             const msgs = data.map((m: any) => ({
-              id: m.id, text: m.text,
+              id: m.id, text: m.text, image_url: m.image_url,
               sender: m.sender_id === 1 ? 'me' : 'other',
               time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               reactions: m.reactions || [],
@@ -278,7 +281,40 @@ function ChatsContent() {
       .catch(() => {});
   }, []);
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedChat) return;
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      formData.append('user_id', '1');
+      const token = getToken();
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!uploadRes.ok) throw new Error('Upload failed');
+      const uploadData = await uploadRes.json();
+      const imageUrl = uploadData.url || uploadData.path || '';
 
+      const msgRes = await fetch(`/api/chats/${selectedChat.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ text: '', image_url: imageUrl }),
+      });
+      if (msgRes.ok) {
+        const msg = await msgRes.json();
+        setMessages(prev => [...prev, { id: msg.id, text: '', image_url: imageUrl, sender: 'me', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), reactions: [] }]);
+      }
+    } catch {
+      toast({ variant: 'destructive', title: 'Upload failed' });
+    } finally {
+      setUploadingImage(false);
+      e.target.value = '';
+    }
+  };
 
   const handleSendMessage = (textOverride?: string) => {
     const textToSend = textOverride || inputValue;
@@ -421,9 +457,10 @@ function ChatsContent() {
               const isReactionPickerOpen = reactionMsgId === msg.id;
               return (
               <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} key={msg.id} className={cn("flex flex-col max-w-[80%]", msg.sender === "me" ? "ml-auto items-end" : "items-start")}>
-                <button onClick={() => setReactionMsgId(isReactionPickerOpen ? null : msg.id)} className={cn("px-3 py-2 rounded-lg text-sm shadow-sm font-medium leading-snug text-left w-full transition-all active:scale-95", msg.sender === "me" ? "gradient-bg text-white rounded-br-none shadow-primary/10" : "bg-white text-foreground rounded-bl-none border border-border/40")}>
-                  {msg.text}
-                </button>
+                <div onClick={() => setReactionMsgId(isReactionPickerOpen ? null : msg.id)} className={cn("px-3 py-2 rounded-lg text-sm shadow-sm font-medium leading-snug text-left w-full transition-all active:scale-95", msg.sender === "me" ? "gradient-bg text-white rounded-br-none shadow-primary/10" : "bg-white text-foreground rounded-bl-none border border-border/40")}>
+                  {msg.image_url && <img src={msg.image_url} alt="" className="w-full rounded-lg mb-2 max-h-64 object-cover" />}
+                  {msg.text && <p>{msg.text}</p>}
+                </div>
                 {reactionEmojis.length > 0 && (
                   <div className={cn("flex gap-1 mt-1", msg.sender === "me" ? "justify-end" : "justify-start")}>
                     {reactionEmojis.map(emoji => (
@@ -468,6 +505,14 @@ function ChatsContent() {
                   <div className="grid grid-cols-5 gap-1">{QUICK_REACTIONS.map(reaction => { const ReactionIcon = reaction.icon; return (<button key={reaction.id} onClick={() => handleSendMessage(reaction.label)} className="w-10 h-10 flex items-center justify-center hover:bg-muted rounded-xl transition-all active:scale-90"><span className="[transform:translateZ(0)]"><ReactionIcon size={24} className={reaction.color} /></span></button>); })}</div>
                 </PopoverContent>
               </Popover>
+              {selectedChat?.isGroup && (
+                <>
+                  <input id="group-image-upload" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                  <label htmlFor="group-image-upload" className="cursor-pointer text-muted-foreground hover:text-primary transition-colors">
+                    {uploadingImage ? <Loader2 size={20} className="animate-spin" /> : <Upload size={20} />}
+                  </label>
+                </>
+              )}
             </div>
             <Button size="icon" onClick={() => handleSendMessage()} disabled={!inputValue.trim()} className="h-11 w-11 rounded-2xl gradient-bg text-white shadow-xl shadow-primary/30 active:scale-95 transition-all shrink-0"><Send size={18} className="ml-0.5" /></Button>
           </div>

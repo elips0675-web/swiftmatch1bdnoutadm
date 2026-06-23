@@ -188,6 +188,7 @@ CREATE TABLE messages (
   sender_id   INT UNSIGNED NOT NULL,
   text        TEXT NOT NULL,
   reply_to    INT UNSIGNED DEFAULT NULL,
+  read_by     JSON DEFAULT NULL COMMENT 'Array of user_ids who read this message',
   created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
   FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -196,6 +197,9 @@ CREATE TABLE messages (
   INDEX idx_messages_sender (sender_id),
   INDEX idx_messages_created (chat_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Migration for existing DBs:
+-- ALTER TABLE messages ADD COLUMN read_by JSON DEFAULT NULL COMMENT 'Array of user_ids who read this message';
 
 -- -----------------------------------------------------------
 -- 12. MESSAGE REACTIONS

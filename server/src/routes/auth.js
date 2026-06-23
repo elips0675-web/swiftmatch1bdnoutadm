@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 import pool from '../db.js'
 import { JWT_SECRET } from '../middleware.js'
+import { sendVerificationEmail, sendPasswordResetEmail } from '../mail.js'
 
 const router = Router()
 const REFRESH_EXPIRY_DAYS = 30
@@ -42,7 +43,8 @@ router.post('/api/auth/register', async (req, res) => {
 
     const token = jwt.sign({ userId, role: 'user' }, JWT_SECRET, { expiresIn: '24h' })
     const refresh_token = await createRefreshToken(userId)
-    res.status(201).json({ token, refresh_token, userId, verification_token, message: 'Account created' })
+    sendVerificationEmail(email, verification_token)
+    res.status(201).json({ token, refresh_token, userId, message: 'Account created' })
   } catch (err) {
     console.error('Register error:', err)
     res.status(500).json({ message: 'Failed to create account' })
@@ -63,6 +65,7 @@ router.post('/api/auth/forgot-password', async (req, res) => {
       [token, rows[0].id],
     )
 
+    sendPasswordResetEmail(email, token)
     res.json({ message: 'If the email exists, a reset link has been sent' })
   } catch (err) {
     console.error('Forgot password error:', err)
@@ -114,7 +117,8 @@ router.post('/api/auth/resend-verification', async (req, res) => {
       [verification_token, rows[0].id],
     )
 
-    res.json({ message: 'Verification email sent', verification_token })
+    sendVerificationEmail(email, verification_token)
+    res.json({ message: 'Verification email sent' })
   } catch (err) {
     console.error('Resend verification error:', err)
     res.status(500).json({ message: 'Failed to resend verification' })

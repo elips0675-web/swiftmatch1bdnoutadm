@@ -312,6 +312,11 @@ router.get('/api/chats/:chatId/messages', auth, async (req, res) => {
       [req.params.chatId],
     )
 
+    const [[otherParticipant]] = await pool.query(
+      'SELECT user_id, last_read_at FROM chat_participants WHERE chat_id = ? AND user_id != ?',
+      [req.params.chatId, req.userId],
+    )
+
     const msgIds = rows.map(r => r.id)
     const reactionsMap = {}
     if (msgIds.length > 0) {
@@ -328,7 +333,11 @@ router.get('/api/chats/:chatId/messages', auth, async (req, res) => {
         reactionsMap[r.message_id].push(r)
       }
     }
-    const result = rows.map(msg => ({ ...msg, reactions: reactionsMap[msg.id] || [] }))
+    const result = rows.map(msg => ({
+      ...msg,
+      reactions: reactionsMap[msg.id] || [],
+      seen: otherParticipant?.last_read_at ? new Date(msg.created_at) <= new Date(otherParticipant.last_read_at) : false,
+    }))
     res.json(result)
   } catch (err) {
     console.error('Messages error:', err)
@@ -363,7 +372,11 @@ router.post('/api/chats/:chatId/messages', auth, async (req, res) => {
     )
 
     const [[msg]] = await pool.query(
-      `SELECT id, sender_id, text, created_at FROM messages WHERE id = ?`,
+      `SELECT m.id, m.sender_id, m.text, m.reply_to, m.created_at,
+              up.display_name as sender_name
+       FROM messages m
+       JOIN user_profiles up ON m.sender_id = up.id
+       WHERE m.id = ?`,
       [result.insertId],
     )
 

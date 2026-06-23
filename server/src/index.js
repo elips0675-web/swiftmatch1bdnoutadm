@@ -1,11 +1,13 @@
 import 'dotenv/config'
 import express from 'express'
+import { createServer } from 'http'
 import cors from 'cors'
 import jwt from 'jsonwebtoken'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import rateLimit from 'express-rate-limit'
 import pool from './db.js'
+import { initIO } from './ws.js'
 
 import adminDashboard from './routes/admin/dashboard.js'
 import adminUsers from './routes/admin/users.js'
@@ -166,6 +168,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal server error' })
 })
 
-app.listen(PORT, () => {
+const httpServer = createServer(app)
+initIO(httpServer)
+httpServer.listen(PORT, () => {
   console.log(`SwiftMatch API running on port ${PORT}`)
 })

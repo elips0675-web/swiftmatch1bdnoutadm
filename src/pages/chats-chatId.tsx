@@ -1,6 +1,5 @@
-
 import { useState, useRef, useEffect } from "react";
-import { ChevronLeft, Send, MoveVertical as MoreVertical, Smile, Heart, Laugh, Zap, Star, Flame } from "lucide-react";
+import { ChevronLeft, Send, MoreVertical, Smile, Heart, Laugh, Zap, Star, Flame, Eye, CheckCheck } from "lucide-react";
 import Image from "@/shims/next-image";
 import { useRouter } from "@/shims/next-navigation";
 import { Input } from "@/components/ui/input";
@@ -46,7 +45,7 @@ function ChatRoomSkeleton() {
           <Skeleton className="h-10 w-3/4 rounded-lg self-end" />
         </main>
       <div className="px-4 py-2 bg-white border-t">
-            <Skeleton className="h-11 w-full rounded-2xl" />
+            <Skeleton className="h-11 w-2xl rounded-2xl" />
         </div>
       </div>
     );
@@ -58,6 +57,7 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
   const [inputValue, setInputValue] = useState("");
   const [optimisticMessages, setOptimisticMessages] = useState<any[]>([]);
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
+  const [reactionMsgId, setReactionMsgId] = useState<number | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -92,40 +92,63 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
   useEffect(() => {
     scrollToBottom();
   }, [messages, optimisticMessages, viewportHeight]);
-  
+
+  useEffect(() => {
+    if (params.chatId) {
+      fetch(`/api/chats/${params.chatId}/read`, { method: 'PUT' }).catch(() => {});
+    }
+  }, [params.chatId]);
+
   const handleSendMessage = async (textOverride?: string) => {
     const content = textOverride || inputValue.trim();
     if (!content) return;
 
     const tempId = `temp-${Date.now()}`;
-    const optimisticMessage = { id: tempId, content, sender_id: 'me', created_at: new Date().toISOString() };
-    
+    const optimisticMessage = { id: tempId, text: content, sender_id: 'me', created_at: new Date().toISOString(), reactions: [], seen: false };
+
     setOptimisticMessages(prev => [...prev, optimisticMessage]);
     if (!textOverride) setInputValue("");
 
     try {
-      const savedMessage = await sendMessage(`/api/chats/${params.chatId}/messages`, 'POST', { content });
-      // Заменяем временное сообщение на реальное от сервера (если нужно)
+      await sendMessage(`/api/chats/${params.chatId}/messages`, 'POST', { text: content });
     } catch (error) {
-      console.error("Send message error:", error);
       toast({ title: t('error.generic_title'), description: t('error.send_message'), variant: "destructive" });
-      // Удаляем оптимистичное сообщение в случае ошибки
       setOptimisticMessages(prev => prev.filter(m => m.id !== tempId));
     } finally {
-       // После успешной отправки перезагружаем все сообщения, чтобы синхронизироваться с сервером.
-       // Это также очистит оптимистичные сообщения.
-       refetchMessages();
-       setOptimisticMessages([]); // Очищаем массив оптимистичных сообщений
-       scrollToBottom();
+      refetchMessages();
+      setOptimisticMessages([]);
+      scrollToBottom();
     }
   };
+
+  const toggleReaction = async (msgId: number, emoji: string) => {
+    try {
+      const res = await fetch(`/api/chats/${params.chatId}/messages/${msgId}/reactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji }),
+      })
+      if (res.ok) refetchMessages()
+    } catch {}
+    setReactionMsgId(null)
+  }
+
+  const getReactionsGrouped = (reactions: any[]) => {
+    const grouped: Record<string, { emoji: string; count: number; users: number[] }> = {}
+    for (const r of reactions || []) {
+      if (!grouped[r.emoji]) grouped[r.emoji] = { emoji: r.emoji, count: 0, users: [] }
+      grouped[r.emoji].count++
+      grouped[r.emoji].users.push(r.user_id)
+    }
+    return Object.values(grouped)
+  }
 
   const isLoading = messagesLoading || partnerLoading;
 
   if (isLoading) {
     return <ChatRoomSkeleton />
   }
-  
+
   if (messagesError || partnerError || !chatPartner) {
     return (
       <div className="flex flex-col items-center justify-center bg-muted" style={{ height: viewportHeight }}>
@@ -134,7 +157,7 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
       </div>
     )
   }
-  
+
   const allMessages = [...(messages || []), ...optimisticMessages];
 
   return (
@@ -147,29 +170,50 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
         </div>
         <DropdownMenu>
             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="rounded-full"><MoreVertical size={18} /></Button></DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                {/* Опции, такие как "Пожаловаться", можно будет добавить здесь */}
-            </DropdownMenuContent>
+            <DropdownMenuContent align="end" />
         </DropdownMenu>
       </header>
-      
+
       <main ref={msgContainerRef} className="flex-1 overflow-y-auto anti-screenshot">
         <div className="flex flex-col min-h-full px-4 pt-4 pb-2 space-y-2">
           <div className="flex-1" />
           <div className="text-center my-2"><Badge variant="secondary">{t('chats.today')}</Badge></div>
           <AnimatePresence initial={false}>
             {allMessages.map((msg) => (
-              <motion.div 
-                key={msg.id} 
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, transition: { duration: 0.2 } }}
+              <motion.div key={msg.id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, transition: { duration: 0.2 } }}
                 className={cn("flex flex-col max-w-[80%]", msg.sender_id !== chatPartner.user_id ? "ml-auto items-end" : "items-start")} >
-                <div className={cn("px-3 py-2 rounded-lg text-sm", msg.sender_id !== chatPartner.user_id ? "gradient-bg text-white rounded-br-none" : "bg-white text-foreground rounded-bl-none border")}>
-                  {msg.content}
+                <div className={cn("px-3 py-2 rounded-lg text-sm relative group", msg.sender_id !== chatPartner.user_id ? "gradient-bg text-white rounded-br-none" : "bg-white text-foreground rounded-bl-none border")}>
+                  {msg.text}
+                  <button onClick={() => setReactionMsgId(reactionMsgId === msg.id ? null : msg.id)}
+                    className={cn("absolute -bottom-3 right-0 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity", msg.sender_id !== chatPartner.user_id ? "text-white" : "text-muted-foreground")}>
+                    😊
+                  </button>
+                  {reactionMsgId === msg.id && (
+                    <div className={cn("absolute bottom-full right-0 mb-1 flex gap-0.5 bg-white rounded-full shadow-lg border p-1 z-10", msg.sender_id !== chatPartner.user_id ? "" : "")}>
+                      {QUICK_REACTIONS.map(r => (
+                        <button key={r.id} onClick={(e) => { e.stopPropagation(); toggleReaction(msg.id, r.label); }} className="p-1 hover:bg-muted rounded-full text-sm">{r.label}</button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <span className="text-[10px] text-muted-foreground mt-1 px-1">{format(new Date(msg.created_at), 'HH:mm')}</span>
+                <div className="flex items-center gap-1 mt-1 px-1">
+                  <span className="text-[10px] text-muted-foreground">{format(new Date(msg.created_at), 'HH:mm')}</span>
+                  {msg.sender_id !== chatPartner.user_id && (
+                    msg.seen
+                      ? <CheckCheck size={12} className="text-blue-500" />
+                      : <Eye size={12} className="text-muted-foreground/40" />
+                  )}
+                </div>
+                {msg.reactions?.length > 0 && (
+                  <div className="flex gap-1 mt-1 px-1">
+                    {getReactionsGrouped(msg.reactions).map(rg => (
+                      <button key={rg.emoji} onClick={() => toggleReaction(msg.id, rg.emoji)}
+                        className="text-xs bg-white rounded-full px-1.5 py-0.5 border shadow-sm hover:bg-muted transition-colors">
+                        {rg.emoji}<span className="text-[10px] ml-0.5 text-muted-foreground">{rg.count}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             ))}
           </AnimatePresence>

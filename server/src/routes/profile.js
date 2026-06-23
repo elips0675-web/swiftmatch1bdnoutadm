@@ -2,6 +2,8 @@ import { Router } from 'express'
 import pool from '../db.js'
 import { auth } from '../middleware.js'
 
+const router = Router()
+
 function parseJsonField(val, fallback) {
   if (Array.isArray(val)) return val
   if (typeof val === 'string') { try { return JSON.parse(val) } catch { return fallback || [] } }

@@ -67,6 +67,7 @@ export default function AdminDashboardPage() {
         const token = getToken();
         const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
         const f = <T,>(url: string): Promise<T> => fetch(url, { headers }).then(r => { if (!r.ok) throw new Error('fetch failed'); return r.json(); });
+        const ensureArray = (v: unknown): any[] => Array.isArray(v) ? v : [];
         const [s, trend, cities, act, rev] = await Promise.all([
           f<Stats>('/api/admin/stats'),
           f<TrendItem[]>(`/api/admin/registration-trend?period=${trendPeriod}`),
@@ -75,10 +76,10 @@ export default function AdminDashboardPage() {
           f<RevenueMonth[]>('/api/admin/revenue-by-month'),
         ]);
         setStats(s);
-        setTrendData(trend);
-        setCityData(cities);
-        setActivity(act);
-        setRevenueByMonth(rev);
+        setTrendData(ensureArray(trend));
+        setCityData(ensureArray(cities));
+        setActivity(ensureArray(act));
+        setRevenueByMonth(ensureArray(rev));
       } catch {
         setStats({ totalUsers: 0, activeToday: 0, totalMatches: 0, revenue: 0, activeSubs: 0, newToday: 0 });
         setTrendData([]);
@@ -98,7 +99,7 @@ export default function AdminDashboardPage() {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then(r => r.json())
-      .then(setTrendData)
+      .then((d: unknown) => setTrendData(Array.isArray(d) ? d : []))
       .catch(() => setTrendData([]));
   }, [trendPeriod]);
 

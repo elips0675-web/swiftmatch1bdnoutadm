@@ -47,11 +47,14 @@ export default function AdminAnalyticsPage() {
           apiGet<RegistrationItem[]>('/api/admin/analytics/registrations'),
         ]);
         setOverview(ov);
-        setRetention(ret);
-        setRevenueMix(mix);
-        setRegistrations(reg);
+        setRetention(Array.isArray(ret) ? ret : []);
+        setRevenueMix(Array.isArray(mix) ? mix : []);
+        setRegistrations(Array.isArray(reg) ? reg : []);
       } catch {
         setOverview({ mau: '—', conversionRate: '—', arpu: '—' });
+        setRetention([]);
+        setRevenueMix([]);
+        setRegistrations([]);
       } finally {
         setLoading(false);
       }

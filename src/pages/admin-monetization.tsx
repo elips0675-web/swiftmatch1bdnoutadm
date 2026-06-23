@@ -23,15 +23,17 @@ export default function MonetizationPage() {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
+    const apiGet = (url: string) => fetch(url, { headers }).then(r => { if (!r.ok) throw new Error('fetch failed'); return r.json(); });
+    const ensureArray = (v: unknown): any[] => Array.isArray(v) ? v : [];
     Promise.all([
-      fetch('/api/admin/monetization/pricing', { headers }).then(r => r.json()),
-      fetch('/api/admin/monetization/revenue', { headers }).then(r => r.json()),
-      fetch('/api/admin/monetization/funnel', { headers }).then(r => r.json()),
+      apiGet('/api/admin/monetization/pricing'),
+      apiGet('/api/admin/monetization/revenue'),
+      apiGet('/api/admin/monetization/funnel'),
     ])
       .then(([pricingData, revenue, funnel]) => {
-        setPricing(pricingData);
-        setRevenueData(revenue);
-        setFunnelData(funnel);
+        setPricing(ensureArray(pricingData));
+        setRevenueData(ensureArray(revenue));
+        setFunnelData(ensureArray(funnel));
       })
       .catch(() => {
         toast.error('Failed to load monetization data');

@@ -383,7 +383,7 @@ function ChatsContent() {
       <>
         <AppHeader />
         <div className="flex-1 overflow-y-auto pb-24">
-          <GroupFeed categoryNameRu={selectedChat.name} categoryNameEn={selectedChat.name} />
+          <GroupFeed categoryNameRu={selectedChat.name} categoryNameEn={selectedChat.name} groupId={groupId} />
         </div>
         <BottomNav />
       </>

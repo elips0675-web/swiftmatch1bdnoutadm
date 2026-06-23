@@ -12,6 +12,7 @@ import { containsForbiddenWords, isGibberish } from "@/lib/word-filter";
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Pagination, PaginationContent, PaginationItem } from "@/components/ui/pagination";
+import { getToken } from '@/lib/token';
 
 
 const PostText = ({ text, charLimit = 280 }: { text: string, charLimit?: number }) => {
@@ -244,22 +245,55 @@ function generatePosts(categoryName: string, categoryEn: string) {
 interface CategoryFeedProps {
   categoryNameRu: string;
   categoryNameEn: string;
+  groupId?: string;
 }
 
-export function CategoryFeed({ categoryNameRu, categoryNameEn }: CategoryFeedProps) {
-  const initialPosts = useMemo(
-    () => generatePosts(categoryNameRu, categoryNameEn),
-    [categoryNameRu, categoryNameEn]
-  );
+export function CategoryFeed({ categoryNameRu, categoryNameEn, groupId }: CategoryFeedProps) {
+  const isApiMode = !!groupId;
+  const [posts, setPosts] = useState<any[]>([]);
+  const [apiLoaded, setApiLoaded] = useState(false);
+  const { toast } = useToast();
+  const { t, language } = useLanguage();
 
-  const [posts, setPosts] = useState(initialPosts);
+  useEffect(() => {
+    if (isApiMode) {
+      const token = getToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      fetch(`/api/groups/${groupId}/posts`, { headers })
+        .then(r => r.ok ? r.json() : [])
+        .then(data => {
+          const mapped = data.map((p: any) => ({
+            id: p.id,
+            author: p.author,
+            group: categoryNameRu,
+            text: p.text || '',
+            time: new Date(p.createdAt).toLocaleDateString(),
+            avatar: p.avatar || '',
+            images: p.images || [],
+            likes: p.likes,
+            isLiked: p.likedByMe,
+            commentsCount: p.comments.length,
+            comments: p.comments.map((c: any) => ({
+              id: c.id, author: c.author, avatar: c.avatar || '',
+              text: c.text || '', imageUrl: c.imageUrl,
+              time: new Date(c.createdAt).toLocaleDateString(),
+            })),
+          }))
+          setPosts(mapped);
+          setApiLoaded(true);
+        })
+        .catch(() => setApiLoaded(true));
+    } else {
+      setPosts(generatePosts(categoryNameRu, categoryNameEn));
+    }
+  }, [isApiMode, groupId, categoryNameRu, categoryNameEn]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [commentInputs, setCommentInputs] = useState<{ [key: number]: string }>({});
   const [commentsOpen, setCommentsOpen] = useState<Set<number>>(new Set());
   const commentFileRefs = useRef<{ [key: number]: HTMLInputElement }>({});
-  const { toast } = useToast();
-  const { t, language } = useLanguage();
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [newPostText, setNewPostText] = useState("");
   const [newPostImages, setNewPostImages] = useState<string[]>([]);
@@ -343,14 +377,32 @@ export function CategoryFeed({ categoryNameRu, categoryNameEn }: CategoryFeedPro
   useEffect(() => { setCurrentPage(1); }, [searchQuery]);
 
   const handleLike = useCallback((postId: number) => {
-    setPosts((current) =>
-      current.map((post) =>
-        post.id === postId
-          ? { ...post, isLiked: !post.isLiked, likes: post.isLiked ? post.likes - 1 : post.likes + 1 }
-          : post
-      )
-    );
-  }, []);
+    if (groupId) {
+      const token = getToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      fetch(`/api/groups/${groupId}/posts/${postId}/like`, { method: 'POST', headers })
+        .then(r => r.json())
+        .then(data => {
+          setPosts((current) =>
+            current.map((post) =>
+              post.id === postId
+                ? { ...post, isLiked: data.liked, likes: post.likes + (data.liked ? 1 : -1) }
+                : post
+            )
+          );
+        })
+        .catch(() => {});
+    } else {
+      setPosts((current) =>
+        current.map((post) =>
+          post.id === postId
+            ? { ...post, isLiked: !post.isLiked, likes: post.isLiked ? post.likes - 1 : post.likes + 1 }
+            : post
+        )
+      );
+    }
+  }, [groupId]);
 
   const handleShare = useCallback(() => {
     toast({
@@ -377,21 +429,51 @@ export function CategoryFeed({ categoryNameRu, categoryNameEn }: CategoryFeedPro
       return;
     }
 
-    const newComment: any = {
-      id: Date.now(),
-      author: tr("Вы", "You"),
-      avatar: "/demo/people/me.png",
-      time: tr("Только что", "Just now"),
-      text: commentText,
-    };
-
-    setPosts((current) =>
-      current.map((post) =>
-        post.id === postId
-          ? { ...post, comments: [...post.comments, newComment], commentsCount: post.commentsCount + 1 }
-          : post
-      )
-    );
+    if (groupId) {
+      const token = getToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      fetch(`/api/groups/${groupId}/posts/${postId}/comments`, {
+        method: 'POST', headers,
+        body: JSON.stringify({ text: commentText }),
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(newComment => {
+          if (newComment) {
+            setPosts((current) =>
+              current.map((post) =>
+                post.id === postId
+                  ? {
+                      ...post,
+                      comments: [...post.comments, {
+                        id: newComment.id, author: newComment.author, avatar: newComment.avatar || '',
+                        text: newComment.text || '', imageUrl: newComment.imageUrl,
+                        time: new Date(newComment.createdAt).toLocaleDateString(),
+                      }],
+                      commentsCount: post.commentsCount + 1,
+                    }
+                  : post
+              )
+            );
+          }
+        })
+        .catch(() => {});
+    } else {
+      const newComment: any = {
+        id: Date.now(),
+        author: tr("Вы", "You"),
+        avatar: "/demo/people/me.png",
+        time: tr("Только что", "Just now"),
+        text: commentText,
+      };
+      setPosts((current) =>
+        current.map((post) =>
+          post.id === postId
+            ? { ...post, comments: [...post.comments, newComment], commentsCount: post.commentsCount + 1 }
+            : post
+        )
+      );
+    }
     setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
   };
 
@@ -404,25 +486,46 @@ export function CategoryFeed({ categoryNameRu, categoryNameEn }: CategoryFeedPro
       return;
     }
 
-    const newPost = {
-      id: Date.now(),
-      authorRu: tr("Вы", "You"),
-      authorEn: "You",
-      groupRu: "Общее",
-      groupEn: "General",
-      textRu: newPostText,
-      textEn: newPostText,
-      timeRu: tr("Только что", "Just now"),
-      timeEn: "Just now",
-      avatar: "/demo/people/me.png",
-      images: allImages,
-      likes: 0,
-      commentsCount: 0,
-      isLiked: false,
-      comments: [] as any[],
-    };
-
-    setPosts((current) => [newPost, ...current]);
+    if (groupId) {
+      const token = getToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      fetch(`/api/groups/${groupId}/posts`, {
+        method: 'POST', headers,
+        body: JSON.stringify({ text: newPostText, images: allImages }),
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(post => {
+          if (post) {
+            setPosts((current) => [{
+              id: post.id, author: post.author, group: categoryNameRu,
+              text: post.text || '', time: new Date(post.createdAt).toLocaleDateString(),
+              avatar: post.avatar || '', images: post.images || [],
+              likes: 0, isLiked: false, commentsCount: 0, comments: [],
+            }, ...current]);
+          }
+        })
+        .catch(() => {});
+    } else {
+      const newPost = {
+        id: Date.now(),
+        authorRu: tr("Вы", "You"),
+        authorEn: "You",
+        groupRu: "Общее",
+        groupEn: "General",
+        textRu: newPostText,
+        textEn: newPostText,
+        timeRu: tr("Только что", "Just now"),
+        timeEn: "Just now",
+        avatar: "/demo/people/me.png",
+        images: allImages,
+        likes: 0,
+        commentsCount: 0,
+        isLiked: false,
+        comments: [] as any[],
+      };
+      setPosts((current) => [newPost, ...current]);
+    }
     setIsCreatePostOpen(false);
     setNewPostText("");
     setNewPostImages([]);

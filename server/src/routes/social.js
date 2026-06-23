@@ -293,6 +293,133 @@ router.get('/api/groups/:groupId/chat', auth, async (req, res) => {
   }
 })
 
+// ─── Group Posts ───────────────────────────────────────────────
+router.get('/api/groups/:groupId/posts', auth, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT gp.id, gp.group_id, gp.user_id, gp.text, gp.images, gp.created_at, gp.updated_at,
+              up.display_name, up.avatar_url,
+              (SELECT COUNT(*) FROM group_post_likes WHERE post_id = gp.id) AS likes_count,
+              EXISTS(SELECT 1 FROM group_post_likes WHERE post_id = gp.id AND user_id = ?) AS liked_by_me
+       FROM group_posts gp
+       JOIN user_profiles up ON up.id = gp.user_id
+       WHERE gp.group_id = ?
+       ORDER BY gp.created_at DESC
+       LIMIT 50`,
+      [req.userId, req.params.groupId],
+    )
+    const posts = []
+    for (const row of rows) {
+      const [comments] = await pool.query(
+        `SELECT gpc.id, gpc.post_id, gpc.user_id, gpc.text, gpc.image_url, gpc.created_at,
+                up.display_name, up.avatar_url
+         FROM group_post_comments gpc
+         JOIN user_profiles up ON up.id = gpc.user_id
+         WHERE gpc.post_id = ?
+         ORDER BY gpc.created_at ASC
+         LIMIT 20`,
+        [row.id],
+      )
+      posts.push({
+        id: row.id,
+        groupId: row.group_id,
+        userId: row.user_id,
+        text: row.text,
+        images: row.images ? JSON.parse(row.images) : [],
+        likes: row.likes_count,
+        likedByMe: !!row.liked_by_me,
+        comments: comments.map(c => ({
+          id: c.id, postId: c.post_id, userId: c.user_id,
+          text: c.text, imageUrl: c.image_url, createdAt: c.created_at,
+          author: c.display_name, avatar: c.avatar_url,
+        })),
+        createdAt: row.created_at,
+        author: row.display_name,
+        avatar: row.avatar_url,
+      })
+    }
+    res.json(posts)
+  } catch (err) {
+    console.error('Group posts error:', err)
+    res.status(500).json({ message: 'Failed to fetch posts' })
+  }
+})
+
+router.post('/api/groups/:groupId/posts', auth, async (req, res) => {
+  const { text, images } = req.body
+  if (!text && (!images || images.length === 0)) {
+    return res.status(400).json({ message: 'Text or images required' })
+  }
+  try {
+    const [result] = await pool.query(
+      'INSERT INTO group_posts (group_id, user_id, text, images) VALUES (?, ?, ?, ?)',
+      [req.params.groupId, req.userId, text || null, JSON.stringify(images || [])],
+    )
+    const [[post]] = await pool.query(
+      `SELECT gp.id, gp.group_id, gp.user_id, gp.text, gp.images, gp.created_at,
+              up.display_name, up.avatar_url
+       FROM group_posts gp
+       JOIN user_profiles up ON up.id = gp.user_id
+       WHERE gp.id = ?`,
+      [result.insertId],
+    )
+    res.status(201).json({
+      id: post.id, groupId: post.group_id, userId: post.user_id,
+      text: post.text, images: post.images ? JSON.parse(post.images) : [],
+      likes: 0, likedByMe: false, comments: [],
+      createdAt: post.created_at, author: post.display_name, avatar: post.avatar_url,
+    })
+  } catch (err) {
+    console.error('Group post create error:', err)
+    res.status(500).json({ message: 'Failed to create post' })
+  }
+})
+
+router.post('/api/groups/:groupId/posts/:postId/like', auth, async (req, res) => {
+  try {
+    const [existing] = await pool.query(
+      'SELECT id FROM group_post_likes WHERE post_id = ? AND user_id = ?',
+      [req.params.postId, req.userId],
+    )
+    if (existing.length > 0) {
+      await pool.query('DELETE FROM group_post_likes WHERE id = ?', [existing[0].id])
+      return res.json({ liked: false })
+    }
+    await pool.query('INSERT INTO group_post_likes (post_id, user_id) VALUES (?, ?)', [req.params.postId, req.userId])
+    res.json({ liked: true })
+  } catch (err) {
+    console.error('Group post like error:', err)
+    res.status(500).json({ message: 'Failed to toggle like' })
+  }
+})
+
+router.post('/api/groups/:groupId/posts/:postId/comments', auth, async (req, res) => {
+  const { text, image_url } = req.body
+  if (!text && !image_url) return res.status(400).json({ message: 'Text or image required' })
+  try {
+    const [result] = await pool.query(
+      'INSERT INTO group_post_comments (post_id, user_id, text, image_url) VALUES (?, ?, ?, ?)',
+      [req.params.postId, req.userId, text || null, image_url || null],
+    )
+    const [[comment]] = await pool.query(
+      `SELECT gpc.id, gpc.post_id, gpc.user_id, gpc.text, gpc.image_url, gpc.created_at,
+              up.display_name, up.avatar_url
+       FROM group_post_comments gpc
+       JOIN user_profiles up ON up.id = gpc.user_id
+       WHERE gpc.id = ?`,
+      [result.insertId],
+    )
+    res.status(201).json({
+      id: comment.id, postId: comment.post_id, userId: comment.user_id,
+      text: comment.text, imageUrl: comment.image_url, createdAt: comment.created_at,
+      author: comment.display_name, avatar: comment.avatar_url,
+    })
+  } catch (err) {
+    console.error('Group post comment error:', err)
+    res.status(500).json({ message: 'Failed to add comment' })
+  }
+})
+
 // ─── Chats ─────────────────────────────────────────────────────
 router.get('/api/chats', auth, async (req, res) => {
   try {

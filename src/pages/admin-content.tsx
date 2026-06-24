@@ -116,8 +116,8 @@ export default function ContentManagementPage() {
 
   useEffect(() => {
     setInterests(config.interests.map(stripPrefix).sort((a, b) => t(`interest.${a}`).localeCompare(t(`interest.${b}`))));
-    setGoals(config.dating_goals.map(stripPrefix));
-    setEducation(config.education.map(stripPrefix));
+    setGoals(config.dating_goals.map(stripPrefix).sort((a, b) => t(`goal.${a}`).localeCompare(t(`goal.${b}`))));
+    setEducation(config.education.map(stripPrefix).sort((a, b) => t(`education.${a}`).localeCompare(t(`education.${b}`))));
     setCities([...config.cities].sort((a, b) => a.localeCompare(b)));
     setForbiddenWords([...config.banned_words].sort((a, b) => a.localeCompare(b)));
 
@@ -174,19 +174,19 @@ export default function ContentManagementPage() {
               <TabsTrigger value="banned_words" className="rounded-lg py-2 font-bold text-xs">{t('admin.content.forbidden_words')} ({forbiddenWords.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="interests">
-              <EditableList items={interests} nounKey="interests" section="interests" saving={saving === 'interests'} onAdd={i => setInterests(p => [...p, i].sort((a, b) => a.localeCompare(b)))} onDelete={i => setInterests(p => { const next = p.filter(x => x !== i); handleSave('interests', next, setInterests); return next })} />
+              <EditableList items={interests} nounKey="interests" section="interests" saving={saving === 'interests'} onAdd={i => setInterests(p => [...p, i].sort((a, b) => t(`interest.${a}`).localeCompare(t(`interest.${b}`))))} onDelete={i => setInterests(p => { const next = p.filter(x => x !== i); handleSave('interests', next, setInterests); return next })} />
               <div className="mt-2 flex justify-end">
                 <Button size="sm" onClick={() => handleSave('interests', interests, setInterests)} disabled={saving === 'interests'}>{saving === 'interests' ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Сохранить</Button>
               </div>
             </TabsContent>
             <TabsContent value="goals">
-              <EditableList items={goals} nounKey="goals" section="goals" saving={saving === 'dating_goals'} onAdd={i => setGoals(p => [...p, i].sort((a, b) => a.localeCompare(b)))} onDelete={i => setGoals(p => { const next = p.filter(x => x !== i); handleSave('dating_goals', next, setGoals); return next })} />
+              <EditableList items={goals} nounKey="goals" section="goals" saving={saving === 'dating_goals'} onAdd={i => setGoals(p => [...p, i].sort((a, b) => t(`goal.${a}`).localeCompare(t(`goal.${b}`))))} onDelete={i => setGoals(p => { const next = p.filter(x => x !== i); handleSave('dating_goals', next, setGoals); return next })} />
               <div className="mt-2 flex justify-end">
                 <Button size="sm" onClick={() => handleSave('dating_goals', goals, setGoals)} disabled={saving === 'dating_goals'}>{saving === 'dating_goals' ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Сохранить</Button>
               </div>
             </TabsContent>
             <TabsContent value="education">
-              <EditableList items={education} nounKey="education" section="education" saving={saving === 'education'} onAdd={i => setEducation(p => [...p, i].sort((a, b) => a.localeCompare(b)))} onDelete={i => setEducation(p => { const next = p.filter(x => x !== i); handleSave('education', next, setEducation); return next })} />
+              <EditableList items={education} nounKey="education" section="education" saving={saving === 'education'} onAdd={i => setEducation(p => [...p, i].sort((a, b) => t(`education.${a}`).localeCompare(t(`education.${b}`))))} onDelete={i => setEducation(p => { const next = p.filter(x => x !== i); handleSave('education', next, setEducation); return next })} />
               <div className="mt-2 flex justify-end">
                 <Button size="sm" onClick={() => handleSave('education', education, setEducation)} disabled={saving === 'education'}>{saving === 'education' ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null} Сохранить</Button>
               </div>

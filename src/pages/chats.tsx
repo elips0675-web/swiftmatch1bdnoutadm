@@ -205,7 +205,7 @@ function ChatsContent() {
 
 
   useEffect(() => {
-    if (matchId) {
+    if (matchId && apiChats.length > 0) {
       const chat = apiChats.find(c => c.id === parseInt(matchId));
       if (chat) {
         setSelectedChat({
@@ -233,7 +233,7 @@ function ChatsContent() {
           .catch(() => {});
       }
     }
-  }, [matchId]);
+  }, [matchId, apiChats]);
 
   useEffect(() => {
     if (groupId) {

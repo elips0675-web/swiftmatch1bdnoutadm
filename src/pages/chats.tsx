@@ -37,6 +37,20 @@ const Upload = ({ size }: { size: number }) => <svg xmlns="http://www.w3.org/200
 
 const GroupFeed = dynamic(() => import('@/components/feeds/category-feed').then(m => ({ default: m.CategoryFeed })), { ssr: false });
 
+function formatRelativeTime(dateStr: string): string {
+  const now = Date.now();
+  const d = new Date(dateStr).getTime();
+  const diff = now - d;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'только что';
+  if (mins < 60) return `${mins}м`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}ч`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}д`;
+  return new Date(dateStr).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+}
+
 const QUICK_REACTIONS = [
   { id: 'heart', icon: Heart, color: 'text-red-500', label: '❤️' },
   { id: 'flame', icon: Flame, color: 'text-orange-500', label: '🔥' },
@@ -183,7 +197,7 @@ function ChatsContent() {
       img: c.avatar_url || '',
       online: c.online,
       lastMessage: c.last_message || '',
-      time: c.updated_at || '',
+      time: c.updated_at ? formatRelativeTime(c.updated_at) : '',
       last_read_at: c.last_read_at,
       unread_count: c.unread_count || 0,
     }));

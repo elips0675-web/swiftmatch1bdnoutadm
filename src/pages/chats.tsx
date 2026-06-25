@@ -171,7 +171,12 @@ function ChatsContent() {
   const msgContainerRef = useAntiScreenshot<HTMLDivElement>();
 
   const allDirectChats = useMemo(() => {
-    return apiChats.map(c => ({
+    const seen = new Set<number>();
+    return apiChats.filter(c => {
+      if (seen.has(c.id)) return false;
+      seen.add(c.id);
+      return true;
+    }).map(c => ({
       id: c.id,
       other_user_id: c.other_user_id,
       name: c.display_name,

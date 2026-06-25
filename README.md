@@ -4,7 +4,7 @@
 
 Отличается от оригинала:
 - **Бэкенд:** Node.js/Express + MySQL (Laragon), а не Supabase
-- **Данные:** полный дамп демо-данных (17 пользователей, чаты, лайки, интересы)
+- **Данные:** демо-данные (3 пользователя, чаты, сообщения, группы, посты)
 - **Порт API:** 3002 (чтобы не конфликтовать с оригиналом на 3001)
 - **Порт фронта:** 8081
 
@@ -14,12 +14,12 @@
 
 ### 1. MySQL (Laragon)
 
-Убедитесь, что MySQL запущен. База `swiftmatch1bd` уже создана со схемой и демо-данными.
+Убедитесь, что MySQL запущен. База `swiftmatch` уже создана со схемой и демо-данными.
 
 Импортировать заново:
 ```bash
-mysql -u root swiftmatch1bd < database\mysql_schema.sql
-mysql -u root swiftmatch1bd < database\demo_data.sql
+mysql -u root swiftmatch < database\mysql_schema.sql
+mysql -u root swiftmatch < database\demo_data.sql
 ```
 
 ### 2. API сервер
@@ -35,7 +35,7 @@ node src/index.js
 
 ```bash
 npm install
-npx vite --port 8081
+npx vite --port 8081 --host
 # → http://localhost:8081
 ```
 
@@ -97,15 +97,13 @@ npx vite --port 8081
 
 | # | Задача | Приоритет |
 |---|--------|-----------|
-| # | Задача | Приоритет |
-|---|--------|-----------|
-| 1 | **Stripe live** — добавить `.env` с реальными ключами (сейчас mock) | Высокий |
+| 1 | **Stripe live** — добавить `.env` с реальными ключами. Пакет `stripe` не установлен в `server/` | Высокий |
 | 2 | **Реальная реклама** — AdMob / Yandex SDK вместо таймера | Высокий |
-| 3 | **Сброс пароля** — `POST /api/auth/reset-password` | Средний |
-| 4 | **Подтверждение email** — верификация после регистрации | Средний |
-| 5 | **Read receipts** — галочки прочитано в чатах | Средний |
-| 6 | **Emoji-реакции** на сообщения | Средний |
-| 7 | **WebSocket комнаты** — масштабирование через ws rooms | Низкий |
+| 3 | **WebSocket-клиент** — `socket.io-client` не импортирован во фронтенде, чат не реалтайм | Высокий |
+| 4 | **Сброс пароля** — API готов, SMTP закомментирован | Средний |
+| 5 | **Подтверждение email** — API готов, SMTP закомментирован | Средний |
+| 6 | **VAPID-ключи** не заданы — push-уведомления не работают | Средний |
+| 7 | **Порт Vite** — дефолтный конфиг 8080, инструкции про 8081 | Низкий |
 
 ---
 
@@ -127,5 +125,7 @@ PORT=3002
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=
-DB_NAME=swiftmatch1bd
+DB_NAME=swiftmatch
+CORS_ORIGIN=http://localhost:8081
+JWT_SECRET=swiftmatch-dev-secret-change-in-production
 ```

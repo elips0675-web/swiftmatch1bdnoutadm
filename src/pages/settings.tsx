@@ -17,6 +17,7 @@ import {
   Sun,
   Moon
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { AppHeader } from "@/components/layout/app-header";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";

@@ -263,7 +263,46 @@ CREATE TABLE group_members (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------
--- 15. FEED POSTS (category feeds, football feed, etc.)
+-- 15. GROUP POSTS (posts in group/community feeds)
+-- -----------------------------------------------------------
+CREATE TABLE group_posts (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  group_id      INT UNSIGNED NOT NULL,
+  user_id       INT UNSIGNED NOT NULL,
+  text          TEXT,
+  images        JSON DEFAULT NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_group_posts_group (group_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE group_post_likes (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  post_id       INT UNSIGNED NOT NULL,
+  user_id       INT UNSIGNED NOT NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_group_like (post_id, user_id),
+  FOREIGN KEY (post_id) REFERENCES group_posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_group_likes_post (post_id),
+  INDEX idx_group_likes_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE group_post_comments (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  post_id       INT UNSIGNED NOT NULL,
+  user_id       INT UNSIGNED NOT NULL,
+  text          TEXT,
+  image_url     VARCHAR(500) DEFAULT NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (post_id) REFERENCES group_posts(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_group_comments_post (post_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------
+-- 16. FEED POSTS (category feeds, football feed, etc.)
 -- -----------------------------------------------------------
 CREATE TABLE posts (
   id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

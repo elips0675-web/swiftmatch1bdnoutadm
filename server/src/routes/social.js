@@ -325,7 +325,7 @@ router.get('/api/groups/:groupId/posts', auth, async (req, res) => {
         groupId: row.group_id,
         userId: row.user_id,
         text: row.text,
-        images: row.images ? JSON.parse(row.images) : [],
+        images: Array.isArray(row.images) ? row.images : (row.images ? JSON.parse(row.images) : []),
         likes: row.likes_count,
         likedByMe: !!row.liked_by_me,
         comments: comments.map(c => ({
@@ -365,7 +365,7 @@ router.post('/api/groups/:groupId/posts', auth, async (req, res) => {
     )
     res.status(201).json({
       id: post.id, groupId: post.group_id, userId: post.user_id,
-      text: post.text, images: post.images ? JSON.parse(post.images) : [],
+      text: post.text, images: Array.isArray(post.images) ? post.images : (post.images ? JSON.parse(post.images) : []),
       likes: 0, likedByMe: false, comments: [],
       createdAt: post.created_at, author: post.display_name, avatar: post.avatar_url,
     })
@@ -425,7 +425,7 @@ router.get('/api/chats', auth, async (req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT c.id, c.last_message, c.last_sender_id, c.updated_at,
-              up.display_name, up.avatar_url, up.online,
+              up.display_name, up.avatar_url, up.online, other.user_id AS other_user_id,
               cp.last_read_at,
               (SELECT COUNT(*) FROM messages m2 WHERE m2.chat_id = c.id AND (cp.last_read_at IS NULL OR m2.created_at > cp.last_read_at) AND m2.sender_id != ?) AS unread_count
        FROM chats c

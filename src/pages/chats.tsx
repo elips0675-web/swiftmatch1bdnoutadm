@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/context/language-context";
 import { toast } from "@/hooks/use-toast";
 import { useFeatureFlags } from "@/context/feature-flags-context";
+import { useAuth } from "@/context/auth-context";
 import { getToken } from '@/lib/token';
 import { GROUP_CATEGORIES } from '@/lib/demo-data';
 import { containsForbiddenWords, isGibberish } from "@/lib/word-filter";
@@ -125,6 +126,7 @@ function ChatsContent() {
   const router = useRouter();
   const { t, language } = useLanguage();
   const { videoCallsEnabled } = useFeatureFlags();
+  const { token: authToken } = useAuth();
   const matchId = searchParams.get('matchId');
   const groupId = searchParams.get('groupId');
 
@@ -170,6 +172,7 @@ function ChatsContent() {
   const allDirectChats = useMemo(() => {
     return apiChats.map(c => ({
       id: c.id,
+      other_user_id: c.other_user_id,
       name: c.display_name,
       img: c.avatar_url || '',
       online: c.online,
@@ -206,7 +209,7 @@ function ChatsContent() {
 
   useEffect(() => {
     if (matchId && apiChats.length > 0) {
-      const chat = apiChats.find(c => c.id === parseInt(matchId));
+      const chat = apiChats.find(c => c.other_user_id === parseInt(matchId));
       if (chat) {
         setSelectedChat({
           id: chat.id,
@@ -214,7 +217,7 @@ function ChatsContent() {
           img: chat.avatar_url || '',
           online: chat.online,
         });
-        fetch(`/api/chats/${chat.id}/messages`)
+        fetch(`/api/chats/${chat.id}/messages`, { headers: { Authorization: `Bearer ${authToken}` } })
           .then(res => res.ok ? res.json() : [])
           .then(data => {
             if (Array.isArray(data)) {
@@ -245,11 +248,12 @@ function ChatsContent() {
   }, [groupId, language]);
 
   useEffect(() => {
-    fetch('/api/chats')
+    if (!authToken) return;
+    fetch('/api/chats', { headers: { Authorization: `Bearer ${authToken}` } })
       .then(res => res.ok ? res.json() : [])
       .then(data => { if (Array.isArray(data)) setApiChats(data); })
       .catch(() => {});
-  }, []);
+  }, [authToken]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -302,7 +306,7 @@ function ChatsContent() {
 
     fetch(`/api/chats/${selectedChat.id}/messages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
       body: JSON.stringify({ text: textToSend }),
     })
       .then(res => res.ok ? res.json() : null)
@@ -320,7 +324,8 @@ function ChatsContent() {
   const openChat = (chat: any) => {
     setSelectedChat(chat);
     setReactions({});
-    fetch(`/api/chats/${chat.id}/messages`)
+    const authH = { Authorization: `Bearer ${authToken}` };
+    fetch(`/api/chats/${chat.id}/messages`, { headers: authH })
       .then(res => res.ok ? res.json() : [])
       .then(data => {
         if (Array.isArray(data)) {
@@ -338,7 +343,7 @@ function ChatsContent() {
         }
       })
       .catch(() => {});
-    fetch(`/api/chats/${chat.id}/read`, { method: 'PUT' }).catch(() => {});
+    fetch(`/api/chats/${chat.id}/read`, { method: 'PUT', headers: authH }).catch(() => {});
   };
 
   const handleThemeClick = useCallback((themeId: string) => {
@@ -350,7 +355,7 @@ function ChatsContent() {
     try {
       const res = await fetch(`/api/chats/${selectedChat.id}/messages/${msgId}/reactions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
         body: JSON.stringify({ emoji }),
       })
       if (res.ok) {

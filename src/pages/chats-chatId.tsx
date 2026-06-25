@@ -14,6 +14,7 @@ import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useApi, useApiMutation } from "@/hooks/useApi";
 import { useAntiScreenshot } from "@/hooks/useAntiScreenshot";
+import { getToken } from '@/lib/token';
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { format } from 'date-fns';
 
@@ -95,7 +96,8 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
 
   useEffect(() => {
     if (params.chatId) {
-      fetch(`/api/chats/${params.chatId}/read`, { method: 'PUT' }).catch(() => {});
+      const t = getToken();
+      fetch(`/api/chats/${params.chatId}/read`, { method: 'PUT', headers: t ? { Authorization: `Bearer ${t}` } : {} }).catch(() => {});
     }
   }, [params.chatId]);
 
@@ -123,9 +125,10 @@ export default function ChatPage({ params }: { params: { chatId: string } }) {
 
   const toggleReaction = async (msgId: number, emoji: string) => {
     try {
+      const t = getToken();
       const res = await fetch(`/api/chats/${params.chatId}/messages/${msgId}/reactions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) },
         body: JSON.stringify({ emoji }),
       })
       if (res.ok) refetchMessages()

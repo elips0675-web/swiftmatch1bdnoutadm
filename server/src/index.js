@@ -63,10 +63,10 @@ async function adminAuth(req, res, next) {
   }
 }
 
-// Dev route: auto-login as admin without password (only when Supabase not configured)
+// Dev route: auto-login as demo user (id=2, has chats in demo data)
 app.post('/api/auth/dev-login', async (req, res) => {
-  const token = jwt.sign({ userId: 1, role: 'admin' }, JWT_SECRET, { expiresIn: '24h' })
-  res.json({ token, role: 'admin' })
+  const token = jwt.sign({ userId: 2, role: 'user' }, JWT_SECRET, { expiresIn: '24h' })
+  res.json({ token, role: 'user' })
 })
 
 app.post('/api/auth/login', async (req, res) => {

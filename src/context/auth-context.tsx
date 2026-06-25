@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useReducer, useCallback, useRef, type ReactNode } from 'react'
 import { getSupabase } from '@/lib/supabase'
+import { setToken } from '@/lib/token'
 import type { AuthState } from '@/types'
 import type { User, SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/supabase'
@@ -56,7 +57,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) {
-      dispatch({ type: 'AUTH_LOGOUT' })
+      fetch('/api/auth/dev-login', { method: 'POST' })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.token) {
+            setToken(data.token)
+              dispatch({
+                type: 'AUTH_SUCCESS',
+                payload: { id: 2, name: 'Анна', email: 'demo@mail.ru', avatar: '/demo/people/anna.png' },
+                token: data.token,
+              })
+          } else {
+            dispatch({ type: 'AUTH_LOGOUT' })
+          }
+        })
+        .catch(() => dispatch({ type: 'AUTH_LOGOUT' }))
       return
     }
 

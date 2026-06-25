@@ -3,6 +3,24 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
+function utf8Plugin(): import('vite').Plugin {
+  return {
+    name: 'utf8-charset',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const origSetHeader = res.setHeader.bind(res);
+        res.setHeader = function(name: string, value: any) {
+          if (typeof name === 'string' && name.toLowerCase() === 'content-type' && value === 'text/html') {
+            return origSetHeader(name, 'text/html; charset=utf-8');
+          }
+          return origSetHeader(name, value);
+        };
+        next();
+      });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => ({
   server: {
     host: "127.0.0.1",
@@ -19,8 +37,8 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    // mode === "development" && componentTagger(),
-  ].filter(Boolean),
+    utf8Plugin(),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

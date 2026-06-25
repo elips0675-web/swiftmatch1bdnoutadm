@@ -187,6 +187,7 @@ CREATE TABLE messages (
   chat_id     INT UNSIGNED NOT NULL,
   sender_id   INT UNSIGNED NOT NULL,
   text        TEXT NOT NULL,
+  image_url   VARCHAR(500) DEFAULT NULL,
   reply_to    INT UNSIGNED DEFAULT NULL,
   read_by     JSON DEFAULT NULL COMMENT 'Array of user_ids who read this message',
   created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

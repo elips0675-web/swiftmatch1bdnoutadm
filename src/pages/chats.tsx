@@ -126,7 +126,7 @@ function ChatsContent() {
   const router = useRouter();
   const { t, language } = useLanguage();
   const { videoCallsEnabled } = useFeatureFlags();
-  const { token: authToken } = useAuth();
+  const { token: authToken, user } = useAuth();
   const matchId = searchParams.get('matchId');
   const groupId = searchParams.get('groupId');
 
@@ -223,7 +223,7 @@ function ChatsContent() {
             if (Array.isArray(data)) {
               const msgs = data.map((m: any) => ({
                 id: m.id, text: m.text,
-                sender: m.sender_id === 1 ? 'me' : 'other',
+                sender: m.sender_id === user?.id ? 'me' : 'other',
                 time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 reactions: m.reactions || [],
               }));
@@ -236,7 +236,7 @@ function ChatsContent() {
           .catch(() => {});
       }
     }
-  }, [matchId, apiChats]);
+  }, [matchId, apiChats, user?.id]);
 
   useEffect(() => {
     if (groupId) {
@@ -332,7 +332,7 @@ function ChatsContent() {
           const msgs = data.map((m: any) => ({
             id: m.id,
             text: m.text,
-            sender: m.sender_id === 1 ? 'me' : 'other',
+            sender: m.sender_id === user?.id ? 'me' : 'other',
             time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             reactions: m.reactions || [],
           }));

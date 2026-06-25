@@ -117,8 +117,5 @@
 
 Запуск (локально):
   cd C:\swiftmatch1bddomadm
-  npm run dev            # фронт localhost:8080
-  cd server && npm start # API localhost:3002
-
-Прокси в vite.config.ts настроен на localhost:3001.
-Если сервер на 3002 — поменяй в vite.config.ts: target: 'http://localhost:3002'
+  npx vite --port 8081 --host  # фронт localhost:8081
+  cd server && node src/index.js # API localhost:3002

@@ -576,6 +576,15 @@ router.post('/api/chats/:chatId/messages', auth, async (req, res) => {
     if (otherParticipant.length > 0) {
       const [[sender]] = await pool.query('SELECT display_name FROM user_profiles WHERE id = ?', [req.userId])
       sendPushToUser(otherParticipant[0].user_id, sender?.display_name || 'New message', text.substring(0, 100), `/chats?matchId=${otherParticipant[0].user_id}`)
+      try {
+        const io = getIO()
+        if (io) {
+          io.to(`user:${otherParticipant[0].user_id}`).emit('chat:message', {
+            chatId: Number(req.params.chatId),
+            message: msg,
+          })
+        }
+      } catch {}
     }
 
     res.status(201).json(msg)

@@ -23,6 +23,7 @@ import { getToken } from '@/lib/token';
 import { GROUP_CATEGORIES } from '@/lib/demo-data';
 import { containsForbiddenWords, isGibberish } from "@/lib/word-filter";
 import { useAntiScreenshot } from "@/hooks/useAntiScreenshot";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 const VideoCallDialog = dynamic(() => import('@/components/video-call').then(mod => mod.VideoCallDialog), { ssr: false });
 const VoiceCallDialog = dynamic(() => import('@/components/voice-call').then(mod => mod.VoiceCallDialog), { ssr: false });
@@ -141,6 +142,7 @@ function ChatsContent() {
   const { t, language } = useLanguage();
   const { videoCallsEnabled } = useFeatureFlags();
   const { token: authToken, user } = useAuth();
+  const { socket: wsSocket } = useWebSocket();
   const matchId = searchParams.get('matchId');
   const groupId = searchParams.get('groupId');
 
@@ -298,6 +300,34 @@ function ChatsContent() {
       .then(data => { if (Array.isArray(data)) setApiChats(data); })
       .catch(() => {});
   }, [authToken]);
+
+  useEffect(() => {
+    if (!wsSocket) return;
+    const handler = (event: { chatId: number; message: any }) => {
+      setSelectedChat(prev => {
+        if (prev && Number(prev.id) === event.chatId) {
+          setMessages(prevMsgs => {
+            if (prevMsgs.some(m => m.id === event.message.id)) return prevMsgs;
+            return [...prevMsgs, {
+              id: event.message.id,
+              text: event.message.text,
+              sender: 'other',
+              time: new Date(event.message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              reactions: [],
+            }];
+          });
+        } else {
+          fetch('/api/chats', { headers: { Authorization: `Bearer ${authToken}` } })
+            .then(res => res.ok ? res.json() : [])
+            .then(data => { if (Array.isArray(data)) setApiChats(data); })
+            .catch(() => {});
+        }
+        return prev;
+      });
+    };
+    wsSocket.on('chat:message', handler);
+    return () => { wsSocket.off('chat:message', handler); };
+  }, [wsSocket, authToken]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

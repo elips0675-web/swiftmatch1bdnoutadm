@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
 function utf8Plugin(): import('vite').Plugin {
   return {
@@ -24,7 +23,7 @@ function utf8Plugin(): import('vite').Plugin {
 export default defineConfig(({ mode }) => ({
   server: {
     host: "127.0.0.1",
-    port: 8080,
+    port: 8081,
     hmr: {
       overlay: false,
     },

@@ -91,19 +91,26 @@ npx vite --port 8081 --host
 - Боты (11 демо-ботов автолайкают + пишут в чат)
 - i18n (RU/EN)
 
+### Фаза 6 — Infrastructure & Real-time ✅
+- WebSocket-клиент (`socket.io-client`) подключён к серверу
+- Real-time доставка сообщений через `chat:message` event
+- VAPID-ключи сгенерированы, push-уведомления рабочие
+- Stripe пакет установлен
+- Порт Vite унифицирован (8081)
+- UTF-8 кодировка на всех уровнях (БД, сервер, HTML)
+- Очистка мусорных данных (чаты, participants)
+
 ---
 
 ## Что ещё можно сделать
 
 | # | Задача | Приоритет |
 |---|--------|-----------|
-| 1 | **Stripe live** — добавить `.env` с реальными ключами. Пакет `stripe` не установлен в `server/` | Высокий |
+| 1 | **Stripe live** — добавить в `.env` реальные ключи Stripe (сейчас mock) | Высокий |
 | 2 | **Реальная реклама** — AdMob / Yandex SDK вместо таймера | Высокий |
-| 3 | **WebSocket-клиент** — `socket.io-client` не импортирован во фронтенде, чат не реалтайм | Высокий |
-| 4 | **Сброс пароля** — API готов, SMTP закомментирован | Средний |
-| 5 | **Подтверждение email** — API готов, SMTP закомментирован | Средний |
-| 6 | **VAPID-ключи** не заданы — push-уведомления не работают | Средний |
-| 7 | **Порт Vite** — дефолтный конфиг 8080, инструкции про 8081 | Низкий |
+| 3 | **SMTP** — раскомментировать и заполнить SMTP_HOST/USER/PASS в `.env` | Средний |
+| 4 | **Stripe webhook** — настроить raw body для проверки подписи | Средний |
+| 5 | **Stripe success/cancel** — страницы после оплаты | Средний |
 
 ---
 
@@ -128,4 +135,6 @@ DB_PASSWORD=
 DB_NAME=swiftmatch
 CORS_ORIGIN=http://localhost:8081
 JWT_SECRET=swiftmatch-dev-secret-change-in-production
+VAPID_PUBLIC_KEY=BEygaffoNfy9XaaH0QqILW1Kzuf-7WoVL4oAvQpC1ebFkZ8X828d8Fv8TXcqBuykDK4IWJdZMA6TOkQfSBP8N8o
+VAPID_PRIVATE_KEY=b370faewrsuKX2yUXBZ-2-axZiScdesTmpXHPq0yJN4
 ```

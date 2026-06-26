@@ -52,6 +52,8 @@ const SearchFilters = lazy(() => import("./pages/search-filters"))
 const Settings = lazy(() => import("./pages/settings"))
 const SupportChat = lazy(() => import("./pages/support-chat"))
 const User = lazy(() => import("./pages/user"))
+const PremiumSuccess = lazy(() => import("./pages/premium-success"))
+const PremiumCancel = lazy(() => import("./pages/premium-cancel"))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -92,6 +94,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/messaging": "Рассылки — SwiftMatch",
   "/admin/monetization": "Монетизация — SwiftMatch",
   "/admin/reports": "Жалобы — SwiftMatch",
+  "/premium/success": "Оплата успешна — SwiftMatch",
+  "/premium/cancel": "Оплата отменена — SwiftMatch",
 }
 
 function DocumentTitle() {
@@ -127,6 +131,8 @@ const App = () => (
                     <Route path="/admin/reports" element={<AdminGuard><AdminLayout><SuspenseWrapper><AdminReports /></SuspenseWrapper></AdminLayout></AdminGuard>} />
                     <Route path="/admin/photos" element={<AdminGuard><AdminLayout><SuspenseWrapper><AdminPhotos /></SuspenseWrapper></AdminLayout></AdminGuard>} />
                     <Route path="/admin/users" element={<AdminGuard><AdminLayout><SuspenseWrapper><AdminUsers /></SuspenseWrapper></AdminLayout></AdminGuard>} />
+                    <Route path="/premium/success" element={<SuspenseWrapper><PremiumSuccess /></SuspenseWrapper>} />
+                    <Route path="/premium/cancel" element={<SuspenseWrapper><PremiumCancel /></SuspenseWrapper>} />
                     <Route path="*" element={
                       <SuspenseWrapper>
                         <AppContainer>

@@ -84,23 +84,21 @@
 │ Stripe live — реальные ключи         │ ⏳ нужны STRIPE_SECRET_  │
 │ (сейчас mock, всегда успех)          │   KEY + WEBHOOK_SECRET  │
 │ stripe npm (установлен)              │ ✅ server/package.json   │
-│ Stripe success/cancel страницы       │ ❌ нет страниц          │
-│ Фронтенд для редиректа после оплаты  │   /premium/success,     │
-│                                      │   /premium/cancel       │
-│ Stripe webhook raw body              │ ❌ express.json()       │
-│ — подпись не проверить               │   съедает raw body      │
+│ Stripe success/cancel страницы       │ ✅ /premium/success,    │
+│ Фронтенд для редиректа после оплаты   │   /premium/cancel       │
+│ Stripe webhook raw body              │ ✅ express.raw() перед  │
+│ — подпись проверяется                 │   express.json()       │
 └──────────────────────────────────────┴──────────────────────────┘
 
 ▶ Этап 2 — Коммуникации (Email + WebSocket)
 ┌──────────────────────────────────────┬──────────────────────────┐
 │ Что                                  │ Статус                   │
 ├──────────────────────────────────────┼──────────────────────────┤
-│ SMTP — раскомментировать и вписать  │ ⏳ закомментирован в     │
-│ SMTP_HOST/USER/PASS в server/.env   │   server/.env (строки    │
-│                                      │   14-19)                │
-│ Frontend WebSocket — подключить     │ ❌ socket.io-client      │
-│ socket.io-client в чатах для        │   есть в package.json,   │
-│ real-time сообщений                 │   но не импортится       │
+│ SMTP — раскомментировать и вписать  │ ✅ раскомментирован,    │
+│ SMTP_HOST/USER/PASS в server/.env   │   заполнить USER/PASS   │
+│ Frontend WebSocket — подключить     │ ✅ use-websocket.ts     │
+│ socket.io-client в чатах для        │   хук, чаты получают     │
+│ real-time сообщений                 │   сообщения в real-time  │
 └──────────────────────────────────────┴──────────────────────────┘
 
 ▶ Этап 3 — Монетизация и админка

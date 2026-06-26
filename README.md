@@ -46,7 +46,10 @@ npx vite --port 8081 --host
 | Email | Пароль | Роль |
 |-------|--------|------|
 | `admin@mail.ru` | `admin123` | Админ |
-| `demo@mail.ru` | `demo123` | Пользователь (Анна) |
+| `demo@mail.ru` | `admin123` | Анна (пользователь) |
+| `user4@demo.ru` … `user23@demo.ru` | `admin123` | 18 демо-пользователей |
+
+> После `git pull` запустить `node seed-users.cjs` в `server/` если добавились новые demo-пользователи.
 
 ---
 
@@ -108,9 +111,10 @@ npx vite --port 8081 --host
 |---|--------|-----------|
 | 1 | **Stripe live** — добавить в `.env` реальные ключи Stripe (сейчас mock) | Высокий |
 | 2 | **Реальная реклама** — AdMob / Yandex SDK вместо таймера | Высокий |
-| 3 | **SMTP** — раскомментировать и заполнить SMTP_HOST/USER/PASS в `.env` | Средний |
-| 4 | **Stripe webhook** — настроить raw body для проверки подписи | Средний |
-| 5 | **Stripe success/cancel** — страницы после оплаты | Средний |
+| 3 | **SMTP** — заполнить SMTP_USER/PASS в `.env` (хосты раскомментированы) | Низкий |
+| 4 | **Stripe webhook** — проверка подписи через `express.raw()` ✅ | Готово |
+| 5 | **Stripe success/cancel** — страницы `/premium/success`, `/premium/cancel` ✅ | Готово |
+| 6 | **Admin users — premium статус** — реальный `tier` из `subscriptions` вместо `'free'` ✅ | Готово |
 
 ---
 

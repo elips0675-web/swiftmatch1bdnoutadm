@@ -35,6 +35,7 @@ const limiter = rateLimit({ windowMs: 60_000, max: 100, message: { message: 'Too
 const authLimiter = rateLimit({ windowMs: 60_000, max: 10, message: { message: 'Too many auth attempts' } })
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }))
+app.use('/api/premium/webhook', express.raw({ type: 'application/json' }))
 app.use(express.json())
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
 app.use('/api/', limiter)

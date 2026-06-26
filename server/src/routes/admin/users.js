@@ -39,7 +39,7 @@ router.get('/users', async (req, res) => {
     const [rows] = await pool.query(
       `SELECT u.id, up.display_name as name, up.age, u.email, up.city,
               CASE WHEN u.is_active = 1 THEN 'active' ELSE 'banned' END as status,
-               'free' as premium, false as online,
+               COALESCE((SELECT s.tier FROM subscriptions s WHERE s.user_id = u.id AND s.is_active = 1 AND s.expires_at > NOW() LIMIT 1), 'free') as premium, false as online,
               DATE_FORMAT(u.created_at, '%Y-%m-%d') as joined,
               DATE_FORMAT(u.last_login, '%Y-%m-%d %H:%i') as lastActive,
               COALESCE(up.bio, '') as bio
@@ -70,7 +70,7 @@ router.get('/users/:id', async (req, res) => {
     const [rows] = await pool.query(
       `SELECT u.id, up.display_name as name, up.age, u.email, up.city,
               CASE WHEN u.is_active = 1 THEN 'active' ELSE 'banned' END as status,
-              'free' as premium, up.bio,
+              COALESCE((SELECT s.tier FROM subscriptions s WHERE s.user_id = u.id AND s.is_active = 1 AND s.expires_at > NOW() LIMIT 1), 'free') as premium, up.bio,
               DATE_FORMAT(u.created_at, '%Y-%m-%d') as joined,
               DATE_FORMAT(u.last_login, '%Y-%m-%d %H:%i') as lastActive,
               (SELECT COUNT(*) FROM matches WHERE user1_id = u.id OR user2_id = u.id) as matchesCount,

@@ -115,6 +115,8 @@ npx vite --port 8081 --host
 | 4 | **Stripe webhook** — проверка подписи через `express.raw()` ✅ | Готово |
 | 5 | **Stripe success/cancel** — страницы `/premium/success`, `/premium/cancel` ✅ | Готово |
 | 6 | **Admin users — premium статус** — реальный `tier` из `subscriptions` вместо `'free'` ✅ | Готово |
+| 7 | **Upload security** — `optionalAuth` middleware + userId из JWT (с fallback для demo) ✅ | Готово |
+| 8 | **helmet** — security headers (CSP, X-Frame-Options, и т.д.) ✅ | Готово |
 
 ---
 

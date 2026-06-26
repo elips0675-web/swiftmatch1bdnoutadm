@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import rateLimit from 'express-rate-limit'
+import helmet from 'helmet'
 import pool from './db.js'
 import { initIO } from './ws.js'
 
@@ -35,6 +36,7 @@ const limiter = rateLimit({ windowMs: 60_000, max: 100, message: { message: 'Too
 const authLimiter = rateLimit({ windowMs: 60_000, max: 10, message: { message: 'Too many auth attempts' } })
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }))
+app.use(helmet())
 app.use('/api/premium/webhook', express.raw({ type: 'application/json' }))
 app.use(express.json())
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))

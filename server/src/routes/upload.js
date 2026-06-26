@@ -4,6 +4,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
 import pool from '../db.js'
+import { optionalAuth } from '../middleware.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const UPLOAD_DIR = path.resolve(__dirname, '../../uploads')
@@ -28,11 +29,11 @@ const upload = multer({
 
 const router = Router()
 
-router.post('/api/upload', upload.single('photo'), async (req, res) => {
+router.post('/api/upload', optionalAuth, upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' })
 
-    const userId = req.body.user_id || 17
+    const userId = req.userId || req.body.user_id || 17
     const sortOrder = req.body.sort_order || 0
     const url = `/uploads/${req.file.filename}`
 

@@ -233,39 +233,38 @@ function ChatsContent() {
     if (!matchId) return;
     const targetUserId = parseInt(matchId);
     if (isNaN(targetUserId)) return;
-
-    if (apiChats.length === 0) return;
     if (openingChatRef.current === targetUserId) return;
+    openingChatRef.current = targetUserId;
 
-    const existing = apiChats.find(c => c.other_user_id === targetUserId);
-    if (existing) {
-      setSelectedChat({
-        id: existing.id,
-        name: existing.display_name,
-        img: existing.avatar_url || '',
-        online: existing.online,
-      });
-      openingChatRef.current = targetUserId;
-      fetch(`/api/chats/${existing.id}/messages`, { headers: { Authorization: `Bearer ${authToken}` } })
-        .then(res => res.ok ? res.json() : [])
-        .then(data => {
-          if (Array.isArray(data)) {
-            setMessages(data.map((m: any) => ({
-              id: m.id, text: m.text,
-              sender: m.sender_id === user?.id ? 'me' : 'other',
-              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              reactions: m.reactions || [],
-            })));
-            const rMap: Record<number, any[]> = {};
-            data.forEach((m: any) => { if (m.reactions?.length) rMap[m.id] = m.reactions; });
-            setReactions(rMap);
-          }
-        })
-        .catch(() => {});
-      return;
+    if (apiChats.length > 0) {
+      const existing = apiChats.find(c => c.other_user_id === targetUserId);
+      if (existing) {
+        setSelectedChat({
+          id: existing.id,
+          name: existing.display_name,
+          img: existing.avatar_url || '',
+          online: existing.online,
+        });
+        fetch(`/api/chats/${existing.id}/messages`, { headers: { Authorization: `Bearer ${authToken}` } })
+          .then(res => res.ok ? res.json() : [])
+          .then(data => {
+            if (Array.isArray(data)) {
+              setMessages(data.map((m: any) => ({
+                id: m.id, text: m.text,
+                sender: m.sender_id === user?.id ? 'me' : 'other',
+                time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                reactions: m.reactions || [],
+              })));
+              const rMap: Record<number, any[]> = {};
+              data.forEach((m: any) => { if (m.reactions?.length) rMap[m.id] = m.reactions; });
+              setReactions(rMap);
+            }
+          })
+          .catch(() => {});
+        return;
+      }
     }
 
-    openingChatRef.current = targetUserId;
     fetch('/api/chats', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
@@ -275,14 +274,30 @@ function ChatsContent() {
       .then(data => {
         if (!data) return;
         setSelectedChat({ id: data.id, name: '', img: '', online: false });
-        setMessages([]);
+        if (data.existing) {
+          fetch(`/api/chats/${data.id}/messages`, { headers: { Authorization: `Bearer ${authToken}` } })
+            .then(res => res.ok ? res.json() : [])
+            .then(msgs => {
+              if (Array.isArray(msgs)) {
+                setMessages(msgs.map((m: any) => ({
+                  id: m.id, text: m.text,
+                  sender: m.sender_id === user?.id ? 'me' : 'other',
+                  time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  reactions: m.reactions || [],
+                })));
+              }
+            })
+            .catch(() => {});
+        } else {
+          setMessages([]);
+        }
         fetch('/api/chats', { headers: { Authorization: `Bearer ${authToken}` } })
           .then(res => res.ok ? res.json() : [])
           .then(list => { if (Array.isArray(list)) setApiChats(list); })
           .catch(() => {});
       })
       .catch(() => {});
-  }, [matchId, apiChats.length, authToken, user?.id]);
+  }, [matchId, authToken, user?.id]);
 
   useEffect(() => {
     if (groupId) {

@@ -2,9 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { useAuth } from '@/context/auth-context'
 
-const WS_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-  ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
-  : `http://localhost:3002`
+let WS_URL = `http://localhost:3002`
+if (typeof window !== 'undefined') {
+  const isNative = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform()
+  if (isNative) {
+    const envWs = import.meta.env.VITE_WS_URL as string | undefined
+    WS_URL = envWs || 'wss://swiftmatch.app'
+  } else if (window.location.hostname !== 'localhost') {
+    WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
+  }
+}
 
 export function useWebSocket() {
   const { token } = useAuth()

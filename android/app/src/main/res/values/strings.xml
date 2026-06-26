@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SwiftMatch</string>
+    <string name="title_activity_main">SwiftMatch</string>
+    <string name="package_name">com.swiftmatch.app</string>
+    <string name="custom_url_scheme">com.swiftmatch.app</string>
+</resources>

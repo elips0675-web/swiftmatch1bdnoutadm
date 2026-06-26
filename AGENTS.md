@@ -104,6 +104,39 @@ When pulling new commits that add server dependencies (e.g. `express-rate-limit`
 ### 9. Read receipts & emoji reactions missing in chat
 Chat page had no "seen" indicator or emoji reaction UI. **Fix:** Added `seenIndicator` boolean, reaction picker (happy/love/sad/angry/like) with `reactions` array per message, and UI rendering in `src/pages/chats-chatId.tsx`.
 
+## Capacitor Android
+
+### Структура
+- `android/` — нативный Android проект (должен быть в git)
+- `capacitor.config.ts` — конфиг (appId, webDir, plugins, cleartext)
+- `src/lib/native.ts` — адаптер fetch/WS для нативного режима
+
+### Сборка APK (требуется Android Studio + Java)
+1. `VITE_API_URL=https://swiftmatch.app npm run build`
+2. `npx cap copy android`
+3. Открыть `android/` в Android Studio → Build → Build Bundle(s) / APK
+
+### Live Reload (разработка на устройстве)
+```bash
+npx cap run android --livereload=http://<IP>:8081 --open
+```
+`<IP>` — локальный IP машины (192.168.x.x). Устройство должно быть в той же сети.
+
+### Нативные фичи (доступны)
+- **Камера**: `@capacitor/camera` (нативный UI, фото preview)
+- **Файлы**: `@capacitor/filesystem`
+- **Хранилище**: `@capacitor/preferences` (замена localStorage)
+- **Пуши**: через Web Push + VAPID (сервис-воркер) или PushNotifications plugin
+
+### Адаптация API для нативного режима
+В `src/lib/native.ts`:
+- Перехватывает `fetch('/api/...')` → `https://swiftmatch.app/api/...` в режиме native
+- WebSocket в `use-websocket.ts` использует `VITE_WS_URL` или `wss://swiftmatch.app`
+- Все 80+ прямых fetch-вызовов работают без изменений
+
+### CORS
+На сервере настроен `cors({ origin: '*' })` — подходит для Capacitor.
+
 ## Common mistakes to avoid
 
 1. **Admin save 401** — admin routes require JWT. Keep `adminAuth` middleware PASSIVE (call `next()` on failure, don't block). `/api/admin/me` has its own auth check — leave it alone.

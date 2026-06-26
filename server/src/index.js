@@ -5,10 +5,12 @@ import cors from 'cors'
 import jwt from 'jsonwebtoken'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import crypto from 'crypto'
 import rateLimit from 'express-rate-limit'
 import helmet from 'helmet'
 import pool from './db.js'
 import { initIO } from './ws.js'
+import { createLogger, rootLogger } from './logger.js'
 
 import adminDashboard from './routes/admin/dashboard.js'
 import adminUsers from './routes/admin/users.js'
@@ -37,6 +39,15 @@ const authLimiter = rateLimit({ windowMs: 60_000, max: 10, message: { message: '
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }))
 app.use(helmet())
+
+// Request ID + structured logger
+app.use((req, res, next) => {
+  req.rid = req.headers['x-request-id'] || crypto.randomUUID()
+  res.setHeader('X-Request-Id', req.rid)
+  req.log = createLogger(req.rid)
+  next()
+})
+
 app.use('/api/premium/webhook', express.raw({ type: 'application/json' }))
 app.use(express.json())
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
@@ -167,12 +178,13 @@ app.use('/api/admin', adminMonetization)
 app.use('/api/admin', adminModerationRoutes)
 
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err)
+  const log = req.log || rootLogger
+  log.error('Unhandled error', err)
   res.status(500).json({ message: 'Internal server error' })
 })
 
 const httpServer = createServer(app)
 initIO(httpServer)
 httpServer.listen(PORT, () => {
-  console.log(`SwiftMatch API running on port ${PORT}`)
+  rootLogger.info(`SwiftMatch API running on port ${PORT}`)
 })

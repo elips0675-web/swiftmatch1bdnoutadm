@@ -106,6 +106,8 @@ npx vite --port 8081 --host
 - UTF-8 кодировка на всех уровнях (БД, сервер, HTML)
 - Очистка мусорных данных (чаты, participants)
 - **helmet** — security headers (CSP, X-Frame-Options, X-Content-Type-Options и т.д.)
+- **Request ID** — каждый запрос получает UUID, `X-Request-Id` в ответе, `req.log` для структурированного логирования
+- **CSRF** — не нужен (API-only, JWT в `Authorization` header, без кук-сессий)
 
 ---
 

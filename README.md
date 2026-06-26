@@ -131,6 +131,49 @@ npx vite --port 8081 --host
 | `src/` | Фронтенд на React + Vite + Tailwind |
 | `database/` | `mysql_schema.sql` + `demo_data.sql` |
 
+## Capacitor Android
+
+Нативное Android-приложение через Capacitor (WebView + нативные плагины).
+
+### Структура
+- `android/` — Gradle-проект (в git)
+- `capacitor.config.ts` — конфиг (appId, webDir, plugins)
+- `src/lib/native.ts` — адаптер fetch/WS для нативного режима
+
+### Требования
+- Android Studio (скачать [developer.android.com/studio](https://developer.android.com/studio))
+- JDK 17+
+- Android SDK (устанавливается через Android Studio)
+
+### Сборка APK
+```bash
+VITE_API_URL=https://swiftmatch.app npm run build:native
+```
+После сборки открыть `android/` в Android Studio → **Build → Build Bundle(s) / APK**.
+
+### Live Reload (отладка на устройстве)
+Запустить на ПК:
+```bash
+npm run dev
+```
+В другом терминале (устройство в той же сети):
+```bash
+npx cap run android --livereload=http://192.168.x.x:8081 --open
+```
+
+### Нативные фичи
+- **Камера**: `@capacitor/camera` — нативный UI фото/видео
+- **Файлы**: `@capacitor/filesystem`
+- **Хранилище**: `@capacitor/preferences` (замена localStorage)
+- **Пуши**: VAPID-ключи в `server/.env` готовы
+
+### Как это работает
+На сервере настроен `cors({ origin: '*' })` — подходит для Capacitor.
+В нативном режиме `src/lib/native.ts` перехватывает все `fetch('/api/...')` и подставляет `VITE_API_URL`.
+WebSocket в `use-websocket.ts` использует `VITE_WS_URL` или `wss://swiftmatch.app`.
+
+---
+
 ## Настройка .env
 
 `server/.env` уже настроен для локальной работы:

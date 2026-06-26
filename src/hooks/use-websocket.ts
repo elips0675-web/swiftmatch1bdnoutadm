@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { useAuth } from '@/context/auth-context'
 
-const WS_URL = `http://localhost:3002`
+const WS_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
+  : `http://localhost:3002`
 
 export function useWebSocket() {
   const { token } = useAuth()

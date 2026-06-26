@@ -406,7 +406,7 @@ function SearchContent() {
                     variant="outline"
                     className="w-[3.5rem] h-[3.5rem] rounded-full bg-white shadow-xl border-0 text-green-400 hover:text-green-600 active:scale-90 transition-all flex items-center justify-center"
                 >
-                    <Link href={`/chats?userId=${user.id}`}>
+                    <Link href={`/chats?matchId=${user.id}`}>
                         <MessageCircle size={28} />
                     </Link>
                 </Button>

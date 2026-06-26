@@ -230,74 +230,73 @@ function ChatsContent() {
 
 
   useEffect(() => {
-    if (!matchId) return;
+    if (!matchId || !authToken) return;
     const targetUserId = parseInt(matchId);
     if (isNaN(targetUserId)) return;
-    if (openingChatRef.current === targetUserId) return;
-    openingChatRef.current = targetUserId;
-
-    if (apiChats.length > 0) {
-      const existing = apiChats.find(c => c.other_user_id === targetUserId);
-      if (existing) {
-        setSelectedChat({
-          id: existing.id,
-          name: existing.display_name,
-          img: existing.avatar_url || '',
-          online: existing.online,
-        });
-        fetch(`/api/chats/${existing.id}/messages`, { headers: { Authorization: `Bearer ${authToken}` } })
-          .then(res => res.ok ? res.json() : [])
-          .then(data => {
-            if (Array.isArray(data)) {
-              setMessages(data.map((m: any) => ({
-                id: m.id, text: m.text,
-                sender: m.sender_id === user?.id ? 'me' : 'other',
-                time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                reactions: m.reactions || [],
-              })));
-              const rMap: Record<number, any[]> = {};
-              data.forEach((m: any) => { if (m.reactions?.length) rMap[m.id] = m.reactions; });
-              setReactions(rMap);
-            }
-          })
-          .catch(() => {});
-        return;
-      }
+    const existing = apiChats.find(c => c.other_user_id === targetUserId);
+    if (existing) {
+      setSelectedChat({
+        id: existing.id,
+        name: existing.display_name,
+        img: existing.avatar_url || '',
+        online: existing.online,
+      });
+      fetch(`/api/chats/${existing.id}/messages`, { headers: { Authorization: `Bearer ${authToken}` } })
+        .then(res => res.ok ? res.json() : [])
+        .then(data => {
+          if (Array.isArray(data)) {
+            setMessages(data.map((m: any) => ({
+              id: m.id, text: m.text,
+              sender: m.sender_id === user?.id ? 'me' : 'other',
+              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              reactions: m.reactions || [],
+            })));
+            const rMap: Record<number, any[]> = {};
+            data.forEach((m: any) => { if (m.reactions?.length) rMap[m.id] = m.reactions; });
+            setReactions(rMap);
+          }
+        })
+        .catch(() => {});
+      openingChatRef.current = targetUserId;
+      return;
     }
 
-    fetch('/api/chats', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-      body: JSON.stringify({ participant_id: targetUserId }),
-    })
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (!data) return;
-        setSelectedChat({ id: data.id, name: '', img: '', online: false });
-        if (data.existing) {
-          fetch(`/api/chats/${data.id}/messages`, { headers: { Authorization: `Bearer ${authToken}` } })
-            .then(res => res.ok ? res.json() : [])
-            .then(msgs => {
-              if (Array.isArray(msgs)) {
-                setMessages(msgs.map((m: any) => ({
-                  id: m.id, text: m.text,
-                  sender: m.sender_id === user?.id ? 'me' : 'other',
-                  time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                  reactions: m.reactions || [],
-                })));
-              }
-            })
-            .catch(() => {});
-        } else {
-          setMessages([]);
-        }
-        fetch('/api/chats', { headers: { Authorization: `Bearer ${authToken}` } })
-          .then(res => res.ok ? res.json() : [])
-          .then(list => { if (Array.isArray(list)) setApiChats(list); })
-          .catch(() => {});
+    if (apiChats.length > 0) {
+      fetch('/api/chats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ participant_id: targetUserId }),
       })
-      .catch(() => {});
-  }, [matchId, authToken, user?.id]);
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (!data) return;
+          setSelectedChat({ id: data.id, name: '', img: '', online: false });
+          if (data.existing) {
+            fetch(`/api/chats/${data.id}/messages`, { headers: { Authorization: `Bearer ${authToken}` } })
+              .then(res => res.ok ? res.json() : [])
+              .then(msgs => {
+                if (Array.isArray(msgs)) {
+                  setMessages(msgs.map((m: any) => ({
+                    id: m.id, text: m.text,
+                    sender: m.sender_id === user?.id ? 'me' : 'other',
+                    time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    reactions: m.reactions || [],
+                  })));
+                }
+              })
+              .catch(() => {});
+          } else {
+            setMessages([]);
+          }
+          fetch('/api/chats', { headers: { Authorization: `Bearer ${authToken}` } })
+            .then(res => res.ok ? res.json() : [])
+            .then(list => { if (Array.isArray(list)) setApiChats(list); })
+            .catch(() => {});
+        })
+        .catch(() => {});
+      openingChatRef.current = targetUserId;
+    }
+  }, [matchId, apiChats.length, authToken, user?.id]);
 
   useEffect(() => {
     if (groupId) {

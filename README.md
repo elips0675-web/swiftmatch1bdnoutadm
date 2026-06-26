@@ -57,7 +57,7 @@ npx vite --port 8081 --host
 
 ### Фаза 1 — Core User Flow ✅
 - Регистрация → анкета → лайки → мэтч → чат
-- Загрузка фото через `/api/upload`
+- Загрузка фото через `/api/upload` (auth + JWT, fallback для demo)
 - Онбординг с сохранением в MySQL + fallback localStorage
 - Bearer-токен авторизация
 
@@ -76,9 +76,12 @@ npx vite --port 8081 --host
 - Запрещённые слова в чатах (REST + WS)
 - История действий в карточке юзера
 - Имперсонация (войти как пользователь)
+- **Реальный premium-статус** в админке (из `subscriptions`)
 
 ### Фаза 4 — Monetization ✅
 - **Платёжный шлюз:** Stripe Checkout + mock fallback, отмена подписки
+- **Stripe webhook:** проверка подписи через `express.raw()`
+- **Stripe success/cancel:** страницы `/premium/success`, `/premium/cancel`
 - **Премиум-гейтинг:** лимит 10 лайков/день для free, просмотры скрыты без подписки
 - **Рекламные баннеры:** фича-флаг `showAds`, сохранение конфига рекламы в БД
 - **UI:** выбор тарифа (Plus/Gold/Platinum) + длительности (1/6/12 мес.)
@@ -102,6 +105,7 @@ npx vite --port 8081 --host
 - Порт Vite унифицирован (8081)
 - UTF-8 кодировка на всех уровнях (БД, сервер, HTML)
 - Очистка мусорных данных (чаты, participants)
+- **helmet** — security headers (CSP, X-Frame-Options, X-Content-Type-Options и т.д.)
 
 ---
 
@@ -112,11 +116,6 @@ npx vite --port 8081 --host
 | 1 | **Stripe live** — добавить в `.env` реальные ключи Stripe (сейчас mock) | Высокий |
 | 2 | **Реальная реклама** — AdMob / Yandex SDK вместо таймера | Высокий |
 | 3 | **SMTP** — заполнить SMTP_USER/PASS в `.env` (хосты раскомментированы) | Низкий |
-| 4 | **Stripe webhook** — проверка подписи через `express.raw()` ✅ | Готово |
-| 5 | **Stripe success/cancel** — страницы `/premium/success`, `/premium/cancel` ✅ | Готово |
-| 6 | **Admin users — premium статус** — реальный `tier` из `subscriptions` вместо `'free'` ✅ | Готово |
-| 7 | **Upload security** — `optionalAuth` middleware + userId из JWT (с fallback для demo) ✅ | Готово |
-| 8 | **helmet** — security headers (CSP, X-Frame-Options, и т.д.) ✅ | Готово |
 
 ---
 

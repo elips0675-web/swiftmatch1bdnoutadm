@@ -29,11 +29,13 @@ export default function MonetizationPage() {
       apiGet('/api/admin/monetization/pricing'),
       apiGet('/api/admin/monetization/revenue'),
       apiGet('/api/admin/monetization/funnel'),
+      apiGet('/api/admin/monetization/ads').catch(() => null),
     ])
-      .then(([pricingData, revenue, funnel]) => {
+      .then(([pricingData, revenue, funnel, adsData]) => {
         setPricing(ensureArray(pricingData));
         setRevenueData(ensureArray(revenue));
         setFunnelData(ensureArray(funnel));
+        if (adsData) setAds(adsData);
       })
       .catch(() => {
         toast.error('Failed to load monetization data');

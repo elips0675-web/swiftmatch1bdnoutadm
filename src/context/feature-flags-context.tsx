@@ -7,6 +7,7 @@ export interface FeatureFlags {
   aiIcebreakersEnabled: boolean;
   aiCompatibilityEnabled: boolean;
   groupsPageEnabled: boolean;
+  showAdsEnabled: boolean;
 }
 
 const defaultFlags: FeatureFlags = {
@@ -14,6 +15,7 @@ const defaultFlags: FeatureFlags = {
   aiIcebreakersEnabled: true,
   aiCompatibilityEnabled: true,
   groupsPageEnabled: true,
+  showAdsEnabled: false,
 };
 
 const mapApiFlags = (data: Record<string, boolean>): FeatureFlags => ({
@@ -21,6 +23,7 @@ const mapApiFlags = (data: Record<string, boolean>): FeatureFlags => ({
   aiIcebreakersEnabled: data.aiIcebreakers ?? true,
   aiCompatibilityEnabled: data.aiCompatibility ?? true,
   groupsPageEnabled: data.groupsPage ?? true,
+  showAdsEnabled: data.showAds ?? false,
 });
 
 const FeatureFlagsContext = createContext<FeatureFlags>(defaultFlags);

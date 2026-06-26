@@ -26,7 +26,7 @@ import { toast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
 import { subscribeToPush, unsubscribeFromPush } from "@/lib/push-notifications";
 import { getToken } from "@/lib/token";
-import { useTheme } from "next-themes";
+
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -138,18 +138,7 @@ export default function SettingsPage() {
           <section className="space-y-4">
             <h5 className="text-[10px] font-black uppercase tracking-[2px] text-muted-foreground">{t('settings.account')}</h5>
             <div className="space-y-1">
-              <div className="flex items-center justify-between py-3 border-b border-border/50">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    <Sun size={18} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold">{t('settings.theme')}</p>
-                  </div>
-                </div>
-                <ThemeToggle />
-              </div>
-              <div className="flex items-center justify-between py-3 border-b border-border/50">
+<div className="flex items-center justify-between py-3 border-b border-border/50">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                     <Bell size={18} />
@@ -318,24 +307,4 @@ export default function SettingsPage() {
       </main>
     </div>
   );
-}
-
-function ThemeToggle() {
-  const { theme, setTheme, resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-  if (!mounted) return <div className="w-10 h-6 rounded-full bg-muted" />
-  return (
-    <button
-      onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-      className="w-10 h-6 rounded-full bg-muted flex items-center px-0.5 transition-colors relative"
-    >
-      <div className={cn(
-        "w-5 h-5 rounded-full bg-white shadow-sm flex items-center justify-center transition-transform absolute",
-        resolvedTheme === 'dark' ? "translate-x-4" : "translate-x-0"
-      )}>
-        {resolvedTheme === 'dark' ? <Moon size={10} /> : <Sun size={10} />}
-      </div>
-    </button>
-  )
 }
